@@ -10,15 +10,14 @@ const FooterSection = () => {
 
   return (
       <footer className="w-full bg-[#FCFCFD] border-t border-gray-200 py-6">
-          <div className="flex flex-wrap items-center justify-center gap-8">
-              
+          <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center gap-8">
               {/* Left: Copyright */}
-              <p className="text-xs text-[#575757]">
+              <p className="text-xs text-[#575757] order-2 sm:order-none">
                 © 2025 OSSDoctor. All rights reserved.
               </p>
 
               {/* Right: Links */}
-              <nav className="flex flex-wrap gap-4 justify-center">
+              <nav className="flex flex-wrap gap-4 justify-center order-1 sm:order-none">
                   {footerLinks.map((link, index) => (
                       <a
                           key={index}
@@ -30,6 +29,8 @@ const FooterSection = () => {
                       </a>
                   ))}
               </nav>
+
+              
           </div>
           
     </footer>
