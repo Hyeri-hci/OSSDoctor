@@ -2,8 +2,7 @@ import React from "react";
 import HeaderSection from "../../../components/HeaderSection";
 import FooterSection from "../../../components/FooterSection";
 import SearchBar from "../components/SearchBar";
-import { BarChart3, Users, Star, Calendar, GitFork } from "lucide-react";
-// import { GitBranch, Search } from "lucide-react";
+import { BarChart3, Users, Star} from "lucide-react";
 export default function MainPage(onAnalyze, onDiagnosisClick, onContributionClick, onEcosystemClick) {
 
   const features = [
@@ -30,35 +29,7 @@ export default function MainPage(onAnalyze, onDiagnosisClick, onContributionClic
     }
   ];
 
-  const recommendedProjects = [
-    {
-      name: "React",
-      description: "A declarative, efficient, and flexible JavaScript library for building user interfaces.",
-      lastCommit: "2023-10-01",
-      language: "JavaScript",
-      stars: "210k",
-      forks: "45k",
-      issues: "1.2k",
-    },
-    {
-      name: "Vue.js",
-      description: "The Progressive JavaScript Framework for building user interfaces.",
-      lastCommit: "2023-09-28",
-      language: "TypeScript",
-      stars: "200k",
-      forks: "40k",
-      issues: "800",
-    },
-    {
-      name: "TensorFlow",
-      description: "An end-to-end open source platform for machine learning.",
-      lastCommit: "2023-09-30",
-      language: "Python",
-      stars: "170k",
-      forks: "90k",
-      issues: "5k",
-    }
-  ];
+  
 
   return (
     <div className="max-w-screen-2xl mx-auto flex flex-col items-center justify-center">
@@ -130,58 +101,7 @@ export default function MainPage(onAnalyze, onDiagnosisClick, onContributionClic
           </div>
         </section>
 
-        {/* Recommended Projects Section */}
-        <section className="py-16">
-          <div className="max-w-7xl mx-auto px-6">
-            <div className="grid grid-rows-1 items-center gap-8">
-              {/* 왼쪽: 텍스트 + 버튼 */}
-              <div className="flex justify-between items-center">
-                <div>
-                  <h2 className="text-xl md:text-2xl font-bold mb-2">추천 프로젝트</h2>
-                  <p className="text-sm md:text-base">지금 활발한 오픈소스 프로젝트를 탐색해 보세요.</p>
-                </div>
-                <button className="w-full max-w-25 md:max-w-40 bg-black text-white text-sm hover:bg-gray-800 px-6 py-2 rounded">
-                  더 보기
-                </button>
-              </div>
-
-              {/* 오른쪽: 프로젝트 리스트 */}
-              <div className="grid grid-row-3 gap-6 flex-1">
-                {recommendedProjects.map((project, index) => (
-                  <div key={index} className="cursor-pointer hover:shadow-md transition-shadow bg-white rounded-md">
-                    <div className="">
-                      <div className="flex justify-between items-start border border-gray-200 p-6 rounded-lg">
-                        <div className="hidden md:block bg-gray-200 w-24 h-24 rounded items-center justify-center mr-4">
-                          {/* 나중에 이미지 들어갈 자리 */}
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="text-md sm:text-lg mb-1">{project.name}</h3>
-                          <p className="text-gray-600 text-xs mb-3 sm:text-sm">{project.description}</p>
-                          <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-500 flex-wrap">
-                            <div className="flex items-center gap-1">
-                              <Calendar className="w-4 h-4" />
-                              <span>{project.lastCommit}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Star className="w-4 h-4" />
-                              <span>{project.stars}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <GitFork className="w-4 h-4" />
-                              <span>{project.forks}</span>
-                            </div>
-                            <div className="badge badge-secondary">{project.language}</div>
-                          </div>
-                        </div>
-
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
+        
 
       </main>
       <FooterSection />
