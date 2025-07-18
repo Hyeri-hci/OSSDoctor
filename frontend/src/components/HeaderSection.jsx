@@ -35,7 +35,7 @@ const HeaderSection = () => {
 
                 {/* Logo */}
                 <div
-                    className="bg-gray-100 px-4 py-2 rounded-full font-bold text-[#1a202c] text-sm [font-family: 'Roboto', Helvetica] font-bold text-2xl cursor-pointer"
+                    className="bg-gray-100 px-4 py-2 rounded-full font-bold text-[#1a202c] text-xs lg:text-sm cursor-pointer"
                     onClick={() => window.location.href = '/'}
                 >
                     OSSDoctor
@@ -47,7 +47,7 @@ const HeaderSection = () => {
                         <a
                             key={idx}
                             href="#"
-                            className="text-sm text-gray-700 font-medium hover:font-bold transition"
+                            className="text-xs lg:text-sm text-gray-700 font-medium hover:font-bold transition"
                         >
                             {item}
                         </a>
@@ -90,7 +90,7 @@ const HeaderSection = () => {
                         value={searchQuery}
                         onChange={handleSearchChange}
                         placeholder="업사이클링할 프로젝트 찾기"
-                        className="flex-grow bg-transparent text-sm text-gray-700 placeholder-gray-400 outline-none"
+                        className="flex-grow bg-transparent text-xs text-gray-700 placeholder-gray-400 outline-none"
                     />
                     <MagnifyingGlassIcon className="w-5 h-5 text-gray-400 hidden sm:inline-flex" />
                 </form>
