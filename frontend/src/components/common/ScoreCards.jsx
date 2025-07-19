@@ -113,6 +113,17 @@ const MY_ACTIVITY_CARDS_CONFIG = [
     }
 ];
 
+const getActiveBarColor = (color) => {
+    const colorMap = {
+        purple: 'bg-purple-600',
+        green: 'bg-green-600',
+        red: 'bg-red-600',
+        blue: 'bg-blue-600',
+        orange: 'bg-orange-600'
+    };
+    return colorMap[color] || 'bg-gray-600';
+};
+
 
 const ScoreCards = ({
     scores,
@@ -143,9 +154,12 @@ const ScoreCards = ({
     }
 
     // grid class 동적 설정
-    const gridCols = cardsConfig.length === 3 ? `grid-cols-1 md:grid-cols-${cardsConfig.length}` : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4';
+    const gridCols = cardsConfig.length === 3 
+        ? `grid-cols-3 lg:grid-cols-${cardsConfig.length}` 
+        : 'grid-cols-4 md:grid-cols-4 lg:grid-cols-4';
+    
     return (
-        <div className={`grid ${gridCols} gap-6`}>
+        <div className={`grid ${gridCols} gap-2 sm:gap-4 md:gap-6`}>
             {cardsConfig.map((card) => {
                 const IconComponent = card.icon;
                 const isActive = activeTab === card.id;
@@ -156,20 +170,20 @@ const ScoreCards = ({
                         key={card.id}
                         onClick={() => onTabChange(card.id)}
                         className={`${card.bgColor} ${isActive ? card.activeBorderColor : card.borderColor} 
-              border-2 rounded-lg p-6 text-center relative overflow-hidden cursor-pointer 
+              border-2 rounded-lg p-2 sm:p-4 md:p-6 text-center relative overflow-hidden cursor-pointer 
               hover:shadow-md transition-all duration-200 ${isActive ? 'shadow-lg' : ''}`}
                     >
-                        <div className="absolute top-3 right-3">
-                            <IconComponent className={`w-5 h-5 ${card.iconColor}`} />
+                        <div className="absolute top-1 right-1 sm:top-2 sm:right-2 md:top-3 md:right-3">
+                            <IconComponent className={`w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 ${card.iconColor}`} />
                         </div>
-                        <h3 className={`${card.textColor} text-sm font-medium mb-2`}>
+                        <h3 className={`${card.textColor} text-xs sm:text-sm font-medium mb-1 sm:mb-2`}>
                             {card.title}
                         </h3>
-                        <div className={`${card.textColor} text-3xl font-bold`}>
+                        <div className={`${card.textColor} text-lg sm:text-2xl md:text-3xl font-bold`}>
                             {score}/100
                         </div>
                         {isActive && (
-                            <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-purple-500"></div>
+                            <div className={`absolute bottom-0 left-0 right-0 h-1 ${getActiveBarColor(card.color)}`}></div>
                         )}
                     </div>
                 );
