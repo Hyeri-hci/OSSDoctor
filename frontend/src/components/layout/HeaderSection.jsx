@@ -6,21 +6,20 @@ import { SearchBar, Navigation } from "../common";
 const HeaderSection = () => {
     const [searchQuery, setSearchQuery] = useState(""); // 검색어 상태
 
+    const handleMyActivityClick = () => {
+        console.log('GitHub 로그인이 필요한 서비스입니다.');
+    };
+
     const navItems = [
         { label: "프로젝트 진단", href: "/diagnose" },
         {
             label: "나의 기여도",
             href: "/myactivity",
-            onClick: handleMyActivityClick
+            onClick: handleMyActivityClick 
         },
         { label: "업사이클링", href: "/ecosystem" },
         { label: "정보", href: "#" }
     ];
-
-    const handleMyActivityClick = () => {
-        alert('GitHub 로그인이 필요한 서비스입니다.');
-    };
-
 
     return (
         <header className="w-full bg-white shadow-sm sticky top-0 z-50">
