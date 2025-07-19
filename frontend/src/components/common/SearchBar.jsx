@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
-import { MagnifyingGlassCircleIcon } from "@heroicons/react/24/solid"; // 검색 아이콘
+import { MagnifyingGlassIcon } from "@heroicons/react/24/solid"; // 검색 아이콘
 
 
 const SearchBar = ({
@@ -43,7 +43,7 @@ const SearchBar = ({
         >
             {/* Search Icon */}
             <div className="flex items-center pl-3">
-                <MagnifyingGlassCircleIcon className={`text-gray-500 ${iconSizeClasses[size]}`} />
+                <MagnifyingGlassIcon className={`text-gray-500 ${iconSizeClasses[size]}`} />
             </div>
 
             {/* Search Input */}
