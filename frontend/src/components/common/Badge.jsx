@@ -14,6 +14,7 @@ const Badge = ({
         primary: "bg-blue-100 text-blue-800",
         secondary: "bg-purple-100 text-purple-800",
         success: "bg-green-100 text-green-800",
+        info: "bg-blue-100 text-blue-700",
         warning: "bg-yellow-100 text-yellow-800",
         error: "bg-red-100 text-red-800"
     };
@@ -35,7 +36,7 @@ const Badge = ({
 
 Badge.propTypes = {
     children: PropTypes.node,
-    variant: PropTypes.oneOf(['default', 'primary', 'secondary', 'success', 'warning', 'error']),
+    variant: PropTypes.oneOf(['default', 'primary', 'secondary', 'success', 'info', 'warning', 'error']),
     size: PropTypes.oneOf(['small', 'default', 'large']),
     className: PropTypes.string
 };
