@@ -13,8 +13,20 @@ export default function MainPage() {
 
     const handleAnalyze = (url) => {
         if(url && url.trim() !== "") {
-            console.log("Analyzing URL:", url);
-            // URL 분석 로직 추가
+            const trimmedUrl = url.trim();
+            const githubUrlPattern = /^(https?:\/\/)?(www\.)?github\.com\/[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+$/;
+
+            if(githubUrlPattern.test(trimmedUrl)) { 
+                // github url에서 owner/name 추출하여 진단 페이지로 이동
+                const githubUrlMatch = trimmedUrl.match(/github\.com\/([^/]+)\/([^/]+)/);
+                if(githubUrlMatch) {
+                    const [, owner, name] = githubUrlMatch;
+                    const cleanName = name.replace(/\.git$/, ""); // .git 제거
+                    window.location.href = `/diagnose?owner=${encodeURIComponent(owner)}&name=${encodeURIComponent(cleanName)}`;
+                }
+            } else {
+                alert('유효한 GitHub URL을 입력해주세요.\n예: https://github.com/user/repo');
+            }
         } else {
             alert('유효한 URL을 입력해주세요.');
         }
