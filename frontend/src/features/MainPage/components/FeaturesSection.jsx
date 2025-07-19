@@ -1,6 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { ChartBarIcon, UsersIcon, StartIcon } from "lucide-react";
+import { ChartBarIcon, UsersIcon, StarIcon } from "@heroicons/react/24/outline";
 import { Button, Card } from "../../../components/common";
 
 const FeaturesSection = ({ onDiagnosisClick, onContributionClick, onEcosystemClick }) => {
@@ -23,7 +23,7 @@ const FeaturesSection = ({ onDiagnosisClick, onContributionClick, onEcosystemCli
             title: "에코시스템 익스플로러",
             subtitle: "생태계 탐색",
             description: "업사이클할 오픈소스를 찾고, 인기 순위를 확인해 보세요.",
-            icon: <StartIcon className="w-12 h-12 text-purple-500" />,
+            icon: <StarIcon className="w-12 h-12 text-purple-500" />,
             onClick: onEcosystemClick,
         }
     ];
