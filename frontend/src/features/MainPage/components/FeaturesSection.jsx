@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { ChartBarIcon, UsersIcon, StarIcon } from "@heroicons/react/24/outline";
-import { Button, Card } from "../../../components/common";
+import { Card } from "../../../components/common";
 
 const FeaturesSection = ({ onDiagnosisClick, onContributionClick, onEcosystemClick }) => {
     const features = [
@@ -38,10 +38,6 @@ const FeaturesSection = ({ onDiagnosisClick, onContributionClick, onEcosystemCli
                             <p className="text-sm md:text-base xl:text-lg text-gray-600 max-w-2xl mx-auto">
                                 오픈소스 활동을 더 풍부하게 만들어 줄 주요 기능들을 살펴보세요.
                             </p>
-
-                            <Button className="mt-6">
-                                더 알아보기
-                            </Button>
                         </div>
                     </div>
 
