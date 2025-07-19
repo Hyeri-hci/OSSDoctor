@@ -35,7 +35,8 @@ const DiagnoseSearchSection = ({ onSearch, error }) => {
     return (
         <section className="bg-[#F3F3F3] py-16">
             <div className="container mx-auto px-6 xl:px-8 2xl:px-12">
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 md:gap-8">
+                <div className="max-w-7xl mx-auto">
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 md:gap-8">
                     {/* 제목 섹션 */}
                     <div className="flex-shrink-0 text-center md:text-left">
                         <h1 className="text-2xl md:text-xl lg:text-2xl font-bold text-gray-900 mb-1">
@@ -82,14 +83,13 @@ const DiagnoseSearchSection = ({ onSearch, error }) => {
                                 )}
                             </div>
                         </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </section>
     );
-};
-
-DiagnoseSearchSection.propTypes = {
+};DiagnoseSearchSection.propTypes = {
     onSearch: PropTypes.func.isRequired,
     error: PropTypes.string
 };
