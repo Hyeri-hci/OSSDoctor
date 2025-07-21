@@ -9,5 +9,6 @@ import java.util.Optional;
 @Repository
 public interface RepositoryRepository extends JpaRepository<RepositoryEntity, Long> {
 
+    @Override
     Optional<RepositoryEntity> findById(Long id);
 }
