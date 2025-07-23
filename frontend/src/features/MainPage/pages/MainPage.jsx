@@ -1,10 +1,13 @@
 import React from "react";
 import { Layout } from "../../../components/layout";
+import { useAuth } from "../../../hooks/useAuth";
+import { initiateGitHubLogin } from "../../../utils/github-auth";
 import HeroSection from "../components/HeroSection";
 import FeaturesSection from "../components/FeaturesSection";
 import RecommendedProjectsSection from "../components/RecommendedProjectsSection";
 
 export default function MainPage() {
+    const { isAuthenticated, checkAuthStatus } = useAuth();
 
     // 진단 기능 클릭 핸들러
     const handleDiagnosisClick = () => {
@@ -31,9 +34,27 @@ export default function MainPage() {
             alert('유효한 URL을 입력해주세요.');
         }
     };
+    
+    // 기여 기능 클릭 핸들러
+    const handleContributionClick = async () => {
+        if (!isAuthenticated) {
+            await checkAuthStatus();
+            
+            if (!isAuthenticated) {
+                alert('GitHub 로그인이 필요한 서비스입니다.');
+                try {
+                    console.log("GitHub 로그인 시작");
+                    initiateGitHubLogin({
+                        scope: "read:user,user:email,public_repo",
+                    });
+                } catch (error) {
+                    console.error('GitHub 로그인 시작 실패:', error);
+                    alert('로그인 기능에 문제가 발생했습니다. 잠시 후 다시 시도해주세요.');
+                }
+                return;
+            }
+        }
 
-    // 기여도 분석 기능 클릭 핸들러
-    const handleContributionClick = () => {
         window.location.href = "/myactivity";
     };
 
