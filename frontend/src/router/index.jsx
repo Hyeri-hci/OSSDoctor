@@ -22,8 +22,7 @@ export default function AppRouter() {
 
         {/* Ecosystem Page Route Path */}
         <Route path="/ecosystem" element={<EcosystemPage />} />
-
-        {/* GitHub OAuth Callback Route Path */}
+        
         
       </Routes>
     </BrowserRouter>
