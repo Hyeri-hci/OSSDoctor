@@ -67,7 +67,11 @@ export const checkAuthStatus = async () => {
     try {
         const backendUrl = import.meta.env.VITE_BACKEND_API_URL;
         if (!backendUrl) {
-            throw new Error('백엔드 API URL이 설정되지 않았습니다. .env 파일을 확인하세요.');
+            return {
+                isLoggedIn: false,
+                user: null,
+                error: null,
+            };
         }
 
         const response = await fetch(`${backendUrl}/auth/status`, {
@@ -111,7 +115,8 @@ export const logout = async () => {
     try {
         const backendUrl = import.meta.env.VITE_BACKEND_API_URL;
         if (!backendUrl) {
-            throw new Error('백엔드 API URL이 설정되지 않았습니다. .env 파일을 확인하세요.');
+            window.location.href = '/';
+            return true;
         }
 
         const response = await fetch(`${backendUrl}/auth/logout`, {

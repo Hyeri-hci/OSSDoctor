@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import {
     checkAuthStatus,
     logout
@@ -19,7 +19,7 @@ import {
 export const useAuth = () => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [user, setUser] = useState(null);
-    const [isLoading, setIsLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState(false); // 초기에는 로딩 상태가 아님
     const [error, setError] = useState(null);
 
 
@@ -47,10 +47,6 @@ export const useAuth = () => {
             setIsLoading(false);
         }
     }, []);
-
-    useEffect(() => {
-        loadUserData();
-    }, [loadUserData]);
 
     /** * 로그인 처리 함수 (OAuth 콜백 후 상태 업데이트)
      * @param {Object} authResult - OAuth 인증 결과 (백엔드에서 반환된 사용자 정보)
