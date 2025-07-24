@@ -7,3 +7,4 @@ export { default as Navigation } from './Navigation';
 export { default as ScoreCards } from './ScoreCards';
 export { default as LoadingSpinner } from './LoadingSpinner';
 export { default as EmptyState } from './EmptyState';
+export { default as Modal } from './Modal';
