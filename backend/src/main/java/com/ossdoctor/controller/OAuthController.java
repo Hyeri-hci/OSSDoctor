@@ -107,10 +107,20 @@ public class OAuthController {
 
         System.out.println("\n\n\n\n\n" + jwt);
 
+        // 쿠키 생성
+        ResponseCookie jwtCookie = ResponseCookie.from("JWT_TOKEN", jwt)
+                .httpOnly(true)
+                .secure(true)
+                .path("/")
+                .maxAge(3600)
+                .sameSite("Lax")
+                .build();
 
         // 리다이렉트 응답
         HttpHeaders redirectHeaders = new HttpHeaders();
         redirectHeaders.setLocation(URI.create("http://localhost:5173/?auth=success&user=" + nickname)); // 프론트 주소
+        redirectHeaders.add(HttpHeaders.SET_COOKIE, jwtCookie.toString());
+
         return ResponseEntity.status(HttpStatus.FOUND)
                 .headers(redirectHeaders)
                 .build();
