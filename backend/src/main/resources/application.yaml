@@ -5,3 +5,16 @@ spring:
     name: ossdoctor
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
+
+github:
+  token: ${GITHUB_TOKEN:your_token_here}
+  api:
+    base-url: https://api.github.com
+    graphql-url: https://api.github.com/graphql
+    rate-limit-max-retries: 3
+    cache-expiry-minutes: 10
+
+  nvd:
+    api:
+      base-url: https://services.nvd.nist.gov/rest/json/cves/2.0
+      rate-limit-delay-ms: 1000
