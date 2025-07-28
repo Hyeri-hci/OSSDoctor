@@ -1,6 +1,7 @@
 package com.ossdoctor.controller;
 
-import com.nimbusds.jose.shaded.gson.JsonObject;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.Cookie;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
@@ -13,6 +14,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -20,6 +22,8 @@ import io.jsonwebtoken.security.Keys;
 
 import java.security.Key;
 import java.util.Date;
+
+import com.ossdoctor.model.UserInfo;
 
 @RestController
 public class OAuthController {
@@ -29,15 +33,11 @@ public class OAuthController {
     private String clientSecret;
     @Value("${jwt.secret.key}")
     private String jwtSecret;
-    // JWT 비밀 키
-
-
-
 
     @GetMapping("/oauth/callback")
     public ResponseEntity<?> githubCallback(@RequestParam("code") String code) {
         Key jwtkey = Keys.hmacShaKeyFor(jwtSecret.getBytes());
-        // 세션 시간
+        // 세션 유지 시간
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + 3600000);
 
@@ -50,6 +50,7 @@ public class OAuthController {
         params.add("client_secret", clientSecret);
         params.add("code", code);
 
+        // Access Token 발급을 위한 헤더 정보
         HttpHeaders tokenHeaders = new HttpHeaders();
         tokenHeaders.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
         tokenHeaders.setAccept(List.of(MediaType.APPLICATION_JSON));
@@ -72,15 +73,13 @@ public class OAuthController {
         // JSONObjec에서 access token을 확인해서 저장하기
         String accessToken = jsonObject.get("access_token").toString();
 
-
-        System.out.println("Access Token 응답: " + accessToken);
-
-        // 사용자 정보 받아오기
+        // 사용자 정보 조회를 위한 헤더
         HttpHeaders userheaders = new HttpHeaders();
         userheaders.set("Accept", "application/vnd.github+json");
         userheaders.set("Authorization", "Bearer " + accessToken);
         userheaders.set("X-GitHub-Api-Version", "2022-11-28");
 
+        // 사용자 정보 조회를 위한 엔티티
         HttpEntity<String> entity = new HttpEntity<>(userheaders);
         RestTemplate userRestTemplate = new RestTemplate();
         ResponseEntity<String> userResponse = userRestTemplate.exchange(
@@ -91,8 +90,8 @@ public class OAuthController {
         );
 
         String userResult = userResponse.getBody();
-        System.out.println(userResult);
 
+        // 유저 정보로 JWT 생성하기
         JSONObject userJson = new JSONObject(userResult);
         String nickname = userJson.getString("login");
         String jwt = Jwts.builder()
@@ -105,10 +104,8 @@ public class OAuthController {
                 .signWith(jwtkey, SignatureAlgorithm.HS256)
                 .compact();
 
-        System.out.println("\n\n\n\n\n" + jwt);
-
         // 쿠키 생성
-        ResponseCookie jwtCookie = ResponseCookie.from("JWT_TOKEN", jwt)
+        ResponseCookie jwtCookie = ResponseCookie.from("auth_token", jwt)
                 .httpOnly(true)
                 .secure(true)
                 .path("/")
@@ -124,5 +121,60 @@ public class OAuthController {
         return ResponseEntity.status(HttpStatus.FOUND)
                 .headers(redirectHeaders)
                 .build();
+    }
+
+    @GetMapping("/auth/status")
+    public Map<String, Object> status(HttpServletRequest request) {
+        // 쿠키 이름을 프론트엔드와 일치시킴
+        String jwtToken = getCookieValue(request, "auth_token");
+
+        if (jwtToken != null && isValidJWT(jwtToken)) {
+            UserInfo user = extractUserFromJWT(jwtToken);
+
+            // 프론트엔드가 기대하는 키 사용
+            return Map.of("isLoggedIn", true, "user", user);
+        }
+
+        return Map.of("isLoggedIn", false, "user", null);
+    }
+
+    // extractUserFromJWT 메서드 추가 필요
+    private UserInfo extractUserFromJWT(String token) {
+        Key key = Keys.hmacShaKeyFor(jwtSecret.getBytes());
+        var claims = Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+
+        return new UserInfo(
+                Integer.parseInt(claims.getSubject()),
+                (String) claims.get("nickname"),
+                (String) claims.get("avatar_url"),
+                (String) claims.get("bio")
+        );
+    }
+
+
+    // 쿠키값을 가져오는 함수 (jakarta.servlet.http.Cookie 사용)
+    private String getCookieValue(HttpServletRequest request, String cookieName) {
+        if (request.getCookies() == null) return null;
+        for (Cookie cookie : request.getCookies()) {
+            if (cookie.getName().equals(cookieName)) {
+                return cookie.getValue();
+            }
+        }
+        return null;
+    }
+
+    // JWT 유효성 검사 함수
+    private boolean isValidJWT(String token) {
+        try {
+            Key key = Keys.hmacShaKeyFor(jwtSecret.getBytes());
+            Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 }
