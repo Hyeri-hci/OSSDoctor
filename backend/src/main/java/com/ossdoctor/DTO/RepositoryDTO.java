@@ -11,6 +11,7 @@ public class RepositoryDTO {
     private Long idx;
     private Long githubRepoId;
     private String name;
+    private String fullName;
     private String url;
     private String owner;
     private String language;

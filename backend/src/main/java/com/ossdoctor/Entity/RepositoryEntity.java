@@ -23,6 +23,9 @@ public class RepositoryEntity {
     @Column(length = 100, nullable = false)
     private String name;
 
+    @Column(name = "full_name", nullable = false)
+    private String fullName;
+
     @Column(length = 255, nullable = false)
     private String url;
 
