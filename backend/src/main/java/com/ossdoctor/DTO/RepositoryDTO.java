@@ -3,6 +3,8 @@ package com.ossdoctor.DTO;
 import com.ossdoctor.Entity.SOURCE_TYPE;
 import lombok.*;
 
+import java.util.List;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -11,7 +13,7 @@ public class RepositoryDTO {
     private Long idx;
     private Long githubRepoId;
     private String name;
-    private String fullName;
+    private String description;
     private String url;
     private String owner;
     private String language;
@@ -21,4 +23,6 @@ public class RepositoryDTO {
     private int fork;
     private int watchers;
     private int contributors;
+
+    private List<String> topics;
 }

@@ -4,6 +4,9 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Slf4j
 @Data
 @Builder
@@ -23,8 +26,7 @@ public class RepositoryEntity {
     @Column(length = 100, nullable = false)
     private String name;
 
-    @Column(name = "full_name", nullable = false)
-    private String fullName;
+    private String description;
 
     @Column(length = 255, nullable = false)
     private String url;
@@ -53,4 +55,9 @@ public class RepositoryEntity {
 
     @Column(nullable = false)
     private Integer contributors = 0;
+
+    @ToString.Exclude
+    @OneToMany(mappedBy = "repository")
+    @Builder.Default
+    private List<TopicEntity> topics = new ArrayList<>();
 }
