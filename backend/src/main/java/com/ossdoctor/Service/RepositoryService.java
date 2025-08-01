@@ -30,6 +30,8 @@ public class RepositoryService {
                 .fork(entity.getFork())
                 .watchers(entity.getWatchers())
                 .contributors(entity.getContributors())
+                .description(entity.getDescription())
+                .viewCount(entity.getViewCount())
                 .build();
     }
 
@@ -46,6 +48,8 @@ public class RepositoryService {
                 .fork(dto.getFork())
                 .watchers(dto.getWatchers())
                 .contributors(dto.getContributors())
+                .description(dto.getDescription())
+                .viewCount(dto.getViewCount() != null ? dto.getViewCount() : 0L)
                 .build();
     }
 }

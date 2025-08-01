@@ -23,6 +23,7 @@ public class RepositoryDTO {
     private int fork;
     private int watchers;
     private int contributors;
+    private Long viewCount;
 
     private List<String> topics;
 }

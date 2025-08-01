@@ -56,6 +56,9 @@ public class RepositoryEntity {
     @Column(nullable = false)
     private Integer contributors = 0;
 
+    @Column(name = "view_count", nullable = false)
+    private Long viewCount = 0L;
+
     @ToString.Exclude
     @OneToMany(mappedBy = "repository")
     @Builder.Default
