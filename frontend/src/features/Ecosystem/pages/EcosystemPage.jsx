@@ -2,6 +2,7 @@ import React, { useState, useMemo } from "react";
 import { Layout } from "../../../components/Layout";
 import useEcosystemView from '../hooks/useEcosystemView';
 import useLeaderboardData from '../hooks/useLeaderboardData';
+import ActivityLeaderboard from '../components/ActivityLeaderboard';
 
 const ALL_PROJECTS = [
     {
@@ -146,7 +147,7 @@ const EcosystemPage = () => {
         currentView,
         navigateToProjects,
         navigateToLeaderboard,
-        // navigateToMain
+        navigateToMain
     } = useEcosystemView();
 
     // 리더보드 데이터 (메인 페이지용)
@@ -408,9 +409,7 @@ const EcosystemPage = () => {
             case 'leaderboard':
                 return (
                     <div className="container mx-auto px-6 xl:px-8 2xl:px-12">
-                        <h2 className="text-2xl font-bold mb-6">활동 리더보드</h2>
-                        {/* 여기에 리더보드 컴포넌트 추가 */}
-                        {/* 예시: <ActivityLeaderboard /> */}
+                        <ActivityLeaderboard onBack={navigateToMain} />
                     </div>
                 );
                 // return <ActivityLeaderboard onBack={navigateToMain} />;
