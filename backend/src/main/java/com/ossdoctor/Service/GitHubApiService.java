@@ -2,10 +2,13 @@ package com.ossdoctor.Service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ossdoctor.DTO.ActivityDTO;
 import com.ossdoctor.DTO.CommitDTO;
 import com.ossdoctor.DTO.RepositoryDTO;
 import com.ossdoctor.config.GithubApiProperties;
 import com.ossdoctor.exception.GitHubApiException;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
@@ -36,16 +39,11 @@ public class GitHubApiService {
     private final ObjectMapper objectMapper; // JSON 데이터 변환 도구
 
     private final RepositoryService repositoryService;
+    private final ActivityService activityService;
 
-    // Repository 기본 정보 GraphQL Query
-    /**
-     * 요청 정보:
-     * - 프로젝트 기본 정보 (이름, 설명, 스타 수 등)
-     * - 커밋, Pull Request, Issue 통계
-     * - 사용 언어 분석
-     * - 주제 태그들
-     */
-    // id 추가
+    // ========== REST API 사용 메서드 ==========
+
+    // Repository 기본 정보 GraphQL Query (id 추가)
     private static final String REPOSITORY_QUERY = """
     query GetRepository($owner: String!, $name: String!) {
       repository(owner: $owner, name: $name) {
@@ -142,10 +140,11 @@ public class GitHubApiService {
         }
         """;
 
-    // 최근 PR & Issue 정보 GraphQL Query
+    // 최근 PR & Issue 정보 GraphQL Query => id 추가
     private static final String RECENT_ACTIVITIES_QUERY = """
-        query GetRecentActivities($owner: String!, $name: String!, $since: DateTime!) {
+        query GetRecentActivities($owner: String!, $name: String!) {
           repository(owner: $owner, name: $name) {
+            databaseId
             pullRequests(first: 20, orderBy: {field: UPDATED_AT, direction: DESC}) {
               nodes {
                 title
@@ -176,6 +175,7 @@ public class GitHubApiService {
         }
         """;
 
+    // =========== 공개 API 메서드 ===========
 
     // Repository 기본 정보 조회
     // owner_repo 키로 캐시 있나?
@@ -221,8 +221,30 @@ public class GitHubApiService {
                 .onErrorMap(this::handleApiError);
     }
 
-    // 최근 활동 이력 조회
+    // 최근 활동 이력 조회 - 최근 7일간 Pull Request, Issue 등 활동 가져와 프로젝트 최근 동향 파악
+    @Cacheable(value = "recentActivites", key = "#owner + '_' +#repo")
+    public Mono<List<ActivityDTO>> getRecentActivities(String owner, String repo) {
+        log.info("Fetching recent activities for {}/{}", owner, repo);
 
+        LocalDateTime since = LocalDateTime.now().minusDays(7);
+
+        Map<String, Object> variables = Map.of(
+                "owner", owner,
+                "name", repo,
+                "since", since.format(DateTimeFormatter.ISO_DATE_TIME)
+        );
+
+        return executeGraphQLQuery(RECENT_ACTIVITIES_QUERY, variables)
+                .map(this::parseRecentActivities)
+                .flatMap(result -> activityService.saveActivities(result.getActivities(), result.getRepositoryId()))
+                .onErrorMap(this::handleApiError);
+    }
+
+    // ========== REST API 사용 메서드 ==========
+
+
+
+    // ========== 내부 유틸리티 메서드들 ==========
     // Webclient 사용해서 GraphQL Query를 비동기로 호출하는 메서드
     private Mono<JsonNode> executeGraphQLQuery(String query, Map<String, Object> variables) {
 
@@ -348,6 +370,56 @@ public class GitHubApiService {
                 .collect(Collectors.toList());
     }
 
+    // 최근 활동 파싱
+    private ActivitiesWithRepoId parseRecentActivities(JsonNode response) {
+        List<ActivityDTO> activities = new ArrayList<>();
+        JsonNode repository = response.path("data").path("repository");
+        Long repoId = repository.path("databaseId").asLong();
+
+        // PR 파싱
+        for (JsonNode pr : repository.path("pullRequests").path("nodes")) {
+            String type = pr.path("mergeAt").asText().isEmpty() ?
+                    (pr.path("state").asText().equals("OPEN") ?
+                            "pr_opened" : "pr_closed") : "pr_merged";
+
+            activities.add(ActivityDTO.builder()
+                            .type(type)
+                            .title(pr.path("title").asText())
+                            .author(pr.path("author").path(("login")).asText())
+                            .startDate(pr.path("createdAt").asText())
+                            .endDate(pr.path("mergedAt").asText().isEmpty() ?
+                                    pr.path("updatedAt").asText() : pr.path("mergedAt").asText())
+                            .number(pr.path("number").asInt())
+                    .build());
+        }
+
+        // Issue 파싱
+        for (JsonNode issue : repository.path("issues").path("nodes")) {
+            String type = issue.path("state").asText().equals("OPEN") ? "issue_opened" : "issue_closed";
+
+            activities.add(ActivityDTO.builder()
+                    .type(type)
+                    .title(issue.path("title").asText())
+                    .author(issue.path("author").path("login").asText())
+                    .startDate(issue.path("createdAt").asText())
+                    .endDate(issue.path("closedAt").asText().isEmpty() ?
+                            issue.path("updatedAt").asText() : issue.path("closedAt").asText())
+                    .number(issue.path("number").asInt())
+                    .build());
+        }
+
+        // 정렬 + limit 처리 후 리턴
+        List<ActivityDTO> sortedLimited = activities.stream()
+                .sorted((a, b) -> b.getEndDate().compareTo(a.getEndDate()))
+                .limit(20)
+                .toList();
+
+        // ActivitiesWithRepoId 객체 생성하여 반환
+        return new ActivitiesWithRepoId(sortedLimited, repoId);
+    }
+
+    // ========== 유틸리티 메서드들 ==========
+
     // 요일 파싱
     private String getDayOfWeek(String dateString) {
         try {
@@ -383,6 +455,13 @@ public class GitHubApiService {
 
         // WebClientResponseException이 아닌 경우 = GitHub 서버 자체와의 연결에 실패한 경우
         return new GitHubApiException("네트워크 오류가 발생했습니다", throwable);
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class ActivitiesWithRepoId {
+        private final List<ActivityDTO> activities;
+        private final Long repositoryId;
     }
 
 
