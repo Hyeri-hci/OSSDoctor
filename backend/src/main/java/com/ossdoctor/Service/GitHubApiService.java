@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ossdoctor.DTO.ActivityDTO;
 import com.ossdoctor.DTO.CommitDTO;
+import com.ossdoctor.DTO.ContributorDTO;
 import com.ossdoctor.DTO.RepositoryDTO;
 import com.ossdoctor.config.GithubApiProperties;
 import com.ossdoctor.exception.GitHubApiException;
@@ -27,6 +28,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -43,7 +46,7 @@ public class GitHubApiService {
 
     // ========== REST API 사용 메서드 ==========
 
-    // Repository 기본 정보 GraphQL Query (id 추가)
+    // Repository 기본 정보 GraphQL Query (databaseId, watcher 추가)
     private static final String REPOSITORY_QUERY = """
     query GetRepository($owner: String!, $name: String!) {
       repository(owner: $owner, name: $name) {
@@ -109,6 +112,9 @@ public class GitHubApiService {
               name
             }
           }
+        }
+        watchers {
+          totalCount
         }
       }
     }
@@ -193,11 +199,13 @@ public class GitHubApiService {
         // GraphQL Query 호출
         return executeGraphQLQuery(REPOSITORY_QUERY, variables)
                 .map(this::parseRepositoryInfo) // JSON -> DTO
-                .flatMap(dto -> {
-                    // 비동기식 작업으로 (save(JPA) => 블로킹 방식의 동기 메서드)
-                    return Mono.fromCallable(() -> repositoryService.save(dto))
-                            .subscribeOn(Schedulers.boundedElastic()); // 다른 Thread 실행
-                })
+                .flatMap(dto ->
+                        // contributor 수를 가져와 DTO에 설정
+                        getContributorCount(owner, repo)
+                                .doOnNext(dto::setContributors)
+                                .then(Mono.fromCallable(() -> repositoryService.save(dto))
+                                        .subscribeOn(Schedulers.boundedElastic()))
+                )
                 .onErrorMap(this::handleApiError); // 에러 핸들링
     }
 
@@ -242,6 +250,50 @@ public class GitHubApiService {
     }
 
     // ========== REST API 사용 메서드 ==========
+    // Contributors 10명 정보 조회
+    @Cacheable(value = "contributors", key = "#owner + '_' + #repo")
+    public Mono<List<ContributorDTO>> getContributors(String owner, String repo) {
+        log.info("Fetching contributors for {}/{}", owner, repo);
+
+        return webClient.get()
+                //
+                .uri("/repos/{owner}/{repo}/contributors?per_page=10", owner, repo)
+                .header(HttpHeaders.AUTHORIZATION, "token " + properties.getToken())
+                .retrieve()
+                .bodyToMono(JsonNode.class)
+                .doOnNext(jsonNode -> log.info("RESTAPI Response: {}", jsonNode.toPrettyString()))
+                .map(this::parseContributors)
+                .retryWhen(Retry.backoff(3, Duration.ofSeconds(1)))
+                .onErrorMap(this::handleApiError);
+    }
+
+    // Contributors 수 조회
+    @Cacheable(value = "contributorCount", key = "#owner + '_' + #repo")
+    public Mono<Integer> getContributorCount(String owner, String repo) {
+        return webClient.get()
+                // 함 페이지에 1명만 응답 => 마지막 페이지 번호 = 전체 contributor 수
+                .uri("/repos/{owner}/{repo}/contributors?per_page=1&anon=true", owner, repo)
+                .header(HttpHeaders.AUTHORIZATION, "token " + properties.getToken())
+                .exchangeToMono(response -> {
+                    HttpHeaders headers = response.headers().asHttpHeaders();
+                    String linkHeader = headers.getFirst("Link"); // Link 헤더(페이징 정보)
+
+                    // rel="last"가 포함 => 어러 페이지 존재
+                    if (linkHeader != null && linkHeader.contains("rel=\"last\"")) {
+                        Pattern pattern = Pattern.compile(".*[?&]page=(\\d+)>; rel=\"last\"");
+                        Matcher matcher = pattern.matcher(linkHeader);
+                        if (matcher.find()) {
+                            int lastPage = Integer.parseInt(matcher.group(1));
+                            log.info("Parsed contributor count from Link header: {}", lastPage);
+                            return Mono.just(lastPage);
+                        }
+                    }
+
+                    log.info("No Link header found. Defaulting contributor count to 1.");
+                    return Mono.just(1); // Link 헤더 없음 => 1명 이하
+                });
+    }
+
 
 
 
@@ -330,6 +382,7 @@ public class GitHubApiService {
                 .language(topLanguages) // top3 언어, 예시) "C,Java,Python"
                 .star(repository.path("stargazerCount").asInt()) // star
                 .fork(repository.path("forkCount").asInt())
+                .watchers(repository.path("watchers").path("totalCount").asInt())
                 .license(repository.path("licenseInfo").path("name").asText())
                 .topics(topics)
                 /*
@@ -420,6 +473,23 @@ public class GitHubApiService {
 
         // ActivitiesWithRepoId 객체 생성하여 반환
         return new ActivitiesWithRepoId(sortedLimited, repoId);
+    }
+
+    // Contributors 파싱
+    private List<ContributorDTO> parseContributors(JsonNode response) {
+        List<ContributorDTO> contributors = new ArrayList<>();
+
+        for (JsonNode contributor : response) {
+            contributors.add(ContributorDTO.builder()
+                            .name(contributor.path("login").asText())
+                            .contributions(contributor.path("contributions").asInt())
+                            .avatarUrl(contributor.path("avatarUrl").asText())
+                            .htmlUrl(contributor.path("htmlUrl").asText())
+                            .type(contributor.path("type").asText())
+                    .build());
+        }
+
+        return contributors;
     }
 
     // ========== 유틸리티 메서드들 ==========
