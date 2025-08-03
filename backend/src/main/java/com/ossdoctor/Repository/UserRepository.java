@@ -11,4 +11,6 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
 
     @Override
     Optional<UserEntity> findById(Long id);
+
+    Optional<UserEntity> findByNickname(String nickname);
 }

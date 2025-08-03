@@ -11,4 +11,6 @@ public interface RepositoryRepository extends JpaRepository<RepositoryEntity, Lo
 
     @Override
     Optional<RepositoryEntity> findById(Long id);
+
+    Optional<RepositoryEntity> findByGithubRepoId(Long githubRepoId);
 }
