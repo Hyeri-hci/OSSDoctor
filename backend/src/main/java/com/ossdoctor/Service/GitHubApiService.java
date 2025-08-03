@@ -140,7 +140,7 @@ public class GitHubApiService {
         }
         """;
 
-    // 최근 PR & Issue 정보 GraphQL Query => id 추가
+    // 최근 PR & Issue 정보 GraphQL Query => id 추가, since 삭제(추후 논의)
     private static final String RECENT_ACTIVITIES_QUERY = """
         query GetRecentActivities($owner: String!, $name: String!) {
           repository(owner: $owner, name: $name) {
@@ -222,7 +222,7 @@ public class GitHubApiService {
     }
 
     // 최근 활동 이력 조회 - 최근 7일간 Pull Request, Issue 등 활동 가져와 프로젝트 최근 동향 파악
-    @Cacheable(value = "recentActivites", key = "#owner + '_' +#repo")
+    @Cacheable(value = "recentActivities", key = "#owner + '_' +#repo")
     public Mono<List<ActivityDTO>> getRecentActivities(String owner, String repo) {
         log.info("Fetching recent activities for {}/{}", owner, repo);
 
@@ -230,12 +230,13 @@ public class GitHubApiService {
 
         Map<String, Object> variables = Map.of(
                 "owner", owner,
-                "name", repo,
-                "since", since.format(DateTimeFormatter.ISO_DATE_TIME)
+                "name", repo
+                //"since", since.format(DateTimeFormatter.ISO_DATE_TIME)
         );
 
         return executeGraphQLQuery(RECENT_ACTIVITIES_QUERY, variables)
                 .map(this::parseRecentActivities)
+                // ActivityDTO -> PR, Issue 저장(비동기식)
                 .flatMap(result -> activityService.saveActivities(result.getActivities(), result.getRepositoryId()))
                 .onErrorMap(this::handleApiError);
     }
@@ -378,9 +379,12 @@ public class GitHubApiService {
 
         // PR 파싱
         for (JsonNode pr : repository.path("pullRequests").path("nodes")) {
-            String type = pr.path("mergeAt").asText().isEmpty() ?
-                    (pr.path("state").asText().equals("OPEN") ?
-                            "pr_opened" : "pr_closed") : "pr_merged";
+            JsonNode mergedAtNode = pr.path("mergedAt");
+            String mergedAtText = mergedAtNode.isNull() ? "" : mergedAtNode.asText();
+
+            String type = mergedAtText.isEmpty() ?
+                    (pr.path("state").asText().equals("OPEN") ? "pr_opened" : "pr_closed")
+                    : "pr_merged";
 
             activities.add(ActivityDTO.builder()
                             .type(type)
@@ -411,7 +415,7 @@ public class GitHubApiService {
         // 정렬 + limit 처리 후 리턴
         List<ActivityDTO> sortedLimited = activities.stream()
                 .sorted((a, b) -> b.getEndDate().compareTo(a.getEndDate()))
-                .limit(20)
+                //.limit(20)
                 .toList();
 
         // ActivitiesWithRepoId 객체 생성하여 반환

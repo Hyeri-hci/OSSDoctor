@@ -7,6 +7,7 @@ import com.ossdoctor.Repository.PullRequestRepository;
 import com.ossdoctor.Repository.RepositoryRepository;
 import com.ossdoctor.Repository.UserRepository;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -14,9 +15,11 @@ import reactor.core.scheduler.Schedulers;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Service
 @AllArgsConstructor
 public class ActivityService {
@@ -102,6 +105,16 @@ public class ActivityService {
     }
 
     private LocalDateTime parseDate(String isoDateTime) {
-        return LocalDateTime.parse(isoDateTime, DateTimeFormatter.ISO_DATE_TIME);
+        if (isoDateTime == null || isoDateTime.equalsIgnoreCase("null") || isoDateTime.isBlank()) {
+            return null;
+        }
+
+        try {
+            return LocalDateTime.parse(isoDateTime, DateTimeFormatter.ISO_DATE_TIME);
+        } catch (DateTimeParseException e) {
+            log.info("날짜 파싱 실패: {}", isoDateTime);
+            return null;
+        }
     }
+
 }
