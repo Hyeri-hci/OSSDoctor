@@ -28,6 +28,9 @@ public class PullRequestEntity {
     @JoinColumn(name = "user_id", nullable = true)
     private UserEntity user;
 
+    @Column(name = "user_name", length = 50, nullable = false)
+    private String userName;
+
     @Column(name = "pr_number", nullable = false)
     private Integer prNumber;
 
