@@ -16,7 +16,6 @@ public class PullRequestDTO {
     private Long idx;
     private Long repositoryId;
     private Long userId;
-    private String userName;
     private int prNumber;
     private String title;
     private PR_STATE state;
