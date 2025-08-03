@@ -25,6 +25,9 @@ public class IssueEntity {
     @JoinColumn(name = "user_id", nullable = true)
     private UserEntity user;
 
+    @Column(name = "user_name", length = 50, nullable = false)
+    private String userName;
+
     @Column(name = "issue_number", nullable = false)
     private Integer issueNumber;
 

@@ -16,6 +16,7 @@ public class IssueDTO {
     private Long idx;
     private Long repositoryId;
     private Long userId;
+    private String userName;
     private int issueNumber;
     private String title;
     private ISSUE_STATE state;
