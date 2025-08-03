@@ -60,7 +60,7 @@ public class RepositoryEntity {
     private Long viewCount = 0L;
 
     @ToString.Exclude
-    @OneToMany(mappedBy = "repository")
+    @OneToMany(mappedBy = "repository", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<TopicEntity> topics = new ArrayList<>();
 }

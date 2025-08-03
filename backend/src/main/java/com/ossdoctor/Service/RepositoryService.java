@@ -2,9 +2,13 @@ package com.ossdoctor.Service;
 
 import com.ossdoctor.DTO.RepositoryDTO;
 import com.ossdoctor.Entity.RepositoryEntity;
+import com.ossdoctor.Entity.TopicEntity;
 import com.ossdoctor.Repository.RepositoryRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @AllArgsConstructor
@@ -17,6 +21,13 @@ public class RepositoryService {
     }
 
     private RepositoryDTO toDTO(RepositoryEntity entity) {
+
+        List<String> topics = entity.getTopics() != null ?
+                entity.getTopics().stream()
+                        .map(TopicEntity::getTopic)
+                        .toList()
+                : new ArrayList<>();
+
         return RepositoryDTO.builder()
                 .idx(entity.getIdx())
                 .githubRepoId(entity.getGithubRepoId())
@@ -32,11 +43,13 @@ public class RepositoryService {
                 .contributors(entity.getContributors())
                 .description(entity.getDescription())
                 .viewCount(entity.getViewCount())
+                .topics(topics)
                 .build();
     }
 
     private RepositoryEntity toEntity(RepositoryDTO dto) {
-        return RepositoryEntity.builder()
+
+        RepositoryEntity entity = RepositoryEntity.builder()
                 .githubRepoId(dto.getGithubRepoId())
                 .name(dto.getName())
                 .url(dto.getUrl())
@@ -51,5 +64,17 @@ public class RepositoryService {
                 .description(dto.getDescription())
                 .viewCount(dto.getViewCount() != null ? dto.getViewCount() : 0L)
                 .build();
+
+        if (dto.getTopics() != null) {
+            List<TopicEntity> topicEntities = dto.getTopics().stream()
+                    .map(topic -> TopicEntity.builder()
+                            .topic(topic)
+                            .repository(entity)
+                            .build())
+                    .toList();
+            entity.setTopics(topicEntities);
+        }
+
+        return entity;
     }
 }
