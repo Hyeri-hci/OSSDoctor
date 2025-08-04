@@ -18,12 +18,8 @@ const DiagnoseSearchSection = ({ onSearch, error }) => {
     }, []);
 
     const handleSearch = () => {
-        if (searchInput.trim()) {
-            onSearch(searchInput.trim());
-        }
-
-        alert("진단을 시작합니다!"); // 진단 시작 알림
-        setSearchInput(""); // 검색 후 입력창 초기화
+       onSearch(searchInput);
+       console.log(`${searchInput}`);
     };
 
     const handleKeyDown = (e) => {
@@ -57,6 +53,7 @@ const DiagnoseSearchSection = ({ onSearch, error }) => {
                                     onChange={setSearchInput}
                                     onKeyDown={handleKeyDown}
                                     onSubmit={handleSearch}
+                                    error={error}
                                     size="large"
                                     className="flex-1"
                                 />

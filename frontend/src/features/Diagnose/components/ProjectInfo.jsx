@@ -1,26 +1,11 @@
 import React from "react";
 import { StarIcon, CodeBracketIcon, EyeIcon } from "@heroicons/react/24/solid";
 import { Badge } from "../../../components/common";
+import { getMockProjectInfoData } from '../mockData';
 
 const ProjectInfo = () => {
-    // Mock Data
-    const projectData = {
-        name: "react-awesome-project",
-        description: "A modern React application with TypeScript, Tailwind CSS, and comprehensive testing suite. This project demonstrates best practices in frontend development including component architecture, state management, and responsive design patterns.",
-        owner: {
-            name: "awesome-developer",
-            avatar: "https://via.placeholder.com/120x120/4F46E5/FFFFFF?text=AD"
-        },
-        stats: {
-            stars: 1247,
-            forks: 234,
-            watchers: 89
-        },
-        language: "TypeScript",
-        license: "MIT",
-        lastPush: "2024-01-15",
-        topics: ["react", "typescript", "tailwind", "vite"]
-    };
+    // Mock 데이터 사용
+    const projectData = getMockProjectInfoData();
 
     return (
         <div className="bg-white p-4 md:p-6 border-b border-gray-200">
