@@ -13,4 +13,7 @@ public interface RepositoryRepository extends JpaRepository<RepositoryEntity, Lo
     Optional<RepositoryEntity> findById(Long id);
 
     Optional<RepositoryEntity> findByGithubRepoId(Long githubRepoId);
+
+    // fullName
+    Optional<RepositoryEntity> findByOwnerAndName(String owner, String name);
 }

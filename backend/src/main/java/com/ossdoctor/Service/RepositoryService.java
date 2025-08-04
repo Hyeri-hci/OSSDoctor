@@ -4,6 +4,8 @@ import com.ossdoctor.DTO.RepositoryDTO;
 import com.ossdoctor.Entity.RepositoryEntity;
 import com.ossdoctor.Entity.TopicEntity;
 import com.ossdoctor.Repository.RepositoryRepository;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -47,7 +49,8 @@ public class RepositoryService {
                 .totalPullRequests(entity.getTotalPullRequests())
                 .closedIssues(entity.getClosedIssues())
                 .totalIssues(entity.getTotalIssues())
-                .lastPushedAt(entity.getLastPushedAt())
+                .lastUpdatedAt(entity.getLastUpdatedAt())
+                .lastCommitedAt(entity.getLastCommitedAt())
                 .topics(topics)
                 .build();
     }
@@ -73,7 +76,8 @@ public class RepositoryService {
                 .closedIssues(dto.getClosedIssues())
                 .totalIssues(dto.getTotalIssues())
                 .totalIssues(dto.getTotalIssues())
-                .lastPushedAt(dto.getLastPushedAt())
+                .lastUpdatedAt(dto.getLastUpdatedAt())
+                .lastCommitedAt(dto.getLastCommitedAt())
                 .build();
 
         if (dto.getTopics() != null) {
@@ -87,5 +91,12 @@ public class RepositoryService {
         }
 
         return entity;
+    }
+
+    @Transactional
+    public RepositoryDTO findByFullName(String owner, String name) {
+        return toDTO(repositoryRepository.findByOwnerAndName(owner, name)
+                .orElseThrow(() ->
+                        new EntityNotFoundException("Repository with name " + name + " not found")));
     }
 }
