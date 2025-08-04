@@ -2,16 +2,14 @@ package com.ossdoctor.Service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ossdoctor.DTO.ActivityDTO;
-import com.ossdoctor.DTO.CommitDTO;
-import com.ossdoctor.DTO.ContributorDTO;
-import com.ossdoctor.DTO.RepositoryDTO;
+import com.ossdoctor.DTO.*;
 import com.ossdoctor.config.GithubApiProperties;
 import com.ossdoctor.exception.GitHubApiException;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.graphql.GraphQlProperties;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -294,7 +292,20 @@ public class GitHubApiService {
                 });
     }
 
-
+    // API 상태 확인
+    public Mono<ApiStatusDTO> getApiStatus() {
+        return webClient.get()
+                .uri("/rate_limit")
+                .header(HttpHeaders.AUTHORIZATION, "token " + properties.getToken())
+                .retrieve()
+                .bodyToMono(JsonNode.class)
+                .doOnNext(jsonNode -> log.info("REST API Response: {}", jsonNode.toPrettyString()))
+                .map(this::parseApiStatus)
+                .onErrorReturn(ApiStatusDTO.builder()
+                        .tokenValid(false)
+                        .error("API unavailable")
+                        .build());
+    }
 
 
     // ========== 내부 유틸리티 메서드들 ==========
@@ -490,6 +501,21 @@ public class GitHubApiService {
         }
 
         return contributors;
+    }
+
+    // API 상태 파싱
+    private ApiStatusDTO parseApiStatus(JsonNode response) {
+        JsonNode coreLimit = response.path("resources").path("core");
+
+        return ApiStatusDTO.builder()
+                .tokenValid(true)
+                .rateLimit(RateLimitDTO.builder()
+                        .limit(coreLimit.path("limit").asInt())
+                        .used(coreLimit.path("used").asInt())
+                        .remaining(coreLimit.path("remaining").asInt())
+                        .resetAt(coreLimit.path("reset").asText())
+                        .build())
+                .build();
     }
 
     // ========== 유틸리티 메서드들 ==========
