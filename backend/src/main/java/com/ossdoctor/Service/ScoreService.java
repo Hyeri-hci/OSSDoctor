@@ -16,7 +16,7 @@ public class ScoreService {
     private final ScoreRepository scoreRepository;
     private final RepositoryRepository repositoryRepository;
 
-    private ScoreDTO save(ScoreDTO scoreDTO) {
+    public ScoreDTO save(ScoreDTO scoreDTO) {
         return toDTO(scoreRepository.save(toEntity(scoreDTO)));
     }
 
