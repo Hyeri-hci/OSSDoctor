@@ -3,6 +3,7 @@ import { Layout } from "../../../components/Layout";
 import useEcosystemView from '../hooks/useEcosystemView';
 import useLeaderboardData from '../hooks/useLeaderboardData';
 import ActivityLeaderboard from '../components/ActivityLeaderboard';
+import ProjectExplorer from '../components/ProjectExplorer';
 
 const ALL_PROJECTS = [
     {
@@ -145,7 +146,7 @@ const EcosystemPage = () => {
     // 커스텀 훅을 사용한 뷰 상태 관리
     const {
         currentView,
-        navigateToProjects,
+        navigateToEcosystem,
         navigateToLeaderboard,
         navigateToMain
     } = useEcosystemView();
@@ -192,7 +193,7 @@ const EcosystemPage = () => {
                             {/* 액션 버튼들 */}
                             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                                 <button
-                                    onClick={navigateToProjects}
+                                    onClick={navigateToEcosystem}
                                     className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200"
                                 >
                                     프로젝트 탐색하기
@@ -264,7 +265,7 @@ const EcosystemPage = () => {
                             {/* 더 많은 프로젝트 보기 버튼 */}
                             <div className="text-center">
                                 <button
-                                    onClick={navigateToProjects}
+                                    onClick={navigateToEcosystem}
                                     className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200"
                                 >
                                     더 많은 프로젝트 탐색하기 →
@@ -397,22 +398,19 @@ const EcosystemPage = () => {
 
     const renderContent = () => {
         switch (currentView) {
-            case 'projects':
+            case 'ecosystem':
                 return (
                     <div className="container mx-auto px-6 xl:px-8 2xl:px-12">
-                        <h2 className="text-2xl font-bold mb-6">프로젝트 탐색</h2>
-                        {/* 여기에 프로젝트 탐색 컴포넌트 추가 */}
-                        {/* 예시: <ProjectExplorer /> */}
+                        <ProjectExplorer onBack={navigateToMain} />
                     </div>
                 );
-                // return <ProjectExplorer onBack={navigateToMain} />;
             case 'leaderboard':
                 return (
                     <div className="container mx-auto px-6 xl:px-8 2xl:px-12">
                         <ActivityLeaderboard onBack={navigateToMain} />
                     </div>
                 );
-                // return <ActivityLeaderboard onBack={navigateToMain} />;
+            // return <ActivityLeaderboard onBack={navigateToMain} />;
             default:
                 return renderMainEcosystem();
         }
