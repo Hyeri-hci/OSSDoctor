@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -70,6 +71,9 @@ public class RepositoryEntity {
 
     @Column(name = "total_issue_count", nullable = false)
     private Integer totalIssues = 0;
+
+    @Column(name = "last_pushed_at", nullable = false)
+    private LocalDate lastPushedAt;
 
     @ToString.Exclude
     @OneToMany(mappedBy = "repository", cascade = CascadeType.ALL, orphanRemoval = true)

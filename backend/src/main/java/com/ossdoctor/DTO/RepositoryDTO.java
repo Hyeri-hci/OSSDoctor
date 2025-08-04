@@ -3,6 +3,7 @@ package com.ossdoctor.DTO;
 import com.ossdoctor.Entity.SOURCE_TYPE;
 import lombok.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Data
@@ -28,6 +29,7 @@ public class RepositoryDTO {
     private int totalPullRequests;
     private int closedIssues;
     private int totalIssues;
+    private LocalDate lastPushedAt;
 
     private List<String> topics;
 }

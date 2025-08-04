@@ -47,6 +47,7 @@ public class RepositoryService {
                 .totalPullRequests(entity.getTotalPullRequests())
                 .closedIssues(entity.getClosedIssues())
                 .totalIssues(entity.getTotalIssues())
+                .lastPushedAt(entity.getLastPushedAt())
                 .topics(topics)
                 .build();
     }
@@ -71,6 +72,8 @@ public class RepositoryService {
                 .totalPullRequests(dto.getTotalPullRequests())
                 .closedIssues(dto.getClosedIssues())
                 .totalIssues(dto.getTotalIssues())
+                .totalIssues(dto.getTotalIssues())
+                .lastPushedAt(dto.getLastPushedAt())
                 .build();
 
         if (dto.getTopics() != null) {
