@@ -3,13 +3,13 @@ package com.ossdoctor.Service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ossdoctor.DTO.*;
+import com.ossdoctor.Entity.SCORE_TYPE;
 import com.ossdoctor.config.GithubApiProperties;
 import com.ossdoctor.exception.GitHubApiException;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.graphql.GraphQlProperties;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -24,7 +24,9 @@ import reactor.util.retry.Retry;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -41,6 +43,7 @@ public class GitHubApiService {
 
     private final RepositoryService repositoryService;
     private final ActivityService activityService;
+    private final ScoreService scoreService;
 
     // ========== REST API 사용 메서드 ==========
 
@@ -76,9 +79,12 @@ public class GitHubApiService {
           name
           target {
             ... on Commit {
-              history {
-                totalCount
-              }
+              history(first: 1) {
+               totalCount
+               nodes {
+                 committedDate
+               }
+             }
             }
           }
         }
@@ -383,6 +389,18 @@ public class GitHubApiService {
         String nameWithOwner = repository.path("nameWithOwner").asText();
         String owner = nameWithOwner.split("/")[0];
 
+        // 최근 업데이트 날짜 추출
+        String pushedAtStr = repository.path("updatedAt").asText();
+        LocalDate pushedAt = OffsetDateTime.parse(pushedAtStr).toLocalDate();
+
+        String commitedAtStr = repository.path("defaultBranchRef")
+                .path("target")
+                .path("history")
+                .path("nodes")
+                .get(0)
+                .path("committedDate").asText();
+        LocalDate commitedAt = OffsetDateTime.parse(commitedAtStr).toLocalDate();
+
         return RepositoryDTO.builder()
                 .githubRepoId(repository.get("databaseId").asLong())
                 .name(repository.get("name").asText())
@@ -396,16 +414,15 @@ public class GitHubApiService {
                 .watchers(repository.path("watchers").path("totalCount").asInt())
                 .license(repository.path("licenseInfo").path("name").asText())
                 .topics(topics)
-                /*
-                .totalCommits(repository.path("defaultBranchRef").path("target")
-                        .path("history").path("totalCount").asInt())
-                .openPullRequests(repository.path("openPullRequests").path("totalCount").asInt())
-                .closedPullRequests(repository.path("closedPullRequests").path("totalCount").asInt())
+                .lastCommitedAt(commitedAt)
+                //.openPullRequests(repository.path("openPullRequests").path("totalCount").asInt())
+                //.closedPullRequests(repository.path("closedPullRequests").path("totalCount").asInt())
                 .mergedPullRequests(repository.path("mergedPullRequests").path("totalCount").asInt())
                 .totalPullRequests(repository.path("pullRequests").path("totalCount").asInt())
-                .openIssues(repository.path("openIssues").path("totalCount").asInt())
+                //.openIssues(repository.path("openIssues").path("totalCount").asInt())
                 .closedIssues(repository.path("closedIssues").path("totalCount").asInt())
-                .totalIssues(repository.path("issues").path("totalCount").asInt())*/
+                .totalIssues(repository.path("issues").path("totalCount").asInt())
+                .lastUpdatedAt(pushedAt)
                 .build();
     }
 
@@ -518,7 +535,87 @@ public class GitHubApiService {
                 .build();
     }
 
+    public ScoreDTO getHealthScore(String owner, String repo) {
+        return calculateHealthScore(repositoryService.findByFullName(owner, repo));
+    }
+
+    // 건강 점수 계산 최종
+    private ScoreDTO calculateHealthScore(RepositoryDTO repo) {
+
+        int commitScore = calculateCommitScore(repo);
+        int updateScore = calculateUpdateScore(repo);
+        int prScore = calculatePrMergeScore(repo);
+        int issueScore = calculateIssueScore(repo);
+
+        log.info("repo: " + repo.getName());
+        log.info("commitScore: " + commitScore);
+        log.info("updateScore: " + updateScore);
+        log.info("prScore: " + prScore);
+        log.info("issueScore: " + issueScore);
+
+        int healthScore = commitScore + updateScore + prScore + issueScore;
+
+        return scoreService.save(ScoreDTO.builder()
+                .repositoryId(repo.getIdx())
+                .scoreType(SCORE_TYPE.HEALTH)
+                .score(healthScore)
+                .createdAt(LocalDateTime.now())
+                .build());
+    }
+
+    // 건겅 점수 계산1 - 최근 커밋 날짜
+    private int calculateCommitScore(RepositoryDTO repo) {
+        long daysSinceLastCommit = getDaysSinceLast(repo.getLastCommitedAt());
+
+        if (daysSinceLastCommit <= 7) return 15;
+        else if (daysSinceLastCommit <= 14) return 10;
+        else if (daysSinceLastCommit <= 30) return 5;
+        else if (daysSinceLastCommit <= 90) return 2;
+        else return 0;
+
+    }
+
+    // 건강 점수 계산2 - 최근 업데이트 날짜
+    private int calculateUpdateScore(RepositoryDTO repo) {
+        long daysSinceLastUpdate = getDaysSinceLast(repo.getLastUpdatedAt());
+
+        if (daysSinceLastUpdate <= 7) return 30;
+        else if (daysSinceLastUpdate <= 14) return 20;
+        else if (daysSinceLastUpdate <= 30) return 10;
+        else if (daysSinceLastUpdate <= 90) return 5;
+        else return 0;
+    }
+
+    // 건강 점수 계산3 - PR Merge 비율
+    private int calculatePrMergeScore(RepositoryDTO repo) {
+        int mergedPR = repo.getMergedPullRequests();
+        int totalPR = repo.getTotalPullRequests();
+
+        // 로직
+
+        return 0;
+    }
+
+    // 건강 점수 계산4 - Issue 해결율
+    private int calculateIssueScore(RepositoryDTO repo) {
+        int closedIssue = repo.getClosedIssues();
+        int totalIssue = repo.getTotalIssues();
+
+        // 로직
+
+        return 0;
+    }
+
+
     // ========== 유틸리티 메서드들 ==========
+
+    // 날짜 계산
+    private long getDaysSinceLast(LocalDate date) {
+        if (date == null) return 999;
+
+        // 두 날짜 사이 일(day) 단위 차이 계산
+        return ChronoUnit.DAYS.between(date, LocalDate.now());
+    }
 
     // 요일 파싱
     private String getDayOfWeek(String dateString) {
