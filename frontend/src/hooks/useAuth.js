@@ -48,35 +48,45 @@ export const useAuth = () => {
         }
     }, []);
 
-    /** * 로그인 처리 함수 (OAuth 콜백 후 상태 업데이트)
+    /** 
+     * 로그인 처리 함수 (OAuth 콜백 후 상태 업데이트)
      * @param {Object} authResult - OAuth 인증 결과 (백엔드에서 반환된 사용자 정보)
      * 
      * - authResult가 유효한 경우, 사용자 정보 설정
      * - authResult가 유효하지 않은 경우, 백엔드에서 상태 다시 확인
      */
-
     const handleLogin = useCallback(async (authResult = null) => {
         try {
             setIsLoading(true);
             setError(null);
 
             if (authResult && authResult.user) {
+                // OAuth 콜백에서 전달받은 사용자 정보로 직접 설정
+                console.log('OAuth 콜백에서 받은 사용자 정보로 로그인 처리:', authResult.user);
                 setIsAuthenticated(true);
                 setUser(authResult.user);
             } else {
+                // 백엔드에서 현재 인증 상태 확인
+                console.log('백엔드에서 현재 인증 상태 확인 중...');
                 const authStatus = await checkAuthStatus();
+                
                 if (authStatus.isLoggedIn && authStatus.user) {
+                    console.log('백엔드 인증 상태 확인 성공:', authStatus.user);
                     setIsAuthenticated(true);
                     setUser(authStatus.user);
                 } else {
+                    console.log('백엔드 인증 상태 확인 결과: 로그인되지 않음');
                     setIsAuthenticated(false);
                     setUser(null);
+                    
+                    if (authStatus.error) {
+                        setError(authStatus.error);
+                    }
                 }
             }
         } catch (error) {
-            console.error('Login failed:', error);
-            setError('Login failed, please try again');
-
+            console.error('Login processing failed:', error);
+            setError(error.message || 'Login failed, please try again');
             setIsAuthenticated(false);
             setUser(null);
         } finally {

@@ -17,11 +17,12 @@ export const initiateGitHubLogin = (options = {}) => {
     if (!redirectUri) {
         console.error('GitHub Redirect URI가 설정되지 않았습니다. .env 파일을 확인하세요.');
         console.error('이 주소는 GitHub에서 로그인 완료 후 사용자를 보낼 URI입니다.');
+        console.error('예시: VITE_GITHUB_REDIRECT_URI=http://localhost:8080/oauth/callback');
         throw new Error('GitHub Redirect URI가 설정되지 않았습니다.');
     }
 
     const {
-        scope = 'read:user, repo, user:email', // 기본 권한 범위: 사용자 정보 읽기, 저장소 접근, 이메일 읽기
+        scope = 'read:user,user:email,public_repo', // 기본 권한 범위: 사용자 정보 읽기, 저장소 접근, 이메일 읽기
         state = generateRandomState(), // CSRF 방지를 위한 랜덤 문자열
     } = options;
 

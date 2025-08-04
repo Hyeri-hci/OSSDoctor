@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Layout } from "../../../components/layout";
 import { useAuth } from "../../../hooks/useAuth";
 import { initiateGitHubLogin } from "../../../utils/github-auth";
@@ -7,7 +7,28 @@ import FeaturesSection from "../components/FeaturesSection";
 import RecommendedProjectsSection from "../components/RecommendedProjectsSection";
 
 export default function MainPage() {
-    const { isAuthenticated, checkAuthStatus } = useAuth();
+    const { isAuthenticated, checkAuthStatus, handleLogin } = useAuth();
+
+    // OAuth 콜백 처리 - 백엔드에서 리다이렉트된 결과 처리
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const authStatus = urlParams.get('auth');
+        const user = urlParams.get('user');
+
+        if (authStatus === 'success' && user) {
+            console.log('OAuth 로그인 성공:', user);
+            handleLogin(); // 로그인 상태 업데이트
+            
+            // URL에서 파라미터 제거
+            window.history.replaceState({}, document.title, window.location.pathname);
+        } else if (authStatus === 'error') {
+            console.error('OAuth 로그인 실패');
+            alert('로그인에 실패했습니다. 다시 시도해주세요.');
+            
+            // URL에서 파라미터 제거
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+    }, [handleLogin]);
 
     // 진단 기능 클릭 핸들러
     const handleDiagnosisClick = () => {
