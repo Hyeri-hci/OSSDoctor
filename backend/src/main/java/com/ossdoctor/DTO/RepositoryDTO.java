@@ -29,7 +29,8 @@ public class RepositoryDTO {
     private int totalPullRequests;
     private int closedIssues;
     private int totalIssues;
-    private LocalDate lastPushedAt;
+    private LocalDate lastUpdatedAt;
+    private LocalDate lastCommitedAt;
 
     private List<String> topics;
 }

@@ -72,8 +72,11 @@ public class RepositoryEntity {
     @Column(name = "total_issue_count", nullable = false)
     private Integer totalIssues = 0;
 
-    @Column(name = "last_pushed_at", nullable = false)
-    private LocalDate lastPushedAt;
+    @Column(name = "last_updated_at")
+    private LocalDate lastUpdatedAt;
+
+    @Column(name = "last_commited_at")
+    private LocalDate lastCommitedAt;
 
     @ToString.Exclude
     @OneToMany(mappedBy = "repository", cascade = CascadeType.ALL, orphanRemoval = true)
