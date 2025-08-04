@@ -43,6 +43,10 @@ public class RepositoryService {
                 .contributors(entity.getContributors())
                 .description(entity.getDescription())
                 .viewCount(entity.getViewCount())
+                .mergedPullRequests(entity.getMergedPullRequests())
+                .totalPullRequests(entity.getTotalPullRequests())
+                .closedIssues(entity.getClosedIssues())
+                .totalIssues(entity.getTotalIssues())
                 .topics(topics)
                 .build();
     }
@@ -63,6 +67,10 @@ public class RepositoryService {
                 .contributors(dto.getContributors())
                 .description(dto.getDescription())
                 .viewCount(dto.getViewCount() != null ? dto.getViewCount() : 0L)
+                .mergedPullRequests(dto.getMergedPullRequests())
+                .totalPullRequests(dto.getTotalPullRequests())
+                .closedIssues(dto.getClosedIssues())
+                .totalIssues(dto.getTotalIssues())
                 .build();
 
         if (dto.getTopics() != null) {

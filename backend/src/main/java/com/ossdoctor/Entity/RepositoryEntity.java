@@ -59,6 +59,18 @@ public class RepositoryEntity {
     @Column(name = "view_count", nullable = false)
     private Long viewCount = 0L;
 
+    @Column(name = "merged_pr_count", nullable = false)
+    private Integer mergedPullRequests = 0;
+
+    @Column(name = "total_pr_count", nullable = false)
+    private Integer totalPullRequests = 0;
+
+    @Column(name = "closed_issue_count", nullable = false)
+    private Integer closedIssues = 0;
+
+    @Column(name = "total_issue_count", nullable = false)
+    private Integer totalIssues = 0;
+
     @ToString.Exclude
     @OneToMany(mappedBy = "repository", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default

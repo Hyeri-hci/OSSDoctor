@@ -24,6 +24,10 @@ public class RepositoryDTO {
     private int watchers;
     private int contributors;
     private Long viewCount;
+    private int mergedPullRequests;
+    private int totalPullRequests;
+    private int closedIssues;
+    private int totalIssues;
 
     private List<String> topics;
 }
