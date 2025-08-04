@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState } from 'react';
 
 const useEcosystemView = (initialView = 'main') => {
     const [currentView, setCurrentView] = useState(initialView);

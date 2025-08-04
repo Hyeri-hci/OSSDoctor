@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Button, Select, Card, Badge, Input, EmptyState } from '../../../components/common';
 import useProjectFilters from '../hooks/useProjectFilters';
+import { MOCK_PROJECTS } from '../mockData';
 import {
     CalendarIcon, StarIcon, CodeBracketIcon, ArrowLeftIcon, MagnifyingGlassIcon
 } from '@heroicons/react/24/outline';
@@ -9,66 +10,6 @@ import {
 const ProjectExplorer = ({ onBack }) => {
     const [showSearchResults, setShowSearchResults] = useState(false);
     const [loading, setLoading] = useState(false);
-
-    // 목업 프로젝트 데이터 (실제로는 API에서 가져올 데이터)
-    const mockProjects = [
-        {
-            id: 1,
-            name: "awesome-react-components",
-            description: "A curated list of awesome React components and libraries. Perfect for developers looking to contribute to React ecosystem.",
-            lastCommit: "2024-07-20",
-            language: "JavaScript",
-            stars: "2.1k",
-            forks: "320",
-            issues: "45",
-            license: "MIT",
-            difficulty: "Beginner",
-            topics: ["react", "components", "ui", "frontend"],
-            goodFirstIssues: 12
-        },
-        {
-            id: 2,
-            name: "python-data-science",
-            description: "Open source data science tools and tutorials for Python. Great for beginners and experienced developers.",
-            lastCommit: "2024-07-18",
-            language: "Python",
-            stars: "1.8k",
-            forks: "280",
-            issues: "32",
-            license: "Apache-2.0",
-            difficulty: "Intermediate",
-            topics: ["python", "data-science", "machine-learning"],
-            goodFirstIssues: 8
-        },
-        {
-            id: 3,
-            name: "vue-ui-toolkit",
-            description: "Modern Vue.js UI component library with TypeScript support. Looking for contributors to expand components collection.",
-            lastCommit: "2024-07-15",
-            language: "TypeScript",
-            stars: "956",
-            forks: "124",
-            issues: "18",
-            license: "MIT",
-            difficulty: "Intermediate",
-            topics: ["vue", "typescript", "ui", "components"],
-            goodFirstIssues: 5
-        },
-        {
-            id: 4,
-            name: "go-microservices",
-            description: "Microservices architecture example in Go with Docker and Kubernetes deployment configurations.",
-            lastCommit: "2024-07-12",
-            language: "Go",
-            stars: "743",
-            forks: "156",
-            issues: "23",
-            license: "BSD-3-Clause",
-            difficulty: "Advanced",
-            topics: ["go", "microservices", "docker", "kubernetes"],
-            goodFirstIssues: 3
-        }
-    ];
 
     const {
         searchQuery,
@@ -83,7 +24,7 @@ const ProjectExplorer = ({ onBack }) => {
         filterOptions,
         hasActiveFilters,
         clearAllFilters
-    } = useProjectFilters(mockProjects);
+    } = useProjectFilters(MOCK_PROJECTS);
 
     // 프로젝트 검색 핸들러
     const handleSearch = async () => {
@@ -321,7 +262,7 @@ const ProjectExplorer = ({ onBack }) => {
                         {showSearchResults ? '다른 인기 프로젝트' : '인기 오픈소스 프로젝트'}
                     </h2>
                     <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                        {mockProjects.slice(0, 3).map((project) => (
+                        {MOCK_PROJECTS.slice(0, 3).map((project) => (
                             <Card key={project.id} className="p-6 hover:shadow-lg transition-shadow">
                                 <div className="space-y-4">
                                     <div className="flex items-start justify-between">

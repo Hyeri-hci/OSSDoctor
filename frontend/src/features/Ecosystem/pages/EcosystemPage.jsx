@@ -1,139 +1,11 @@
-import React, { useState, useMemo } from "react";
-import { Layout } from "../../../components/Layout";
+import React, { useState, useMemo } from 'react';
+import { Layout } from '../../../components/layout';
 import useEcosystemView from '../hooks/useEcosystemView';
 import useLeaderboardData from '../hooks/useLeaderboardData';
 import ActivityLeaderboard from '../components/ActivityLeaderboard';
 import ProjectExplorer from '../components/ProjectExplorer';
-
-const ALL_PROJECTS = [
-    {
-        id: 1,
-        name: 'React UI Kit',
-        description: '모던한 React 컴포넌트 라이브러리입니다. TypeScript 지원과 접근성 개선이 필요합니다.',
-        lastCommit: '2024-07-20',
-        stars: 892,
-        forks: 156,
-        tech: 'React'
-    },
-    {
-        id: 2,
-        name: 'DevTools CLI',
-        description: '개발자를 위한 유용한 CLI 도구입니다. 새로운 기능 추가와 문서화가 필요한 상태입니다.',
-        lastCommit: '2024-07-18',
-        stars: 1200,
-        forks: 89,
-        tech: 'Python'
-    },
-    {
-        id: 3,
-        name: 'Analytics Dashboard',
-        description: 'Vue.js로 만든 분석 대시보드입니다. 차트 라이브러리 업데이트와 반응형 개선이 필요합니다.',
-        lastCommit: '2024-07-15',
-        stars: 567,
-        forks: 234,
-        tech: 'Vue.js'
-    },
-    {
-        id: 4,
-        name: 'REST API Framework',
-        description: 'Express.js 기반의 REST API 프레임워크입니다. 성능 최적화와 보안 강화가 필요합니다.',
-        lastCommit: '2024-07-25',
-        stars: 1800,
-        forks: 321,
-        tech: 'Node.js'
-    },
-    {
-        id: 5,
-        name: 'Budget Tracker',
-        description: 'React Native로 개발된 가계부 앱입니다. UI/UX 개선과 새로운 기능 개발이 진행 중입니다.',
-        lastCommit: '2024-07-22',
-        stars: 445,
-        forks: 78,
-        tech: 'React Native'
-    },
-    {
-        id: 6,
-        name: 'ML Data Processor',
-        description: '머신러닝 데이터 전처리 라이브러리입니다. 새로운 알고리즘 추가와 성능 최적화가 필요합니다.',
-        lastCommit: '2024-07-28',
-        stars: 723,
-        forks: 142,
-        tech: 'Python'
-    },
-    {
-        id: 7,
-        name: 'Design System',
-        description: '통합 디자인 시스템 라이브러리입니다. 새로운 컴포넌트 추가와 테마 확장이 필요합니다.',
-        lastCommit: '2024-07-30',
-        stars: 1340,
-        forks: 287,
-        tech: 'CSS'
-    },
-    {
-        id: 8,
-        name: 'Security Scanner',
-        description: '코드 보안 취약점 스캐너입니다. 새로운 규칙 추가와 성능 개선이 진행 중입니다.',
-        lastCommit: '2024-07-29',
-        stars: 965,
-        forks: 178,
-        tech: 'Go'
-    },
-    {
-        id: 9,
-        name: 'Documentation Builder',
-        description: '자동 문서 생성 도구입니다. 다양한 언어 지원과 템플릿 확장이 필요합니다.',
-        lastCommit: '2024-07-26',
-        stars: 612,
-        forks: 95,
-        tech: 'TypeScript'
-    },
-    {
-        id: 10,
-        name: 'Multi-language Support',
-        description: '다국어 지원 라이브러리입니다. 새로운 언어 추가와 번역 관리 개선이 필요합니다.',
-        lastCommit: '2024-07-24',
-        stars: 834,
-        forks: 203,
-        tech: 'JavaScript'
-    },
-    {
-        id: 11,
-        name: 'Performance Monitor',
-        description: '웹 성능 모니터링 도구입니다. 실시간 분석 기능과 알림 시스템 개선이 필요합니다.',
-        lastCommit: '2024-07-27',
-        stars: 1156,
-        forks: 267,
-        tech: 'JavaScript'
-    },
-    {
-        id: 12,
-        name: 'Build Optimizer',
-        description: '빌드 최적화 도구입니다. 새로운 플러그인 지원과 캐싱 시스템 개선이 진행 중입니다.',
-        lastCommit: '2024-07-23',
-        stars: 789,
-        forks: 134,
-        tech: 'Rust'
-    }
-];
-
-// 기술 스택별 색상 매핑
-const getTechColor = (tech) => {
-    const colorMap = {
-        'React': 'bg-blue-100 text-blue-700',
-        'Python': 'bg-green-100 text-green-700',
-        'Vue.js': 'bg-green-100 text-green-700',
-        'Node.js': 'bg-yellow-100 text-yellow-700',
-        'React Native': 'bg-purple-100 text-purple-700',
-        'CSS': 'bg-pink-100 text-pink-700',
-        'Go': 'bg-indigo-100 text-indigo-700',
-        'TypeScript': 'bg-blue-100 text-blue-700',
-        'JavaScript': 'bg-orange-100 text-orange-700',
-        'Rust': 'bg-red-100 text-red-700'
-    };
-    return colorMap[tech] || 'bg-gray-100 text-gray-700';
-};
-
-
+import { ALL_PROJECTS } from '../mockData';
+import { getTechColor } from '../utils/ecosystemUtils';
 
 const EcosystemPage = () => {
 
@@ -379,7 +251,7 @@ const EcosystemPage = () => {
                                     <div className="text-center">
                                         <button
                                             onClick={navigateToLeaderboard}
-                                            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200"
+                                            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200"
                                         >
                                             전체 순위 보기 →
                                         </button>
