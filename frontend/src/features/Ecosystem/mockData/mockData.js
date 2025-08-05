@@ -117,6 +117,7 @@ export const MOCK_PROJECTS = [
     {
         id: 1,
         name: "awesome-react-components",
+        owner: "brillout",
         description: "A curated list of awesome React components and libraries. Perfect for developers looking to contribute to React ecosystem.",
         lastCommit: "2024-07-20",
         language: "JavaScript",
@@ -126,11 +127,13 @@ export const MOCK_PROJECTS = [
         license: "MIT",
         difficulty: "Beginner",
         topics: ["react", "components", "ui", "frontend"],
-        goodFirstIssues: 12
+        goodFirstIssues: 12,
+        html_url: "https://github.com/brillout/awesome-react-components"
     },
     {
         id: 2,
-        name: "python-data-science",
+        name: "awesome-datascience",
+        owner: "academic",
         description: "Open source data science tools and tutorials for Python. Great for beginners and experienced developers.",
         lastCommit: "2024-07-18",
         language: "Python",
@@ -140,11 +143,13 @@ export const MOCK_PROJECTS = [
         license: "Apache-2.0",
         difficulty: "Intermediate",
         topics: ["python", "data-science", "machine-learning"],
-        goodFirstIssues: 8
+        goodFirstIssues: 8,
+        html_url: "https://github.com/academic/awesome-datascience"
     },
     {
         id: 3,
-        name: "vue-ui-toolkit",
+        name: "awesome-vue",
+        owner: "vuejs",
         description: "Modern Vue.js UI component library with TypeScript support. Looking for contributors to expand components collection.",
         lastCommit: "2024-07-15",
         language: "TypeScript",
@@ -154,11 +159,13 @@ export const MOCK_PROJECTS = [
         license: "MIT",
         difficulty: "Intermediate",
         topics: ["vue", "typescript", "ui", "components"],
-        goodFirstIssues: 5
+        goodFirstIssues: 5,
+        html_url: "https://github.com/vuejs/awesome-vue"
     },
     {
         id: 4,
-        name: "golang-microservices",
+        name: "microservices-demo",
+        owner: "microservices-demo",
         description: "Microservices architecture example with Go. Great project for learning distributed systems and Go best practices.",
         lastCommit: "2024-07-22",
         language: "Go",
@@ -168,11 +175,13 @@ export const MOCK_PROJECTS = [
         license: "MIT",
         difficulty: "Advanced",
         topics: ["golang", "microservices", "docker", "kubernetes"],
-        goodFirstIssues: 3
+        goodFirstIssues: 3,
+        html_url: "https://github.com/microservices-demo/microservices-demo"
     },
     {
         id: 5,
-        name: "rust-web-framework",
+        name: "actix-web",
+        owner: "actix",
         description: "Fast and secure web framework built with Rust. Perfect for contributors interested in systems programming.",
         lastCommit: "2024-07-19",
         language: "Rust",
@@ -182,11 +191,13 @@ export const MOCK_PROJECTS = [
         license: "Apache-2.0",
         difficulty: "Advanced",
         topics: ["rust", "web", "framework", "performance"],
-        goodFirstIssues: 6
+        goodFirstIssues: 6,
+        html_url: "https://github.com/actix/actix-web"
     },
     {
         id: 6,
-        name: "mobile-ui-kit",
+        name: "react-native-elements",
+        owner: "react-native-elements",
         description: "Cross-platform mobile UI components for React Native. Needs help with iOS and Android specific features.",
         lastCommit: "2024-07-21",
         language: "JavaScript",
@@ -196,7 +207,8 @@ export const MOCK_PROJECTS = [
         license: "MIT",
         difficulty: "Beginner",
         topics: ["react-native", "mobile", "ui", "ios", "android"],
-        goodFirstIssues: 15
+        goodFirstIssues: 15,
+        html_url: "https://github.com/react-native-elements/react-native-elements"
     }
 ];
 
@@ -342,4 +354,18 @@ export const MOCK_CURRENT_USER = {
     commitsCount: 98,
     contributionStreak: 12,
     joinDate: "2023-06-01"
+};
+
+// 기타 필터 옵션들
+export const FILTER_OPTIONS = {
+    languages: ['All', 'JavaScript', 'Python', 'TypeScript', 'Java', 'Go', 'Rust'],
+    licenses: ['All', 'MIT', 'Apache-2.0', 'GPL-3.0', 'BSD-3-Clause'],
+    commitDates: [
+        { label: '전체', value: 'all' },
+        { label: '하루 전', value: '1d' },
+        { label: '일주일 전', value: '1w' },
+        { label: '한달 전', value: '1m' },
+        { label: '6개월 전', value: '6m' },
+        { label: '1년 전', value: '1y' }
+    ]
 };

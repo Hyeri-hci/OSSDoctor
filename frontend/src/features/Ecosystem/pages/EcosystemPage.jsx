@@ -1,10 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Layout } from '../../../components/layout';
 import useEcosystemView from '../hooks/useEcosystemView';
 import useLeaderboardData from '../hooks/useLeaderboardData';
 import ActivityLeaderboard from '../components/ActivityLeaderboard';
 import ProjectExplorer from '../components/ProjectExplorer';
-import { ALL_PROJECTS } from '../mockData';
+import { getRecommendedProjectsService } from '../api/project-service';
 import { getTechColor } from '../utils/ecosystemUtils';
 
 const EcosystemPage = () => {
@@ -14,6 +14,8 @@ const EcosystemPage = () => {
 
     // 랜덤 프로젝트 선택을 위한 상태
     const [refreshKey, setRefreshKey] = useState(0);
+    const [recommendedProjects, setRecommendedProjects] = useState([]);
+    const [projectsLoading, setProjectsLoading] = useState(false);
 
     // 커스텀 훅을 사용한 뷰 상태 관리
     const {
@@ -30,10 +32,23 @@ const EcosystemPage = () => {
         error: leaderboardError
     } = useLeaderboardData(timePeriod);
 
-    // 랜덤으로 6개 프로젝트 선택
-    const recommendedProjects = useMemo(() => {
-        const shuffled = [...ALL_PROJECTS].sort(() => 0.5 - Math.random());
-        return shuffled.slice(0, 6);
+    // 추천 프로젝트 로딩
+    useEffect(() => {
+        const loadRecommendedProjects = async () => {
+            setProjectsLoading(true);
+            try {
+                const result = await getRecommendedProjectsService('', 6);
+                setRecommendedProjects(result.projects);
+            } catch (error) {
+                console.error('추천 프로젝트 로딩 실패:', error);
+                // 에러 시 빈 배열 유지
+                setRecommendedProjects([]);
+            } finally {
+                setProjectsLoading(false);
+            }
+        };
+
+        loadRecommendedProjects();
     }, [refreshKey]);
 
     // 프로젝트 추천 새로고침 핸들러
@@ -103,36 +118,54 @@ const EcosystemPage = () => {
                             </div>
 
                             {/* 프로젝트 그리드 */}
-                            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                                {recommendedProjects.map((project) => (
-                                    <div key={project.id} className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 hover:shadow-lg transition-all duration-200 hover:-translate-y-1">
-                                        <div className="flex items-center gap-2 mb-3">
-                                            <h3 className="font-bold text-base">{project.name}</h3>
-                                        </div>
-                                        <p className="text-gray-600 text-sm mb-4 leading-relaxed">
-                                            {project.description}
-                                        </p>
-
-                                        <div className="text-xs text-gray-500 mb-4">
-                                            Last Commit: {project.lastCommit} | Stars: {project.stars.toLocaleString()} | Forks: {project.forks}
-                                        </div>
-
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center space-x-2">
-                                                <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">
-                                                    ⭐ {project.stars.toLocaleString()}
-                                                </span>
-                                                <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">
-                                                    🍴 {project.forks}
-                                                </span>
-                                                <span className={`text-xs px-2 py-1 rounded ${getTechColor(project.tech)}`}>
-                                                    {project.tech}
-                                                </span>
+                            {projectsLoading ? (
+                                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                                    {[...Array(6)].map((_, index) => (
+                                        <div key={index} className="bg-gray-200 rounded-lg p-6 animate-pulse">
+                                            <div className="h-4 bg-gray-300 rounded w-1/2 mb-3"></div>
+                                            <div className="h-3 bg-gray-300 rounded w-full mb-2"></div>
+                                            <div className="h-3 bg-gray-300 rounded w-3/4 mb-4"></div>
+                                            <div className="flex items-center justify-between">
+                                                <div className="h-3 bg-gray-300 rounded w-1/4"></div>
+                                                <div className="h-3 bg-gray-300 rounded w-1/4"></div>
                                             </div>
                                         </div>
-                                    </div>
-                                ))}
-                            </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                                    {recommendedProjects.map((project) => (
+                                        <div key={project.id} className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 hover:shadow-lg transition-all duration-200 hover:-translate-y-1">
+                                            <div className="flex items-center gap-2 mb-3">
+                                                <h3 className="font-bold text-base">{project.name}</h3>
+                                            </div>
+                                            <p className="text-gray-600 text-sm mb-4 leading-relaxed">
+                                                {project.description}
+                                            </p>
+
+                                            <div className="text-xs text-gray-500 mb-4">
+                                                Last Commit: {new Date(project.lastCommit).toLocaleDateString()} | 
+                                                Stars: {typeof project.stars === 'number' ? project.stars.toLocaleString() : project.stars} | 
+                                                Forks: {typeof project.forks === 'number' ? project.forks.toLocaleString() : project.forks}
+                                            </div>
+
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center space-x-2">
+                                                    <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">
+                                                        ⭐ {typeof project.stars === 'number' ? project.stars.toLocaleString() : project.stars}
+                                                    </span>
+                                                    <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">
+                                                        🍴 {typeof project.forks === 'number' ? project.forks.toLocaleString() : project.forks}
+                                                    </span>
+                                                    <span className={`text-xs px-2 py-1 rounded ${getTechColor(project.language || project.tech)}`}>
+                                                        {project.language || project.tech}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
 
                             {/* 더 많은 프로젝트 보기 버튼 */}
                             <div className="text-center">
