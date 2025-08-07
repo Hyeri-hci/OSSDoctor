@@ -1,19 +1,40 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Button, Select, Card, Badge, Input, EmptyState } from '../../../components/common';
-import useProjectFilters from '../hooks/useProjectFilters';
+import useProjectPagination from '../hooks/useProjectPagination';
 import { MOCK_PROJECTS } from '../mockData';
 import {
     MagnifyingGlassIcon,
     StarIcon,
     CodeBracketIcon,
-    CalendarIcon,
-    ArrowTopRightOnSquareIcon,
-    ArrowLeftIcon
+    ArrowLeftIcon,
+    ChevronLeftIcon,
+    ChevronRightIcon
 } from '@heroicons/react/24/outline';
 
 const ProjectExplorer = ({ onBack }) => {
+    // 페이지 상단 참조 (페이지 진입 시 상단 유지용)
+    const pageTopRef = useRef(null);
+    // 프로젝트 카드 섹션 참조 (페이지네이션 시 스크롤용)
+    const projectCardsRef = useRef(null);
+    // 검색 결과 섹션 참조 (페이지네이션 시 스크롤용)
+    const searchResultsRef = useRef(null);
+    
     const {
+        // 페이지네이션 상태
+        displayedProjects,
+        currentPage,
+        currentBatch,
+        totalPagesInBatch,
+        hasMoreInBatch,
+        // canLoadMoreBatches,
+        
+        // API 상태
+        loading,
+        error,
+        hasSearched,
+        
+        // 검색 필터 상태
         searchQuery,
         setSearchQuery,
         selectedLanguage,
@@ -24,15 +45,53 @@ const ProjectExplorer = ({ onBack }) => {
         setSelectedCommitDate,
         sortBy,
         setSortBy,
-        loading,
-        error,
-        hasSearched,
-        filteredProjects,
+        
+        // 페이지네이션 액션
+        goToPage,
+        
+        // 필터 관련
         filterOptions,
         hasActiveFilters,
         clearAllFilters,
         performSearch
-    } = useProjectFilters([]);
+    } = useProjectPagination();
+
+    // 컴포넌트 마운트 시 페이지 상단으로 스크롤
+    useEffect(() => {
+        window.scrollTo({ top: 0, behavior: 'instant' });
+    }, []);
+
+    // 페이지 변경 시 검색 결과 부분으로 스크롤
+    const handlePageChange = (page) => {
+        goToPage(page);
+        // 검색 결과 섹션으로 부드럽게 스크롤
+        if (searchResultsRef.current) {
+            searchResultsRef.current.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'start' 
+            });
+        }
+    };
+
+    // 검색 가능한 상태인지 확인 (최근 업데이트와 정렬 기준은 제외)
+    const canSearch = searchQuery.trim() || selectedLanguage || selectedLicense;
+    
+    // 최근 업데이트만 선택된 상황 감지 (실제 검색 조건 없이)
+    const onlyTimeFilterSelected = selectedCommitDate && !canSearch;
+
+    // 검색 실행 함수
+    const handleSearch = async () => {
+        if (!canSearch) {
+            alert('검색하려면 프로젝트 이름을 입력하거나 프로그래밍 언어, 라이선스 중 하나 이상을 선택해주세요.');
+            return;
+        }
+        
+        try {
+            await performSearch();
+        } catch (error) {
+            console.error('Project search error:', error);
+        }
+    };
 
     // 검색 결과 표시 여부 (필터가 적용되거나 검색이 수행되면 true)
     const showSearchResults = hasSearched || hasActiveFilters;
@@ -40,6 +99,8 @@ const ProjectExplorer = ({ onBack }) => {
     return (
         <div className="container mx-auto px-6 xl:px-8 2xl:px-12 py-8">
             <div className="max-w-7xl mx-auto">
+                {/* 페이지 상단 앵커 */}
+                <div ref={pageTopRef} className="absolute -top-4" />
                 {/* 뒤로가기 버튼 */}
                 <Button
                     onClick={onBack}
@@ -57,7 +118,7 @@ const ProjectExplorer = ({ onBack }) => {
                         기여하고 싶은 오픈소스 프로젝트를 찾아보세요
                     </p>
                     <p className="text-sm text-blue-600">
-                        💡 필터를 선택하면 자동으로 검색 결과가 업데이트됩니다
+                        💡 검색하려면 프로그래밍 언어를 선택하거나 프로젝트명을 입력해주세요
                     </p>
                 </div>
 
@@ -67,7 +128,7 @@ const ProjectExplorer = ({ onBack }) => {
                         {/* 필터 옵션들 */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <label className="block text-sm font-medium mb-2 text-gray-700">
                                     프로그래밍 언어
                                 </label>
                                 <Select
@@ -126,19 +187,24 @@ const ProjectExplorer = ({ onBack }) => {
                                 />
                                 <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                             </div>
+                            
+                            {/* 검색 안내 메시지 - 최근 업데이트만 선택되었을 때만 표시 */}
+                            {onlyTimeFilterSelected && (
+                                <div className="mt-3 text-sm text-orange-600 bg-orange-50 border border-orange-200 rounded-lg p-3">
+                                    <p className="font-medium">💡 검색 도움말</p>
+                                    <p className="mt-1"><strong>최근 업데이트</strong>는 다른 검색 조건과 함께 사용할 수 있는 필터입니다.</p>
+                                    <p className="mt-2 text-xs text-orange-500 bg-orange-100 rounded px-2 py-1">
+                                        <strong>검색하려면:</strong> 프로젝트 이름을 검색하시거나 프로그래밍 언어, 라이선스 중 하나 이상을 선택해주세요.
+                                    </p>
+                                </div>
+                            )}
                         </div>
 
                         {/* 검색 버튼과 필터 상태 */}
                         <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
                             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                                 <Button
-                                    onClick={async () => {
-                                        try {
-                                            await performSearch();
-                                        } catch (error) {
-                                            console.error('Project search error:', error);
-                                        }
-                                    }}
+                                    onClick={handleSearch}
                                     variant="primary"
                                     disabled={loading}
                                     className="flex items-center justify-center gap-2 w-full sm:w-auto"
@@ -219,17 +285,17 @@ const ProjectExplorer = ({ onBack }) => {
                         )}
 
                         {/* 검색 결과 헤더 */}
-                        <div className="mb-6">
+                        <div ref={searchResultsRef} className="mb-6">
                             <h2 className="text-2xl font-bold mb-2">검색 결과</h2>
                             <p className="text-gray-600">
-                                {filteredProjects.length}개의 프로젝트를 찾았습니다
+                                {displayedProjects.length}개의 프로젝트를 찾았습니다 (배치 {currentBatch}, 페이지 {currentPage}/{totalPagesInBatch})
                             </p>
                         </div>
 
                         {/* 검색된 프로젝트 목록 */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-                            {filteredProjects.length > 0 ? (
-                                filteredProjects.map((project) => (
+                        <div ref={projectCardsRef} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                            {displayedProjects.length > 0 ? (
+                                displayedProjects.map((project) => (
                                     <a 
                                         key={project.id}
                                         href={
@@ -281,70 +347,15 @@ const ProjectExplorer = ({ onBack }) => {
                                             </div>
 
                                             {/* 프로젝트 통계 */}
-                                            <div className="flex flex-col gap-2 text-sm text-gray-500">
-                                                <div className="flex items-center justify-between gap-2">
-                                                    <div className="flex items-center gap-1 min-w-0">
-                                                        <CodeBracketIcon className="w-4 h-4 flex-shrink-0" />
-                                                        <span className="break-words">{project.language}</span>
-                                                    </div>
-                                                    <span className="whitespace-nowrap">
-                                                        {typeof project.forks === 'number' ? project.forks : project.forks} forks
-                                                    </span>
-                                                </div>
-                                                <div className="flex items-center gap-1">
-                                                    <CalendarIcon className="w-4 h-4 flex-shrink-0" />
-                                                    <span className="text-xs break-words">
-                                                        {new Date(project.lastCommit).toLocaleDateString('ko-KR')}
-                                                    </span>
-                                                </div>
+                                            <div className="flex items-center justify-between text-sm text-gray-500 gap-2">
+                                                <span className="flex items-center gap-1 min-w-0">
+                                                    <CodeBracketIcon className="w-4 h-4 flex-shrink-0" />
+                                                    <span className="break-words">{project.language}</span>
+                                                </span>
+                                                <span className="whitespace-nowrap">
+                                                    {typeof project.forks === 'number' ? project.forks : project.forks} forks
+                                                </span>
                                             </div>
-
-                                            {/* Good First Issues 또는 활동 상태 - 우선순위 조정 */}
-                                            {project.goodFirstIssues > 0 ? (
-                                                <div className="p-3 bg-green-50 border border-green-200 rounded-lg mt-auto">
-                                                    <span className="text-green-700 text-sm font-medium break-words">
-                                                        <span 
-                                                            onClick={(e) => {
-                                                                e.preventDefault();
-                                                                e.stopPropagation();
-                                                                window.open(`${project.html_url}/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22`, '_blank');
-                                                            }}
-                                                            className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
-                                                        >
-                                                            🌟 초보자 추천 • 이슈 {project.goodFirstIssues}개
-                                                        </span>
-                                                        {project.totalOpenIssues > project.goodFirstIssues && (
-                                                            <span className="text-gray-500 text-xs ml-2">
-                                                                (전체 {project.totalOpenIssues}개)
-                                                            </span>
-                                                        )}
-                                                    </span>
-                                                </div>
-                                            ) : project.totalOpenIssues > 0 ? (
-                                                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg mt-auto">
-                                                    <div className="text-blue-700 text-sm font-medium">
-                                                        � 오픈 이슈 {project.totalOpenIssues}개
-                                                        <span className="text-blue-500 text-xs ml-2">(초보자용 없음)</span>
-                                                    </div>
-                                                </div>
-                                            ) : project.activityStatus && !project.activityStatus.isActive ? (
-                                                <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg mt-auto">
-                                                    <div className="text-orange-700 text-sm font-medium">
-                                                        🔄 비활성 프로젝트 • 마지막 활동: {new Date(project.activityStatus.lastActivityDate).toLocaleDateString('ko-KR')}
-                                                        {project.activityStatus.daysSinceLastActivity && (
-                                                            <div className="text-xs text-orange-600 mt-1">
-                                                                {Math.floor(project.activityStatus.daysSinceLastActivity / 365)}년 {Math.floor((project.activityStatus.daysSinceLastActivity % 365) / 30)}개월 전
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            ) : (
-                                                <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg mt-auto">
-                                                    <div className="text-gray-700 text-sm font-medium">
-                                                        📦 안정된 프로젝트
-                                                    </div>
-                                                </div>
-                                            )}
                                         </div>
                                     </Card>
                                 </a>
@@ -367,6 +378,48 @@ const ProjectExplorer = ({ onBack }) => {
                                 </div>
                             )}
                         </div>
+                        
+                        {/* 페이지네이션 컨트롤 */}
+                        {displayedProjects.length > 0 && (
+                            <div className="flex flex-col items-center justify-center gap-4 mt-8">
+                                {/* 페이지 번호 */}
+                                <div className="flex items-center justify-center gap-2">
+                                    <Button
+                                        onClick={() => handlePageChange(currentPage - 1)}
+                                        disabled={currentPage <= 1}
+                                        variant="outline"
+                                        size="sm"
+                                    >
+                                        <ChevronLeftIcon className="w-4 h-4" />
+                                        이전
+                                    </Button>
+                                    
+                                    <div className="flex items-center gap-1">
+                                        {Array.from({ length: totalPagesInBatch }, (_, i) => i + 1).map((page) => (
+                                            <Button
+                                                key={page}
+                                                onClick={() => handlePageChange(page)}
+                                                variant={currentPage === page ? "default" : "outline"}
+                                                size="sm"
+                                                className="min-w-[2.5rem]"
+                                            >
+                                                {page}
+                                            </Button>
+                                        ))}
+                                    </div>
+                                    
+                                    <Button
+                                        onClick={() => handlePageChange(currentPage + 1)}
+                                        disabled={!hasMoreInBatch}
+                                        variant="outline"
+                                        size="sm"
+                                    >
+                                        다음
+                                        <ChevronRightIcon className="w-4 h-4" />
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
 
@@ -416,50 +469,11 @@ const ProjectExplorer = ({ onBack }) => {
                                         </span>
                                         <span className="whitespace-nowrap">{project.forks} forks</span>
                                     </div>
-
-                                    {project.goodFirstIssues > 0 ? (
-                                        <div className="p-3 bg-green-50 border border-green-200 rounded-lg mt-auto">
-                                            <div className="flex items-center justify-between gap-2">
-                                                <span 
-                                                    onClick={(e) => {
-                                                        e.preventDefault();
-                                                        e.stopPropagation();
-                                                        window.open(`${project.html_url || (project.owner && project.name ? `https://github.com/${project.owner}/${project.name}` : `https://github.com/search?q=${encodeURIComponent(project.name)}&type=repositories`)}/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22`, '_blank');
-                                                    }}
-                                                    className="text-green-700 text-sm font-medium hover:text-green-800 hover:underline cursor-pointer"
-                                                >
-                                                    📋 초보자용 이슈 {project.goodFirstIssues}개
-                                                </span>
-                                                <span 
-                                                    onClick={(e) => {
-                                                        e.preventDefault();
-                                                        e.stopPropagation();
-                                                        window.open(
-                                                            project.html_url || 
-                                                            (project.owner && project.name ? `https://github.com/${project.owner}/${project.name}` :
-                                                            `https://github.com/search?q=${encodeURIComponent(project.name)}&type=repositories`),
-                                                            '_blank'
-                                                        );
-                                                    }}
-                                                    className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-green-700 bg-green-100 hover:bg-green-200 border border-green-300 rounded transition-colors duration-200 cursor-pointer"
-                                                >
-                                                    레포지토리 보기
-                                                    <ArrowTopRightOnSquareIcon className="w-3 h-3" />
-                                                </span>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg mt-auto">
-                                            <div className="text-blue-700 text-sm font-medium">
-                                                📋 인기 프로젝트
-                                            </div>
-                                        </div>
-                                    )}
                                 </div>
                             </Card>
                         </a>
-                        ))}
-                    </div>
+                    ))}
+                </div>
                 </div>
             </div>
         </div>
