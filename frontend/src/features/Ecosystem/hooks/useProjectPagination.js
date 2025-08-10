@@ -3,9 +3,16 @@ import { searchProjectsWithPagination } from '../api/project-service';
 
 const useProjectPagination = () => {
     // 페이지네이션 상태들
-    const [allProjects, setAllProjects] = useState([]);        // 현재 검색의 모든 프로젝트 (최대 50개)
-    const [displayedProjects, setDisplayedProjects] = useState([]); // 현재 화면에 표시된 프로젝트 (10개)
+    const [allProjects, setAllProjects] = useState([]);        // 현재 검색의 모든 프로젝트 (최대 30개)
+    const [displayedProjects, setDisplayedProjects] = useState([]); // 현재 화면에 표시된 프로젝트 (6개)
     const [currentPage, setCurrentPage] = useState(1);         // 현재 페이지 (1~5)
+    
+    // 배치 시스템 상태 추가
+    const [currentBatch, setCurrentBatch] = useState(1);
+    const [canLoadMoreBatches, setCanLoadMoreBatches] = useState(false);
+    const [loadingNextBatch, setLoadingNextBatch] = useState(false);
+    const [batchHistory, setBatchHistory] = useState({}); // 배치별 데이터 저장
+    const [maxBatchReached, setMaxBatchReached] = useState(1); // 도달한 최대 배치 번호
     
     // API 상태들
     const [loading, setLoading] = useState(false);
@@ -20,8 +27,8 @@ const useProjectPagination = () => {
     const [sortBy, setSortBy] = useState('beginner-friendly');
     
     // 설정값들
-    const PROJECTS_PER_PAGE = 10;  // 한 번에 표시할 프로젝트 수
-    const PROJECTS_PER_BATCH = 50; // 한 번에 가져올 프로젝트 수
+    const PROJECTS_PER_PAGE = 6;   // 한 번에 표시할 프로젝트 수 (10 → 6)
+    const PROJECTS_PER_BATCH = 30; // 한 번에 가져올 프로젝트 수 (50 → 30)
     
     // 계산된 상태들
     const totalPagesInBatch = Math.ceil(allProjects.length / PROJECTS_PER_PAGE);
@@ -43,7 +50,7 @@ const useProjectPagination = () => {
                 offset: 0
             };
 
-            console.log(`🔍 검색 실행`, filters);
+            console.log(`🔍 검색 실행 (배치 1)`, filters);
 
             // 검색 API 호출
             const result = await searchProjectsWithPagination(
@@ -55,18 +62,37 @@ const useProjectPagination = () => {
             if (result.projects && result.projects.length > 0) {
                 setAllProjects(result.projects);
                 
-                // 🎯 첫 10개만 표시
+                // 🎯 첫 6개만 표시
                 const firstPageProjects = result.projects.slice(0, PROJECTS_PER_PAGE);
                 setDisplayedProjects(firstPageProjects);
                 
                 // 📊 상태 초기화
                 setCurrentPage(1);
+                setCurrentBatch(1);
                 setHasSearched(true);
                 
+                // 배치 히스토리에 저장
+                setBatchHistory(prev => ({
+                    ...prev,
+                    1: result.projects
+                }));
+                setMaxBatchReached(1);
+                
+                // 배치 정보 업데이트
+                setCanLoadMoreBatches(result.batchInfo?.hasMoreBatches || false);
+                
                 console.log(`✅ 검색 완료: ${result.projects.length}개 프로젝트 로드, ${firstPageProjects.length}개 표시`);
+                console.log(`📦 배치 정보:`, result.batchInfo);
+                console.log(`🎯 페이지네이션 상태:`, {
+                    currentPage: 1,
+                    totalPagesInBatch: Math.ceil(result.projects.length / PROJECTS_PER_PAGE),
+                    hasMoreInBatch: 1 < Math.ceil(result.projects.length / PROJECTS_PER_PAGE),
+                    canLoadMoreBatches: result.batchInfo?.hasMoreBatches || false
+                });
             } else {
                 setAllProjects([]);
                 setDisplayedProjects([]);
+                setCanLoadMoreBatches(false);
                 console.log('📭 검색 결과 없음');
             }
             
@@ -77,6 +103,97 @@ const useProjectPagination = () => {
             setLoading(false);
         }
     }, [searchQuery, selectedLanguage, selectedLicense, selectedCommitDate, sortBy]);
+
+    // 다음 배치 로딩 함수 추가
+    const loadNextBatch = useCallback(async () => {
+        if (!canLoadMoreBatches || loadingNextBatch) return;
+        
+        setLoadingNextBatch(true);
+        setError(null);
+        
+        try {
+            const filters = {
+                searchQuery,
+                language: selectedLanguage,
+                license: selectedLicense,
+                timeFilter: selectedCommitDate,
+                sortBy,
+                limit: PROJECTS_PER_BATCH,
+                offset: 0
+            };
+
+            const nextBatchNumber = currentBatch + 1;
+            console.log(`🔍 다음 배치 ${nextBatchNumber} 로딩 시작`, filters);
+
+            const result = await searchProjectsWithPagination(
+                filters, 
+                PROJECTS_PER_BATCH, 
+                nextBatchNumber
+            );
+            
+            if (result.projects && result.projects.length > 0) {
+                // 새로운 배치로 교체 (기존 데이터 덮어쓰기)
+                setAllProjects(result.projects);
+                
+                // 배치 히스토리에 저장
+                setBatchHistory(prev => ({
+                    ...prev,
+                    [nextBatchNumber]: result.projects
+                }));
+                setMaxBatchReached(nextBatchNumber);
+                
+                // 첫 6개 표시
+                const firstPageProjects = result.projects.slice(0, PROJECTS_PER_PAGE);
+                setDisplayedProjects(firstPageProjects);
+                
+                // 페이지를 1로 리셋하고 배치 번호 증가
+                setCurrentPage(1);
+                setCurrentBatch(nextBatchNumber);
+                
+                // 다음 배치 가능 여부 업데이트
+                setCanLoadMoreBatches(result.batchInfo?.hasMoreBatches || false);
+                
+                console.log(`✅ 배치 ${nextBatchNumber} 로딩 완료: ${result.projects.length}개 프로젝트`);
+                console.log(`📦 배치 정보:`, result.batchInfo);
+            } else {
+                setCanLoadMoreBatches(false);
+                console.log('📭 다음 배치 결과 없음');
+            }
+            
+        } catch (err) {
+            setError(`다음 배치 로딩 실패: ${err.message}`);
+            console.error('🔍 다음 배치 로딩 에러:', err);
+        } finally {
+            setLoadingNextBatch(false);
+        }
+    }, [currentBatch, canLoadMoreBatches, loadingNextBatch, searchQuery, selectedLanguage, selectedLicense, selectedCommitDate, sortBy]);
+
+    // 특정 배치로 이동하는 함수 (히스토리에 있는 배치만 가능)
+    const goToBatch = useCallback((batchNumber) => {
+        if (batchNumber < 1 || batchNumber > maxBatchReached) {
+            console.warn(`배치 ${batchNumber}는 유효하지 않습니다. (범위: 1-${maxBatchReached})`);
+            return;
+        }
+        
+        const batchData = batchHistory[batchNumber];
+        if (!batchData) {
+            console.warn(`배치 ${batchNumber}의 데이터를 찾을 수 없습니다.`);
+            return;
+        }
+        
+        console.log(`📦 배치 ${batchNumber}로 이동`);
+        
+        // 배치 데이터 로드
+        setAllProjects(batchData);
+        setCurrentBatch(batchNumber);
+        
+        // 첫 페이지로 이동
+        setCurrentPage(1);
+        const firstPageProjects = batchData.slice(0, PROJECTS_PER_PAGE);
+        setDisplayedProjects(firstPageProjects);
+        
+        console.log(`✅ 배치 ${batchNumber} 로드 완료: ${batchData.length}개 프로젝트, ${firstPageProjects.length}개 표시`);
+    }, [batchHistory, maxBatchReached]);
 
     // 다음 페이지 이동
     const goToNextPage = useCallback(() => {
@@ -123,6 +240,13 @@ const useProjectPagination = () => {
         setDisplayedProjects(pageProjects);
         
         console.log(`📄 페이지 이동: ${pageNumber}/${totalPagesInBatch} (${pageProjects.length}개 표시)`);
+        console.log(`🎯 배치 상태:`, {
+            currentPage: pageNumber,
+            totalPagesInBatch,
+            hasMoreInBatch: pageNumber < totalPagesInBatch,
+            canLoadMoreBatches,
+            currentBatch
+        });
     }, [allProjects, totalPagesInBatch]);
 
     const clearAllFilters = useCallback(() => {
@@ -136,6 +260,10 @@ const useProjectPagination = () => {
         setAllProjects([]);
         setDisplayedProjects([]);
         setCurrentPage(1);
+        setCurrentBatch(1);
+        setCanLoadMoreBatches(false);
+        setBatchHistory({});
+        setMaxBatchReached(1);
         setHasSearched(false);
         setError(null);
         
@@ -208,18 +336,23 @@ const useProjectPagination = () => {
 
     return {
         // 데이터 상태
-        displayedProjects,           // 현재 화면에 표시되는 10개 프로젝트
-        allProjects,                 // 현재 검색의 모든 프로젝트 (최대 50개)
+        displayedProjects,           // 현재 화면에 표시되는 6개 프로젝트
+        allProjects,                 // 현재 검색의 모든 프로젝트 (최대 30개)
         
         // 페이지네이션 정보
         currentPage,                 // 현재 페이지 (1~5)
+        currentBatch,                // 현재 배치 번호
+        maxBatchReached,             // 도달한 최대 배치 번호
         totalPagesInBatch,           // 총 페이지 수
         hasMoreInBatch,              // 더 페이지가 있는지
+        canLoadMoreBatches,          // 다음 배치 로딩 가능 여부
         
         // 페이지 이동 함수들
         goToNextPage,                // 다음 페이지
         goToPrevPage,                // 이전 페이지  
         goToPage,                    // 특정 페이지로 이동
+        loadNextBatch,               // 다음 배치 로딩
+        goToBatch,                   // 특정 배치로 이동
         
         // 필터 상태들
         searchQuery,
@@ -237,6 +370,7 @@ const useProjectPagination = () => {
         
         // API 상태들
         loading,
+        loadingNextBatch,            // 다음 배치 로딩 상태
         error,
         hasSearched,
         

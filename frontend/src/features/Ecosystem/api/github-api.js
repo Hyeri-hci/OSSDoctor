@@ -83,15 +83,15 @@ const getDateRange = (timeFilter) => {
   return ranges[timeFilter] || null;
 };
 
-// 프로젝트 검색 GraphQL 쿼리
-export const searchProjects = async (filters = {}) => {
+// 프로젝트 검색 GraphQL 쿼리 (페이지네이션 지원)
+export const searchProjects = async (filters = {}, cursor = null) => {
   const {
     searchQuery = '',
     language = '',
     license = '',
     timeFilter = '', // 'day', 'week', 'month', '6months', 'year'
     sortBy = 'beginner-friendly', // 'beginner-friendly', 'good-first-issues', 'stars', 'updated', 'created'
-    limit = 50
+    limit = 30
   } = filters;
 
   // 검색 조건 구성
@@ -164,9 +164,13 @@ export const searchProjects = async (filters = {}) => {
   });
 
   const query = `
-    query SearchRepositories($searchString: String!, $first: Int!) {
-      search(query: $searchString, type: REPOSITORY, first: $first) {
+    query SearchRepositories($searchString: String!, $first: Int!, $after: String) {
+      search(query: $searchString, type: REPOSITORY, first: $first, after: $after) {
         repositoryCount
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
         edges {
           node {
             ... on Repository {
@@ -226,7 +230,8 @@ export const searchProjects = async (filters = {}) => {
 
   const variables = {
     searchString,
-    first: limit
+    first: limit,
+    after: cursor
   };
 
   try {
@@ -425,7 +430,8 @@ export const searchProjects = async (filters = {}) => {
     return {
       projects: sortedProjects,
       totalCount: data.search.repositoryCount,
-      hasNextPage: data.search.edges.length === limit
+      pageInfo: data.search.pageInfo,
+      hasNextPage: data.search.pageInfo.hasNextPage
     };
   } catch (error) {
     console.error('프로젝트 검색 실패:', error);
