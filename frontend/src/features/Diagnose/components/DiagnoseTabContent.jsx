@@ -1,7 +1,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { LoadingSpinner, EmptyState, Button } from '../../../components/common';
-// import OverallOverview from './OverallOverview';
+import OverallOverview from './OverallOverview';
+import HealthOverview from './HealthOverview';
+import SecurityHistory from './SecurityHistory';
 
 
 const DiagnoseTabContent = ({ activeTab, loading, projectData, fullProjectName }) => {
@@ -38,14 +40,14 @@ const DiagnoseTabContent = ({ activeTab, loading, projectData, fullProjectName }
     const renderTabContent = () => {
         switch (activeTab) {
             case 'overview':
-                // return <OverallOverview projectData={projectData} />;
-                return <div>종합 점수 탭 내용</div>; // 임시 내용
+                return <OverallOverview projectData={projectData} />;
+                // return <div>종합 점수 탭 내용</div>; // 임시 내용
             case 'health':
-                return <div>건강 점수 탭 내용</div>; // 임시 내용
+                return <HealthOverview projectData={projectData} />;
             case 'security':
-                return <div>보안 점수 탭 내용</div>; // 임시 내용
+                return <SecurityHistory projectData={projectData} />;
             default:
-                return <div>종합 점수 탭 내용</div>; // 임시 내용
+                return <OverallOverview projectData={projectData} />;
         }
     };
 
