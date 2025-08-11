@@ -1,7 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, Card, Badge } from '../../../components/common';
-import { CalendarIcon, StarIcon, CodeBracketIcon } from '@heroicons/react/24/outline';
+import { Button, ProjectCard } from '../../../components/common';
 
 const RecommendedProjectsSection = ({ projects = [] }) => {
 
@@ -58,46 +57,12 @@ const RecommendedProjectsSection = ({ projects = [] }) => {
 
                     <div className="grid grid-cols-1 gap-6">
                         {dispalyProjects.map((project, index) => (
-                            <Card key={index} hover={true} padding="default" className="transition-shadow">
-                                {/* Desktop row & Mobile row */}
-                                <div className="flex flex-col md:flex-row gap-4">
-
-                                    {/* Project Image - Desktop */}
-                                    <div className="hidden md:flex bg-gray-200 w-24 h-24 rounded items-center justify-center flex-shrink-0">
-                                        {/* 추후 이미지 삽입 */}
-                                    </div>
-
-                                    {/* Project Information */}
-                                    <div className="flex-1 min-w-0">
-                                        <h3 className="text-lg sm:text-xl font-semibold mb-2 truncate">{project.name}</h3>
-                                        <p className="text-gray-600 text-sm sm:text-base mb-4 overflow-hidden text-ellipsis"
-                                            style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
-                                            {project.description}
-                                        </p>
-
-                                        <div className="flex items-center gap-4 text-xs sm:text-sm text-gray-500 flex-wrap">
-                                            {/* Last Commit */}
-                                            <div className="flex items-center gap-1">
-                                                <CalendarIcon className="w-4 h-4 flex-shrink-0" />
-                                                <span className="whitespace-nowrap">{project.lastCommit}</span>
-                                            </div>
-                                            {/* Stars */}
-                                            <div className="flex items-center gap-1">
-                                                <StarIcon className="w-4 h-4 flex-shrink-0" />
-                                                <span className="whitespace-nowrap">{project.stars} Stars</span>
-                                            </div>
-                                            {/* Forks */}
-                                            <div className="flex items-center gap-1">
-                                                <CodeBracketIcon className="w-4 h-4 flex-shrink-0" />
-                                                <span className="whitespace-nowrap">{project.forks} Forks</span>
-                                            </div>
-
-                                            {/* Language */}
-                                            <Badge variant="secondary" size="small">{project.language}</Badge>
-                                        </div>
-                                    </div>
-                                </div>
-                            </Card>
+                            <ProjectCard 
+                                key={index} 
+                                project={project} 
+                                layout="horizontal"
+                                showImage={true}
+                            />
                         ))}
                     </div>
                 </div>
