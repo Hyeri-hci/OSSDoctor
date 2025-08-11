@@ -366,38 +366,174 @@ export const getContributorStatsService = async (owner, repo) => {
   }
 };
 
-// 배치별 프로젝트 검색 (useProjectPagination용)
+// 배치별 커서를 저장하기 위한 전역 저장소
+let batchCursors = {};
+let currentSearchKey = '';
+
+// 검색 키 생성 (필터 조건을 기반으로 고유 키 생성)
+const generateSearchKey = (filters) => {
+  return JSON.stringify({
+    searchQuery: filters.searchQuery || '',
+    language: filters.language || '',
+    license: filters.license || '',
+    timeFilter: filters.timeFilter || '',
+    sortBy: filters.sortBy || 'beginner-friendly'
+  });
+};
+
 export const searchProjectsWithPagination = async (filters = {}, batchSize = 30, batchNumber = 1) => {
   try {
-    const result = await searchProjectsService({ 
-      ...filters, 
-      limit: batchSize 
-    });
+    console.log(`배치 ${batchNumber} 검색 시작:`, { filters, batchSize, batchNumber });
+
+    const searchKey = generateSearchKey(filters);
     
+    // 새로운 검색인 경우 커서 초기화
+    if (currentSearchKey !== searchKey) {
+      currentSearchKey = searchKey;
+      batchCursors = {};
+      console.log('새로운 검색 - 커서 초기화');
+    }
+
+    // GitHub API 사용 가능한 경우
+    if (isGitHubApiAvailable()) {
+      try {
+        // 해당 배치의 커서 찾기
+        let cursor = null;
+        
+        if (batchNumber > 1) {
+          cursor = batchCursors[batchNumber - 1];
+          if (!cursor) {
+            throw new Error(`배치 ${batchNumber}의 커서를 찾을 수 없습니다. 이전 배치를 먼저 로드해주세요.`);
+          }
+        }
+        
+        console.log(`GitHub API 호출 - 배치 ${batchNumber}, 커서:`, cursor ? cursor.substring(0, 20) + '...' : 'null');
+        
+        // GitHub API 호출
+        const apiResult = await searchProjects(filters, cursor);
+        
+        if (!apiResult || !apiResult.projects) {
+          throw new Error('GitHub API에서 데이터를 가져올 수 없습니다.');
+        }
+
+        // 다음 배치 커서 저장
+        if (apiResult.pageInfo && apiResult.pageInfo.hasNextPage) {
+          batchCursors[batchNumber] = apiResult.pageInfo.endCursor;
+        }
+
+        // 배치 정보 계산
+        const hasMoreBatches = apiResult.pageInfo?.hasNextPage || false;
+        
+        console.log(`GitHub API 배치 ${batchNumber} 완료:`, {
+          projectCount: apiResult.projects.length,
+          hasMoreBatches,
+          nextCursor: hasMoreBatches ? apiResult.pageInfo.endCursor.substring(0, 20) + '...' : 'none'
+        });
+
+        return {
+          projects: apiResult.projects,
+          totalCount: apiResult.totalCount,
+          batchInfo: {
+            batchNumber,
+            batchSize,
+            totalBatches: -1, // GitHub API에서는 정확한 총 배치 수를 알 수 없음
+            hasMoreBatches,
+            startIndex: (batchNumber - 1) * batchSize,
+            endIndex: (batchNumber - 1) * batchSize + apiResult.projects.length,
+            actualBatchSize: apiResult.projects.length,
+            usingGitHubAPI: true
+          }
+        };
+        
+      } catch (error) {
+        console.warn(`GitHub API 배치 ${batchNumber} 로딩 실패, Mock 데이터로 대체:`, error);
+        // GitHub API 실패시 Mock 데이터로 폴백
+      }
+    }
+
+    // Mock 데이터 사용 (GitHub API 미사용 또는 실패시)
+    console.log('Mock 데이터 사용');
+    const allResults = await searchProjectsService(filters);
+    
+    if (!allResults || !allResults.projects) {
+      return {
+        projects: [],
+        totalCount: 0,
+        batchInfo: {
+          batchNumber,
+          batchSize,
+          totalBatches: 0,
+          hasMoreBatches: false,
+          startIndex: 0,
+          endIndex: 0,
+          actualBatchSize: 0,
+          usingGitHubAPI: false
+        }
+      };
+    }
+
+    // 전체 결과에서 해당 배치의 데이터 추출 (Mock 데이터용)
+    const allProjects = allResults.projects;
+    const totalProjects = allProjects.length;
+    const totalBatches = Math.ceil(totalProjects / batchSize);
+    
+    // 배치 인덱스 계산
+    const startIndex = (batchNumber - 1) * batchSize;
+    const endIndex = Math.min(startIndex + batchSize, totalProjects);
+    const batchProjects = allProjects.slice(startIndex, endIndex);
+    
+    const hasMoreBatches = batchNumber < totalBatches;
+    
+    console.log(`Mock 데이터 배치 ${batchNumber} 검색 완료:`, {
+      totalProjects,
+      totalBatches,
+      currentBatchSize: batchProjects.length,
+      hasMoreBatches,
+      startIndex,
+      endIndex
+    });
+
     return {
-      projects: result.projects || [],
-      totalCount: result.totalCount || 0,
+      projects: batchProjects,
+      totalCount: totalProjects,
       batchInfo: {
         batchNumber,
         batchSize,
-        hasMoreBatches: result.hasNextPage || false,
-        actualBatchSize: result.projects?.length || 0,
-        usingGitHubAPI: isGitHubApiAvailable()
+        totalBatches,
+        hasMoreBatches,
+        startIndex,
+        endIndex,
+        actualBatchSize: batchProjects.length,
+        usingGitHubAPI: false
       }
     };
+
   } catch (error) {
-    console.error('배치 검색 실패:', error);
+    console.error(`배치 ${batchNumber} 검색 실패:`, error);
+    
     return {
       projects: [],
       totalCount: 0,
       batchInfo: {
         batchNumber,
         batchSize,
+        totalBatches: 0,
         hasMoreBatches: false,
+        startIndex: 0,
+        endIndex: 0,
         actualBatchSize: 0,
         usingGitHubAPI: false
       },
       error: error.message
     };
   }
+};
+
+export const quickSearchProjects = async (query = '', batchSize = 30, batchNumber = 1) => {
+  const filters = {
+    query: query.trim(),
+    sortBy: 'beginner-friendly'
+  };
+  
+  return await searchProjectsWithPagination(filters, batchSize, batchNumber);
 };
