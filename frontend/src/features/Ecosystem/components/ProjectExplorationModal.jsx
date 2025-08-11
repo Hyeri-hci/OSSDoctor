@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { Button, Modal } from '../../../components/common';
 
@@ -24,9 +24,28 @@ const ProjectExplorationModal = ({
     onGoToBatch,
     onLoadNextBatch
 }) => {
+    const previousLoadingRef = useRef(loadingNextBatch);
+    
+    // 로딩 완료 시 3초 후 자동 닫기
+    useEffect(() => {
+        const wasLoading = previousLoadingRef.current;
+        const isNowNotLoading = !loadingNextBatch;
+        
+        if (wasLoading && isNowNotLoading && isOpen) {
+            // 로딩이 완료되었으면 3초 후 자동으로 모달 닫기
+            const timer = setTimeout(() => {
+                onClose();
+            }, 3000);
+            
+            return () => clearTimeout(timer);
+        }
+        
+        previousLoadingRef.current = loadingNextBatch;
+    }, [loadingNextBatch, isOpen, onClose]);
+
     const handleLoadNextBatch = () => {
+        // 로딩 중일 때는 모달을 닫지 않음
         onLoadNextBatch();
-        onClose();
     };
 
     const handleGoToBatch = (batchNum) => {
@@ -34,11 +53,20 @@ const ProjectExplorationModal = ({
         onClose();
     };
 
+    // 로딩 중일 때는 ESC 키나 외부 클릭으로 닫을 수 없도록 설정
+    const handleModalClose = () => {
+        if (!loadingNextBatch) {
+            onClose();
+        }
+    };
+
     return (
         <Modal
             isOpen={isOpen}
-            onClose={onClose}
+            onClose={handleModalClose}
             title="다른 프로젝트 탐색"
+            closeOnBackdrop={!loadingNextBatch}
+            closeOnEscape={!loadingNextBatch}
         >
             <div className="p-6">
                 <div className="text-center mb-6">
@@ -53,7 +81,7 @@ const ProjectExplorationModal = ({
                 {/* 그룹 네비게이션 */}
                 <div className="space-y-4">
                     {/* 현재까지 탐색한 그룹들 */}
-                    {maxBatchReached > 1 && (
+                    {maxBatchReached > 1 && !loadingNextBatch && (
                         <div>
                             <h4 className="text-sm font-medium text-gray-700 mb-3">이미 본 그룹들</h4>
                             <div className="grid grid-cols-4 gap-2">
@@ -82,7 +110,7 @@ const ProjectExplorationModal = ({
                             <Button
                                 onClick={handleLoadNextBatch}
                                 disabled={loadingNextBatch}
-                                className="w-full bg-green-600 hover:bg-green-700 text-white py-3"
+                                className="w-full bg-green-600 hover:bg-green-700 text-white py-3 disabled:opacity-75"
                             >
                                 {loadingNextBatch ? (
                                     <>
@@ -98,19 +126,35 @@ const ProjectExplorationModal = ({
                         </div>
                     )}
                     
-                    {/* 안내 메시지 */}
-                    <div className="bg-blue-50 rounded-lg p-4 mt-4">
-                        <div className="flex items-start gap-3">
-                            <span className="text-blue-500 text-lg">💡</span>
-                            <div>
-                                <p className="text-blue-800 text-sm font-medium mb-1">탐색 팁</p>
-                                <p className="text-blue-700 text-sm">
-                                    각 그룹은 GitHub에서 실시간으로 가져온 서로 다른 프로젝트들입니다. 
-                                    마음에 드는 프로젝트를 찾을 때까지 계속 탐색해보세요!
-                                </p>
+                    {/* 로딩 중 안내 메시지 */}
+                    {loadingNextBatch ? (
+                        <div className="bg-green-50 rounded-lg p-4 mt-4">
+                            <div className="flex items-start gap-3">
+                                <div className="w-5 h-5 border-2 border-green-500 border-t-transparent rounded-full animate-spin flex-shrink-0 mt-0.5" />
+                                <div>
+                                    <p className="text-green-800 text-sm font-medium mb-1">새로운 프로젝트를 찾는 중입니다</p>
+                                    <p className="text-green-700 text-sm">
+                                        GitHub에서 {maxBatchReached + 1}번째 그룹의 프로젝트들을 가져오고 있습니다. 
+                                        잠시만 기다려주세요!
+                                    </p>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    ) : (
+                        /* 일반 안내 메시지 */
+                        <div className="bg-blue-50 rounded-lg p-4 mt-4">
+                            <div className="flex items-start gap-3">
+                                <span className="text-blue-500 text-lg">💡</span>
+                                <div>
+                                    <p className="text-blue-800 text-sm font-medium mb-1">탐색 팁</p>
+                                    <p className="text-blue-700 text-sm">
+                                        각 그룹은 GitHub에서 실시간으로 가져온 서로 다른 프로젝트들입니다. 
+                                        마음에 드는 프로젝트를 찾을 때까지 계속 탐색해보세요!
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </Modal>
