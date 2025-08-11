@@ -135,3 +135,109 @@ export const getRankIcon = (rank) => {
     if (rank === 3) return '🥉';
     return `#${rank}`;
 };
+
+// 프로그래밍 언어별 색상 매핑
+export const getLanguageColor = (language) => {
+    const languageColors = {
+        'JavaScript': '#f7df1e',
+        'TypeScript': '#3178c6',
+        'Python': '#3776ab',
+        'Java': '#ed8b00',
+        'React': '#61dafb',
+        'Vue': '#4fc08d',
+        'Angular': '#dd0031',
+        'Node.js': '#68a063',
+        'Go': '#00add8',
+        'Rust': '#dea584',
+        'PHP': '#777bb4',
+        'Ruby': '#cc342d',
+        'C++': '#f34b7d',
+        'C#': '#239120',
+        'Swift': '#fa7343',
+        'Kotlin': '#7f52ff',
+        'Dart': '#0175c2',
+        'HTML': '#e34c26',
+        'CSS': '#1572b6',
+        'Shell': '#89e051',
+        'Markdown': '#083fa1'
+    };
+    return languageColors[language] || '#586069';
+};
+
+// 검색 쿼리 빌더
+export const buildSearchQuery = (filters) => {
+    const { searchQuery, language, license, sortBy } = filters;
+    let query = searchQuery || '';
+    
+    if (language && language !== 'all') {
+        query += ` language:${language}`;
+    }
+    
+    if (license && license !== 'all') {
+        query += ` license:${license}`;
+    }
+    
+    return query.trim();
+};
+
+// 디바운스 함수
+export const debounce = (func, wait) => {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+};
+
+// 스로틀 함수
+export const throttle = (func, limit) => {
+    let inThrottle;
+    return function(...args) {
+        if (!inThrottle) {
+            func.apply(this, args);
+            inThrottle = true;
+            setTimeout(() => inThrottle = false, limit);
+        }
+    };
+};
+
+// 로컬 스토리지 헬퍼
+export const storage = {
+    get: (key) => {
+        try {
+            const item = localStorage.getItem(key);
+            return item ? JSON.parse(item) : null;
+        } catch (error) {
+            console.warn(`localStorage get error for key "${key}":`, error);
+            return null;
+        }
+    },
+    set: (key, value) => {
+        try {
+            localStorage.setItem(key, JSON.stringify(value));
+        } catch (error) {
+            console.warn(`localStorage set error for key "${key}":`, error);
+        }
+    },
+    remove: (key) => {
+        try {
+            localStorage.removeItem(key);
+        } catch (error) {
+            console.warn(`localStorage remove error for key "${key}":`, error);
+        }
+    }
+};
+
+// URL 검증 함수
+export const isValidUrl = (string) => {
+    try {
+        new URL(string);
+        return true;
+    } catch (_) {
+        return false;
+    }
+};
