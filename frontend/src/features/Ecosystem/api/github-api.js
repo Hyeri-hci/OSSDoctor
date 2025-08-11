@@ -152,16 +152,7 @@ export const searchProjects = async (filters = {}, cursor = null) => {
   
   const searchString = searchTerms.join(' ');
   
-  console.log('=== GitHub API 쿼리 생성 ===');
-  console.log('개별 검색 조건들:', searchTerms);
-  console.log('최종 검색 쿼리:', searchString);
-  console.log('적용된 필터들:', { 
-    검색어: searchQuery || '없음',
-    언어: language || '없음', 
-    라이선스: license || '없음',
-    시간필터: timeFilter || '없음',
-    정렬: sortBy 
-  });
+  console.log('🔍 최종 검색 쿼리:', searchString);
 
   const query = `
     query SearchRepositories($searchString: String!, $first: Int!, $after: String) {
@@ -241,11 +232,10 @@ export const searchProjects = async (filters = {}, cursor = null) => {
       throw new Error('검색 결과를 가져올 수 없습니다.');
     }
 
-    console.log('GitHub API 원시 응답:', {
+    console.log('📊 GitHub API 원시 응답:', {
       repositoryCount: data.search.repositoryCount,
       actualResultCount: data.search.edges.length,
-      searchString: searchString,
-      filters
+      searchString: searchString
     });
 
     // 결과를 프론트엔드에서 사용하기 쉬운 형태로 변환
@@ -423,9 +413,6 @@ export const searchProjects = async (filters = {}, cursor = null) => {
       
       return score;
     }
-
-    console.log(`검색 결과: ${projects.length}개 프로젝트 발견`); // 디버그용
-    console.log('라이선스 정보:', projects.map(p => ({ name: p.name, license: p.license })).slice(0, 5)); // 디버그용
 
     return {
       projects: sortedProjects,

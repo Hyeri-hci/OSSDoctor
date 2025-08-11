@@ -92,7 +92,7 @@ const ProjectExplorer = ({ onBack }) => {
         try {
             await performSearch();
         } catch (error) {
-            console.error('Project search error:', error);
+            console.error('프로젝트 검색 에러:', error);
         }
     };
 

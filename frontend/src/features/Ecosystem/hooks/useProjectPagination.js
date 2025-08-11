@@ -50,7 +50,7 @@ const useProjectPagination = () => {
                 offset: 0
             };
 
-            console.log(`🔍 검색 실행 (배치 1)`, filters);
+            console.log('🔍 검색 실행:', filters);
 
             // 검색 API 호출
             const result = await searchProjectsWithPagination(
@@ -80,25 +80,15 @@ const useProjectPagination = () => {
                 
                 // 배치 정보 업데이트
                 setCanLoadMoreBatches(result.batchInfo?.hasMoreBatches || false);
-                
-                console.log(`✅ 검색 완료: ${result.projects.length}개 프로젝트 로드, ${firstPageProjects.length}개 표시`);
-                console.log(`📦 배치 정보:`, result.batchInfo);
-                console.log(`🎯 페이지네이션 상태:`, {
-                    currentPage: 1,
-                    totalPagesInBatch: Math.ceil(result.projects.length / PROJECTS_PER_PAGE),
-                    hasMoreInBatch: 1 < Math.ceil(result.projects.length / PROJECTS_PER_PAGE),
-                    canLoadMoreBatches: result.batchInfo?.hasMoreBatches || false
-                });
             } else {
                 setAllProjects([]);
                 setDisplayedProjects([]);
                 setCanLoadMoreBatches(false);
-                console.log('📭 검색 결과 없음');
             }
             
         } catch (err) {
             setError(err.message || '검색 중 오류가 발생했습니다.');
-            console.error('🔍 프로젝트 검색 에러:', err);
+            console.error('프로젝트 검색 에러:', err);
         } finally {
             setLoading(false);
         }
@@ -123,7 +113,6 @@ const useProjectPagination = () => {
             };
 
             const nextBatchNumber = currentBatch + 1;
-            console.log(`🔍 다음 배치 ${nextBatchNumber} 로딩 시작`, filters);
 
             const result = await searchProjectsWithPagination(
                 filters, 
@@ -152,17 +141,13 @@ const useProjectPagination = () => {
                 
                 // 다음 배치 가능 여부 업데이트
                 setCanLoadMoreBatches(result.batchInfo?.hasMoreBatches || false);
-                
-                console.log(`✅ 배치 ${nextBatchNumber} 로딩 완료: ${result.projects.length}개 프로젝트`);
-                console.log(`📦 배치 정보:`, result.batchInfo);
             } else {
                 setCanLoadMoreBatches(false);
-                console.log('📭 다음 배치 결과 없음');
             }
             
         } catch (err) {
             setError(`다음 배치 로딩 실패: ${err.message}`);
-            console.error('🔍 다음 배치 로딩 에러:', err);
+            console.error('다음 배치 로딩 에러:', err);
         } finally {
             setLoadingNextBatch(false);
         }
@@ -171,13 +156,11 @@ const useProjectPagination = () => {
     // 특정 배치로 이동하는 함수 (히스토리에 있는 배치만 가능)
     const goToBatch = useCallback((batchNumber) => {
         if (batchNumber < 1 || batchNumber > maxBatchReached) {
-            console.warn(`배치 ${batchNumber}는 유효하지 않습니다. (범위: 1-${maxBatchReached})`);
             return;
         }
         
         const batchData = batchHistory[batchNumber];
         if (!batchData) {
-            console.warn(`배치 ${batchNumber}의 데이터를 찾을 수 없습니다.`);
             return;
         }
         
@@ -191,8 +174,6 @@ const useProjectPagination = () => {
         setCurrentPage(1);
         const firstPageProjects = batchData.slice(0, PROJECTS_PER_PAGE);
         setDisplayedProjects(firstPageProjects);
-        
-        console.log(`✅ 배치 ${batchNumber} 로드 완료: ${batchData.length}개 프로젝트, ${firstPageProjects.length}개 표시`);
     }, [batchHistory, maxBatchReached]);
 
     // 다음 페이지 이동
@@ -207,8 +188,6 @@ const useProjectPagination = () => {
         
         setCurrentPage(nextPage);
         setDisplayedProjects(nextPageProjects);
-        
-        console.log(`📄 페이지 이동: ${nextPage}/${totalPagesInBatch} (${nextPageProjects.length}개 표시)`);
     }, [currentPage, hasMoreInBatch, allProjects, totalPagesInBatch]);
 
     // 이전 페이지 이동
@@ -223,8 +202,6 @@ const useProjectPagination = () => {
         
         setCurrentPage(prevPage);
         setDisplayedProjects(prevPageProjects);
-        
-        console.log(`📄 페이지 이동: ${prevPage}/${totalPagesInBatch} (${prevPageProjects.length}개 표시)`);
     }, [currentPage, allProjects, totalPagesInBatch]);
 
     // 특정 페이지 바로 이동
@@ -266,15 +243,12 @@ const useProjectPagination = () => {
         setMaxBatchReached(1);
         setHasSearched(false);
         setError(null);
-        
-        console.log('🧹 모든 필터 및 페이지네이션 초기화');
     }, []);
 
     useEffect(() => {
         const timeoutId = setTimeout(() => {
             // 프로젝트 이름, 언어, 라이선스 중 하나 이상이 있어야 검색
             if (searchQuery || selectedLanguage || selectedLicense) {
-                console.log('⚡ 자동 검색 실행 (디바운스 0.5초 후)');
                 performSearch(); // 검색 실행
             }
         }, 500);

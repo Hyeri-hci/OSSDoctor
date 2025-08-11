@@ -45,7 +45,7 @@ const useLeaderboardData = (timePeriod = 'realtime') => {
         } catch (error) {
             setError('리더보드 데이터를 불러오는데 실패했습니다.');
             setLoading(false);
-            console.error('Leaderboard refresh error:', error);
+            console.error('리더보드 새로고침 에러:', error);
         }
     };
 

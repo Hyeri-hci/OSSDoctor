@@ -383,15 +383,15 @@ const generateSearchKey = (filters) => {
 
 export const searchProjectsWithPagination = async (filters = {}, batchSize = 30, batchNumber = 1) => {
   try {
-    console.log(`배치 ${batchNumber} 검색 시작:`, { filters, batchSize, batchNumber });
-
+    console.log(`🔍 배치 ${batchNumber} 검색:`, filters);
+    
     const searchKey = generateSearchKey(filters);
     
     // 새로운 검색인 경우 커서 초기화
     if (currentSearchKey !== searchKey) {
       currentSearchKey = searchKey;
       batchCursors = {};
-      console.log('새로운 검색 - 커서 초기화');
+      console.log('🔄 새로운 검색 - 커서 초기화');
     }
 
     // GitHub API 사용 가능한 경우
@@ -407,8 +407,6 @@ export const searchProjectsWithPagination = async (filters = {}, batchSize = 30,
           }
         }
         
-        console.log(`GitHub API 호출 - 배치 ${batchNumber}, 커서:`, cursor ? cursor.substring(0, 20) + '...' : 'null');
-        
         // GitHub API 호출
         const apiResult = await searchProjects(filters, cursor);
         
@@ -423,12 +421,6 @@ export const searchProjectsWithPagination = async (filters = {}, batchSize = 30,
 
         // 배치 정보 계산
         const hasMoreBatches = apiResult.pageInfo?.hasNextPage || false;
-        
-        console.log(`GitHub API 배치 ${batchNumber} 완료:`, {
-          projectCount: apiResult.projects.length,
-          hasMoreBatches,
-          nextCursor: hasMoreBatches ? apiResult.pageInfo.endCursor.substring(0, 20) + '...' : 'none'
-        });
 
         return {
           projects: apiResult.projects,
@@ -483,15 +475,6 @@ export const searchProjectsWithPagination = async (filters = {}, batchSize = 30,
     const batchProjects = allProjects.slice(startIndex, endIndex);
     
     const hasMoreBatches = batchNumber < totalBatches;
-    
-    console.log(`Mock 데이터 배치 ${batchNumber} 검색 완료:`, {
-      totalProjects,
-      totalBatches,
-      currentBatchSize: batchProjects.length,
-      hasMoreBatches,
-      startIndex,
-      endIndex
-    });
 
     return {
       projects: batchProjects,
