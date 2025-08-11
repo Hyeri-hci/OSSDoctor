@@ -1,6 +1,10 @@
 import React from "react";
 import { LoadingSpinner, Button } from "../../../components/common";
-import { useMyActivityData } from "../hooks/useMyActivityData";
+import useMyActivityData from "../hooks/UseMyActivityData";
+import ContributionStatsCard from "./ContributionStatsCard";
+import ContributionTypeChart from "./ContributionTypeChart";
+import ActivityTrendChart from "./ActivityTrendChart";
+import BadgesSection from "./BadgesSection";
 
 const OverviewTab = () => {
     const { data, loading, error } = useMyActivityData();
@@ -13,7 +17,7 @@ const OverviewTab = () => {
                 color="blue"
             />
         );
-    } 
+    }
     else if (error) {
         return (
             <div className="text-center text-red-500 p-8">
@@ -35,7 +39,7 @@ const OverviewTab = () => {
             <ContributionStatsCard stats={data.stats} />
 
             {/* 차트 */}
-            <div className="grid gird-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* 기여별 활동 비율 (Pie) */}
                 <ContributionTypeChart data={data.contributionTypes} />
                 {/* 기여 활동 추이 (Bar) */}
@@ -47,3 +51,5 @@ const OverviewTab = () => {
         </div>
     )
 }
+
+export default OverviewTab;

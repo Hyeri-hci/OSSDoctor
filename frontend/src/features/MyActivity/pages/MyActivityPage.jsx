@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Layout } from "../../../components/layout";
 import { ScoreCards } from "../../../components/common";
+import OverviewTab from "../components/OverviewTab";
 
 const MyActivityPage = () => {
     const [activeTab, setActiveTab] = useState('overview');
@@ -26,18 +27,18 @@ const MyActivityPage = () => {
     }
 
     // Tab Content Rendering Logic
-    // const renderTabContent = () => {
-    //     switch (activeTab) {
-    //         case "overview":
-    //             return <OverviewTab />;
+    const renderTabContent = () => {
+        switch (activeTab) {
+            case "overview":
+                return <OverviewTab />;
     //         case "contributions-history":
     //             return <ContributionsHistoryTab />;
     //         case 'badges-earned':
     //             return <BadgesEarnedTab />;
-    //         default:
-    //             return <OverviewTab userData={userData} />;
-    //     }
-    // };
+            default:
+                return <OverviewTab userData={userData} />;
+        }
+    };
 
     return (
         <Layout>
@@ -87,7 +88,7 @@ const MyActivityPage = () => {
 
                             {/* 탭 콘텐츠 */}
                             <div className="bg-white">
-                                {/* {renderTabContent()} */}
+                                {renderTabContent()}
                             </div>
                         </div>
                     </div>
