@@ -102,7 +102,7 @@ const BadgesTab = ({ badges = [] }) => {
                 </div>
             </div>
 
-            <div className="min-h-96 border border-gray-200 rounded-lg p-4">
+            <div className="max-h-[32rem] overflow-y-auto border border-gray-200 rounded-lg p-4">
                 {showByCategory ? (
                     <div>
                         {filteredBadges.length === 0 ? (
