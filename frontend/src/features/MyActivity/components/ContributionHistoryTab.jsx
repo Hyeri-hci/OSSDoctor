@@ -71,7 +71,7 @@ const ContributionHistoryTab = () => {
 
     return (
         <div className="space-y-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Contribution History</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">기여 이력</h3>
             <p className="text-sm text-gray-600 mb-6">프로젝트 기여 내역을 확인하세요.</p>
 
             <TimelineContainer

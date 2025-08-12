@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 import { LoadingSpinner, Button } from "../../../components/common";
 import useMyActivityData from "../hooks/UseMyActivityData";
 import ContributionStatsCard from "./ContributionStatsCard";
@@ -6,7 +7,7 @@ import ContributionTypeChart from "./ContributionTypeChart";
 import ActivityTrendChart from "./ActivityTrendChart";
 import BadgesSection from "./BadgesSection";
 
-const OverviewTab = () => {
+const OverviewTab = ({ onTabChange }) => {
     const { data, loading, error } = useMyActivityData();
 
     if (loading) {
@@ -47,9 +48,16 @@ const OverviewTab = () => {
             </div>
 
             {/* 최근 획득 뱃지 */}
-            <BadgesSection badges={data.badges} />
+            <BadgesSection 
+                badges={data.badges} 
+                onShowAllBadges={() => onTabChange('badges')}
+            />
         </div>
     )
 }
+
+OverviewTab.propTypes = {
+    onTabChange: PropTypes.func
+};
 
 export default OverviewTab;

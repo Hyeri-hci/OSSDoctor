@@ -2,14 +2,23 @@ import React, { useEffect, useState } from "react";
 import { Layout } from "../../../components/layout";
 import OverviewTab from "../components/OverviewTab";
 import ContributionHistoryTab from "../components/ContributionHistoryTab";
+import BadgesTab from "../components/BadgesTab";
+import useMyActivityData from "../hooks/UseMyActivityData";
 
 const MyActivityPage = () => {
     const [activeTab, setActiveTab] = useState('overview');
+    const { data } = useMyActivityData();
 
     useEffect(() => {
         // 여기에 활동 데이터를 가져오는 API 호출 로직을 추가하세요.
         // 예시: setActivityData(fetchedData);
     }, []);
+
+    // 탭 변경 핸들러
+    const handleTabChange = (newTab) => {
+        setActiveTab(newTab);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
 
     // Mock Data
     const userData = {
@@ -30,11 +39,13 @@ const MyActivityPage = () => {
     const renderTabContent = () => {
         switch (activeTab) {
             case 'overview':
-                return <OverviewTab />;
+                return <OverviewTab onTabChange={handleTabChange} />;
             case 'contribution':
                 return <ContributionHistoryTab />;
+            case 'badges':
+                return <BadgesTab badges={data?.badges || []} />;
             default:
-                return <OverviewTab />;
+                return <OverviewTab onTabChange={handleTabChange} />;
         }
     };
 
@@ -81,24 +92,34 @@ const MyActivityPage = () => {
                             <div className="border-b border-gray-200">
                                 <nav className="-mb-px flex space-x-8" aria-label="Tabs">
                                     <button
-                                        onClick={() => setActiveTab('overview')}
+                                        onClick={() => handleTabChange('overview')}
                                         className={`py-2 px-1 border-b-2 font-medium text-sm ${
                                             activeTab === 'overview'
                                                 ? 'border-blue-500 text-blue-600'
                                                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                         }`}
                                     >
-                                        Overview
+                                        개요
                                     </button>
                                     <button
-                                        onClick={() => setActiveTab('contribution')}
+                                        onClick={() => handleTabChange('contribution')}
                                         className={`py-2 px-1 border-b-2 font-medium text-sm ${
                                             activeTab === 'contribution'
                                                 ? 'border-blue-500 text-blue-600'
                                                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                         }`}
                                     >
-                                        Contribution History
+                                        기여 이력
+                                    </button>
+                                    <button
+                                        onClick={() => handleTabChange('badges')}
+                                        className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                                            activeTab === 'badges'
+                                                ? 'border-blue-500 text-blue-600'
+                                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                        }`}
+                                    >
+                                        뱃지
                                     </button>
                                 </nav>
                             </div>
