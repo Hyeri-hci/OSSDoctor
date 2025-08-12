@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Layout } from "../../../components/layout";
-import { ScoreCards } from "../../../components/common";
 import OverviewTab from "../components/OverviewTab";
+import ContributionHistoryTab from "../components/ContributionHistoryTab";
 
 const MyActivityPage = () => {
     const [activeTab, setActiveTab] = useState('overview');
@@ -20,23 +20,21 @@ const MyActivityPage = () => {
         email: "user@example.com",
         scores: {
             overall: 85,
-            contributions: 90,
-            projects: 80,
-            community: 75,
+            activity: 90,
+            popularity: 78,
+            contribution: 82,
         }
     }
 
-    // Tab Content Rendering Logic
+    // 탭 콘텐츠 렌더링 함수
     const renderTabContent = () => {
         switch (activeTab) {
-            case "overview":
+            case 'overview':
                 return <OverviewTab />;
-    //         case "contributions-history":
-    //             return <ContributionsHistoryTab />;
-    //         case 'badges-earned':
-    //             return <BadgesEarnedTab />;
+            case 'contribution':
+                return <ContributionHistoryTab />;
             default:
-                return <OverviewTab userData={userData} />;
+                return <OverviewTab />;
         }
     };
 
@@ -78,13 +76,32 @@ const MyActivityPage = () => {
                 <div className="bg-white">
                     <div className="container mx-auto px-6 xl:px-8 2xl:px-12 py-6">
                         <div className="max-w-6xl mx-auto space-y-6">
-                            {/* 점수 카드 */}
-                            <ScoreCards
-                                scores={userData.scores}
-                                activeTab={activeTab}
-                                onTabChange={setActiveTab}
-                                variant="myactivity"
-                            />
+                            
+                            {/* 탭 네비게이션 */}
+                            <div className="border-b border-gray-200">
+                                <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+                                    <button
+                                        onClick={() => setActiveTab('overview')}
+                                        className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                                            activeTab === 'overview'
+                                                ? 'border-blue-500 text-blue-600'
+                                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                        }`}
+                                    >
+                                        Overview
+                                    </button>
+                                    <button
+                                        onClick={() => setActiveTab('contribution')}
+                                        className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                                            activeTab === 'contribution'
+                                                ? 'border-blue-500 text-blue-600'
+                                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                        }`}
+                                    >
+                                        Contribution History
+                                    </button>
+                                </nav>
+                            </div>
 
                             {/* 탭 콘텐츠 */}
                             <div className="bg-white">

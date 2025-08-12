@@ -12,7 +12,6 @@ import {
 const ContributionHistoryTab = () => {
     const displayData = { recentActivities: recentActivitiesData };
 
-    // 활동 타입별 아이콘 반환 함수 - HealthOverview와 동일
     const getActivityIcon = (activityType) => {
         const iconProps = "w-4 h-4 mr-2 flex-shrink-0";
         
@@ -32,12 +31,10 @@ const ContributionHistoryTab = () => {
         }
     };
 
-    // 활동 타입별 색상 반환 함수 - HealthOverview와 동일
     const getActivityColor = () => {
         return "bg-gray-50 border-gray-200";
     };
 
-    // 활동 타입별 라벨 반환 함수 - HealthOverview와 동일
     const getActivityTypeLabel = (activityType) => {
         const labels = {
             commit: "[commit]",

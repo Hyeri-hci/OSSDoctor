@@ -1,24 +1,16 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Button } from "../../../components/common";
 
-const ContributionStatsCard = ({ stats, onViewHistory }) => {
+const ContributionStatsCard = ({ stats }) => {
     const { monthlyPR, monthlyIssue, monthlyCommit, totalScore } = stats;
 
     return (
         <div className="bg-white border border-gray-200 rounded-lg p-6">
             {/* Section Title */}
-            <div className="flex justify-between items-center mb-4">
+            <div className="mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">
                     기여 통계 요약
                 </h3>
-                <Button
-                    onClick={onViewHistory}
-                    variant="outline"
-                    size="sm"
-                >
-                    자세한 이력 보기
-                </Button>
             </div>
 
             {/* Description */}
@@ -63,7 +55,6 @@ ContributionStatsCard.propTypes = {
         monthlyCommit: PropTypes.number.isRequired,
         totalScore: PropTypes.number.isRequired,
     }).isRequired,
-    onViewHistory: PropTypes.func.isRequired,
 };
 
 export default ContributionStatsCard;
