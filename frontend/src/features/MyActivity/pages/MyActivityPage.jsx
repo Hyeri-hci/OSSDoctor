@@ -65,17 +65,21 @@ const MyActivityPage = () => {
                                 </div>
 
                                 {/* 사용자 정보 */}
-                                <div className="flex-1">
+                                <div className="flex-1 min-w-0">
                                     {/* 이름 & 레벨 */}
                                     <div className="flex items-center gap-3 mb-2">
-                                        <h1 className="text-2xl font-bold text-gray-900">{userData.name}</h1>
-                                        <span className="px-2 py-1 bg-gray-800 text-white text-xs rounded font-medium">{`Level ${userData.level}`}</span>
+                                        <h1 className="text-2xl font-bold text-gray-900 truncate">{userData.name}</h1>
+                                        <span className="px-2 py-1 bg-gray-800 text-white text-xs rounded font-medium flex-shrink-0">{`Level ${userData.level}`}</span>
                                     </div>
                                     {/* 설명 */}
-                                    <p className="text-gray-600 text-sm mb-3">{userData.description}</p>
+                                    <p className="text-gray-600 text-sm mb-3 leading-relaxed">{userData.description}</p>
                                     {/* GitHub URL & e-mail */}
-                                    <div className="text-xs text-gray-500">
-                                        GitHub URL: {userData.githubUrl} | e-mail: {userData.email}
+                                    <div className="text-xs text-gray-500 break-all sm:break-normal">
+                                        <div className="flex flex-col sm:flex-row sm:gap-1">
+                                            <span>GitHub URL: {userData.githubUrl}</span>
+                                            <span className="hidden sm:inline">|</span>
+                                            <span className="sm:ml-1">e-mail: {userData.email}</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

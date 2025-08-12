@@ -7,10 +7,10 @@ import { calculateBadgeStats } from '../utils';
 const BadgesSection = ({ badges = [], onShowAllBadges }) => {
     const badgeStats = calculateBadgeStats(badges);
     
-    // 최근에 획득한 뱃지만 필터링 (earned가 true인 뱃지 중 최대 12개)
+    // 최근에 획득한 뱃지만 필터링 (earned가 true인 뱃지 중 최대 6개)
     const recentEarnedBadges = badges
         .filter(badge => badge.earned)
-        .slice(0, 12); // 최대 12개만 표시
+        .slice(0, 6); // 최대 6개만 표시
 
     return (
         <div className="border-t border-gray-200 pt-8">
@@ -25,7 +25,7 @@ const BadgesSection = ({ badges = [], onShowAllBadges }) => {
                 최근에 획득한 뱃지들입니다.
             </p>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 mb-4">
+            <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 mb-4">
                 {recentEarnedBadges.length === 0 ? (
                     <div className="col-span-full text-center py-4 text-gray-500">
                         아직 획득한 뱃지가 없습니다.
