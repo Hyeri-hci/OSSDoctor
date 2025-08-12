@@ -4,6 +4,9 @@ import React from 'react';
 // 공통 차트 컴포넌트를 import - 데이터 시각화용
 import { BarChart } from '../../../components/common/charts';
 
+// 공통 컴포넌트 import
+import { TimelineContainer } from '../../../components/common';
+
 // Heroicons import - 활동 타입별 아이콘용
 import { 
     CodeBracketIcon, 
@@ -205,47 +208,29 @@ const HealthOverview = ({ projectData }) => {
                         프로젝트의 최근 활동 내역을 확인할 수 있습니다.
                     </p>
 
-                    {/* 활동 이력 목록 - 스크롤 가능한 컨테이너 */}
-                    <div className="max-h-[32rem] overflow-y-auto border border-gray-200 rounded-lg p-4">
-                        <div className="space-y-6">
-                            {(displayData.recentActivities || []).map((dayActivity, dayIndex) => (
-                                <div key={dayIndex} className="border-l-2 border-gray-200 pl-4 relative">
-                                    {/* 날짜별 구분선의 동그라미 표시 */}
-                                    <div className="absolute -left-2 top-0 w-4 h-4 bg-white border-2 border-gray-300 rounded-full"></div>
-
-                                    {/* 날짜 헤더 */}
-                                    <div className="mb-3">
-                                        <h4 className="text-sm font-semibold text-gray-900">{dayActivity.date}</h4>
-                                    </div>
-
-                                    {/* 해당 날짜의 활동 목록 */}
-                                    <div className="space-y-3">
-                                        {dayActivity.activities.map((activity, activityIndex) => (
-                                            <div
-                                                key={activityIndex}
-                                                className={`p-3 rounded-lg border ${getActivityColor()}`}
-                                            >
-                                                <div className="flex items-start">
-                                                    {/* 활동 내용 */}
-                                                    <div className="flex-1 min-w-0">
-                                                        <div className="flex items-center">
-                                                            {getActivityIcon(activity.type)}
-                                                            <h5 className="text-sm font-bold text-gray-900 truncate">
-                                                                {getActivityTypeLabel(activity.type)} {activity.title}
-                                                            </h5>
-                                                        </div>
-                                                        <p className="text-xs text-gray-600 mt-1 ml-6">
-                                                            {activity.author} • {activity.time}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
+                    {/* TimelineContainer 사용 */}
+                    <TimelineContainer
+                        data={displayData.recentActivities || []}
+                        maxHeight="32rem"
+                        renderItem={(activity) => (
+                            <div className={`p-3 rounded-lg border ${getActivityColor()}`}>
+                                <div className="flex items-start">
+                                    {/* 활동 내용 */}
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center">
+                                            {getActivityIcon(activity.type)}
+                                            <h5 className="text-sm font-bold text-gray-900 truncate">
+                                                {getActivityTypeLabel(activity.type)} {activity.title}
+                                            </h5>
+                                        </div>
+                                        <p className="text-xs text-gray-600 mt-1 ml-6">
+                                            {activity.author} • {activity.time}
+                                        </p>
                                     </div>
                                 </div>
-                            ))}
-                        </div>
-                    </div>
+                            </div>
+                        )}
+                    />
                 </div>
             </div>
         </div>
