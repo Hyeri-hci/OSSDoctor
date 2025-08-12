@@ -52,11 +52,12 @@ const BadgesSection = ({ badges = [] }) => {
             </p>
 
             <div className="flex flex-wrap justify-between items-center gap-2 mb-4">
-                <div className="flex space-x-2">
+                <div className="flex flex-wrap gap-2">
                     <Button
                         onClick={() => setFilter('all')}
                         variant={filter === 'all' ? 'primary' : 'outline'}
                         size="sm"
+                        className="whitespace-nowrap"
                     >
                         전체 ({totalCount})
                     </Button>
@@ -65,6 +66,7 @@ const BadgesSection = ({ badges = [] }) => {
                         onClick={() => setFilter('earned')}
                         variant={filter === 'earned' ? 'primary' : 'outline'}
                         size="sm"
+                        className="whitespace-nowrap"
                     >
                         획득 ({earnedCount})
                     </Button>
@@ -73,16 +75,18 @@ const BadgesSection = ({ badges = [] }) => {
                         onClick={() => setFilter('unearned')}
                         variant={filter === 'unearned' ? 'primary' : 'outline'}
                         size="sm"
+                        className="whitespace-nowrap"
                     >
                         미획득 ({totalCount - earnedCount})
                     </Button>
                 </div>
 
-                <div className="flex space-x-2">
+                <div className="flex flex-wrap gap-2">
                     <Button
                         onClick={() => setShowByCategory(false)}
                         variant={!showByCategory ? 'secondary' : 'outline'}
                         size="sm"
+                        className="whitespace-nowrap"
                     >
                         전체 목록
                     </Button>
@@ -91,6 +95,7 @@ const BadgesSection = ({ badges = [] }) => {
                         onClick={() => setShowByCategory(true)}
                         variant={showByCategory ? 'secondary' : 'outline'}
                         size="sm"
+                        className="whitespace-nowrap"
                     >
                         카테고리별
                     </Button>
