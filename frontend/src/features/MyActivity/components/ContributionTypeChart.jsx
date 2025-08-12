@@ -5,13 +5,13 @@ import { PieChart } from "../../../components/common/charts";
 
 const ContributionTypeChart = ({ data }) => {
     return (
-        <div>
+        <div className="bg-white border border-gray-200 rounded-lg p-6">
             {/* Chart title */}
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
                 기여 유형별 활동 비율
             </h3>
             {/* Chart Description */}
-            <p className="text-sm text-gray-600 mb-4">
+            <p className="text-sm text-gray-600 mb-6">
                 기여 유형별 활동 비율을 나타내는 원형 차트입니다.
             </p>
 

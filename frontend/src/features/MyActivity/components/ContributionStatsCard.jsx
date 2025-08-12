@@ -1,44 +1,53 @@
 import React from "react";
 import PropTypes from "prop-types";
+import { Button } from "../../../components/common";
 
-const ContributionStatsCard = ({ stats }) => {
+const ContributionStatsCard = ({ stats, onViewHistory }) => {
     const { monthlyPR, monthlyIssue, monthlyCommit, totalScore } = stats;
 
     return (
-        <div>
+        <div className="bg-white border border-gray-200 rounded-lg p-6">
             {/* Section Title */}
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                기여 통계 요약
-            </h3>
+            <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">
+                    기여 통계 요약
+                </h3>
+                <Button
+                    onClick={onViewHistory}
+                    variant="outline"
+                    size="sm"
+                >
+                    자세한 이력 보기
+                </Button>
+            </div>
 
             {/* Description */}
-            <p className="text-sm text-gray-600 mb-4">
+            <p className="text-sm text-gray-600 mb-6">
                 * 총 기여 기준
             </p>
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-
                 {/* PR */}
-                <div className="text-center">
+                <div className="text-center bg-white border border-gray-200 rounded-lg p-4">
                     <div className="text-sm text-gray-600 mb-1">최근 1개월 PR</div>
                     <div className="text-2xl font-bold text-gray-900">{monthlyPR}</div>
                 </div>
 
                 {/* Issue */}
-                <div className="text-center">
+                <div className="text-center bg-white border border-gray-200 rounded-lg p-4">
                     <div className="text-sm text-gray-600 mb-1">최근 1개월 Issue</div>
                     <div className="text-2xl font-bold text-gray-900">{monthlyIssue}</div>
                 </div>
 
                 {/* Commit */}
-                <div className="text-center">
+                <div className="text-center bg-white border border-gray-200 rounded-lg p-4">
                     <div className="text-sm text-gray-600 mb-1">최근 1개월 Commit</div>
                     <div className="text-2xl font-bold text-gray-900">{monthlyCommit}</div>
                 </div>
 
                 {/* Total Score */}
-                <div className="text-center">
+                <div className="text-center bg-white border border-gray-200 rounded-lg p-4">
                     <div className="text-sm text-gray-600 mb-1">총 점수</div>
                     <div className="text-2xl font-bold text-gray-900">{totalScore}</div>
                 </div>
@@ -54,6 +63,7 @@ ContributionStatsCard.propTypes = {
         monthlyCommit: PropTypes.number.isRequired,
         totalScore: PropTypes.number.isRequired,
     }).isRequired,
+    onViewHistory: PropTypes.func.isRequired,
 };
 
 export default ContributionStatsCard;

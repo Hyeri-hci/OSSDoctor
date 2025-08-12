@@ -4,13 +4,13 @@ import { BarChart } from "../../../components/common/charts";
 
 const ActivityTrendChart = ({ data }) => {
     return (
-        <div>
+        <div className="bg-white border border-gray-200 rounded-lg p-6">
             {/* Chart title */}
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
                 기여 활동 추이
             </h3>
             {/* Chart Description */}
-            <p className="text-sm text-gray-600 mb-4">
+            <p className="text-sm text-gray-600 mb-6">
                 최근 기여 활동의 월별 추이를 나타내는 막대 차트입니다.
             </p>
 
