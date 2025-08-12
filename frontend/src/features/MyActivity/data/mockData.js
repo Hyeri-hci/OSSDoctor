@@ -490,51 +490,481 @@ export const badgesData = [
   }
 ];
 
-// 기여 이력 데이터
+// 기여 이력 데이터 - HealthOverview와 동일한 형식
 export const contributionHistory = [
   {
     id: 1,
     title: 'Cleanup disableDefaultPropsExceptForClasses flag',
-    type: 'pr',
+    type: 'pr_merged',
     number: 35648,
     status: 'merged',
     timestamp: 'yesterday',
-    icon: '🔗'
+    icon: '�',
+    author: 'username',
+    time: 'merged yesterday',
+    repository: 'facebook/react'
   },
   {
     id: 2,
     title: '[compiler] Fix bug with reassigning function param in destructuring',
-    type: 'pr',
+    type: 'pr_merged',
     number: 53624,
     status: 'merged',
     timestamp: 'last week',
-    icon: '🔗'
+    icon: '�',
+    author: 'username',
+    time: 'merged last week',
+    repository: 'facebook/react'
   },
   {
     id: 3,
     title: '[DevTools Bug] callSite.getScriptNameOrSourceURL is not a function (it is undefined)',
-    type: 'issue',
+    type: 'issue_opened',
     number: 30801,
     status: 'opened',
     timestamp: 'yesterday',
-    icon: '⚪'
+    icon: '🔧',
+    author: 'username',
+    time: 'opened yesterday',
+    repository: 'facebook/react'
   },
   {
     id: 4,
-    title: 'Cleanup disableDefaultPropsExceptForClasses flag',
-    type: 'pr',
-    number: 35648,
-    status: 'merged',
-    timestamp: 'yesterday',
-    icon: '🔗'
+    title: 'Add support for React Server Components',
+    type: 'pr_opened',
+    number: 35650,
+    status: 'opened',
+    timestamp: '2 days ago',
+    icon: '📝',
+    author: 'username',
+    time: 'opened 2 days ago',
+    repository: 'vercel/next.js'
   },
   {
     id: 5,
-    title: 'Cleanup disableDefaultPropsExceptForClasses flag',
-    type: 'pr',
-    number: 35648,
+    title: 'Fix TypeScript types for new hooks',
+    type: 'commit',
+    number: null,
+    status: 'committed',
+    timestamp: '3 days ago',
+    icon: '🔧',
+    author: 'username',
+    time: 'committed 3 days ago',
+    repository: 'facebook/react'
+  },
+  {
+    id: 6,
+    title: 'Documentation update for installation guide',
+    type: 'pr_merged',
+    number: 12345,
     status: 'merged',
-    timestamp: null,
-    icon: '🔗'
+    timestamp: '1 week ago',
+    icon: '📝',
+    author: 'username',
+    time: 'merged 1 week ago',
+    repository: 'nodejs/node'
+  },
+  {
+    id: 7,
+    title: 'Performance optimization in rendering pipeline',
+    type: 'issue_closed',
+    number: 54321,
+    status: 'closed',
+    timestamp: '1 week ago',
+    icon: '�',
+    author: 'username',
+    time: 'closed 1 week ago',
+    repository: 'facebook/react'
+  },
+  {
+    id: 8,
+    title: 'Add unit tests for new feature',
+    type: 'commit',
+    number: null,
+    status: 'committed',
+    timestamp: '2 weeks ago',
+    icon: '🔧',
+    author: 'username',
+    time: 'committed 2 weeks ago',
+    repository: 'microsoft/vscode'
+  }
+];
+
+// 날짜별로 그룹화된 기여 이력 데이터 (HealthOverview 형식) - 확장된 데이터
+export const recentActivitiesData = [
+  {
+    date: "2024년 8월 12일",
+    activities: [
+      {
+        type: "pr_merged",
+        title: "Add new React 19 features support",
+        author: "username",
+        time: "merged today",
+        repository: "facebook/react",
+        number: 35700
+      },
+      {
+        type: "commit",
+        title: "Update dependencies to latest versions",
+        author: "username",
+        time: "committed today",
+        repository: "vercel/next.js"
+      }
+    ]
+  },
+  {
+    date: "2024년 8월 11일",
+    activities: [
+      {
+        type: "pr_merged",
+        title: "Cleanup disableDefaultPropsExceptForClasses flag",
+        author: "username",
+        time: "merged yesterday",
+        repository: "facebook/react",
+        number: 35648
+      },
+      {
+        type: "issue_opened",
+        title: "[DevTools Bug] callSite.getScriptNameOrSourceURL is not a function",
+        author: "username", 
+        time: "opened yesterday",
+        repository: "facebook/react",
+        number: 30801
+      },
+      {
+        type: "pr_opened",
+        title: "Improve TypeScript performance in large codebases",
+        author: "username",
+        time: "opened yesterday",
+        repository: "microsoft/TypeScript",
+        number: 56789
+      }
+    ]
+  },
+  {
+    date: "2024년 8월 10일",
+    activities: [
+      {
+        type: "issue_closed",
+        title: "Memory leak in useEffect cleanup",
+        author: "username",
+        time: "closed 2 days ago",
+        repository: "facebook/react",
+        number: 35555
+      },
+      {
+        type: "commit",
+        title: "Add comprehensive unit tests for new hooks",
+        author: "username",
+        time: "committed 2 days ago",
+        repository: "facebook/react"
+      }
+    ]
+  },
+  {
+    date: "2024년 8월 9일",
+    activities: [
+      {
+        type: "pr_opened",
+        title: "Add support for React Server Components",
+        author: "username",
+        time: "opened 3 days ago",
+        repository: "vercel/next.js",
+        number: 35650
+      },
+      {
+        type: "pr_merged",
+        title: "Fix CSS-in-JS hydration mismatch",
+        author: "username",
+        time: "merged 3 days ago",
+        repository: "emotion-js/emotion",
+        number: 2890
+      }
+    ]
+  },
+  {
+    date: "2024년 8월 8일",
+    activities: [
+      {
+        type: "commit",
+        title: "Fix TypeScript types for new hooks",
+        author: "username",
+        time: "committed 4 days ago",
+        repository: "facebook/react"
+      },
+      {
+        type: "issue_opened",
+        title: "Performance regression in React 18.3",
+        author: "username",
+        time: "opened 4 days ago",
+        repository: "facebook/react",
+        number: 35601
+      }
+    ]
+  },
+  {
+    date: "2024년 8월 7일",
+    activities: [
+      {
+        type: "pr_merged",
+        title: "Implement concurrent rendering optimizations",
+        author: "username",
+        time: "merged 5 days ago",
+        repository: "facebook/react",
+        number: 35600
+      },
+      {
+        type: "commit",
+        title: "Add ESLint rules for React best practices",
+        author: "username",
+        time: "committed 5 days ago",
+        repository: "eslint/eslint-plugin-react"
+      },
+      {
+        type: "issue_closed",
+        title: "Bundle size increase after update",
+        author: "username",
+        time: "closed 5 days ago",
+        repository: "webpack/webpack",
+        number: 17234
+      }
+    ]
+  },
+  {
+    date: "2024년 8월 6일",
+    activities: [
+      {
+        type: "pr_opened",
+        title: "Add experimental Suspense boundaries",
+        author: "username",
+        time: "opened 6 days ago",
+        repository: "facebook/react",
+        number: 35580
+      }
+    ]
+  },
+  {
+    date: "2024년 8월 5일",
+    activities: [
+      {
+        type: "commit",
+        title: "Refactor component lifecycle methods",
+        author: "username",
+        time: "committed 1 week ago",
+        repository: "facebook/react"
+      },
+      {
+        type: "pr_merged",
+        title: "Improve error boundaries handling",
+        author: "username",
+        time: "merged 1 week ago",
+        repository: "facebook/react",
+        number: 35570
+      }
+    ]
+  },
+  {
+    date: "2024년 8월 4일",
+    activities: [
+      {
+        type: "pr_merged",
+        title: "[compiler] Fix bug with reassigning function param in destructuring",
+        author: "username",
+        time: "merged 1 week ago",
+        repository: "facebook/react",
+        number: 53624
+      },
+      {
+        type: "pr_merged",
+        title: "Documentation update for installation guide",
+        author: "username",
+        time: "merged 1 week ago",
+        repository: "nodejs/node",
+        number: 12345
+      },
+      {
+        type: "issue_opened",
+        title: "Node.js 20 compatibility issues",
+        author: "username",
+        time: "opened 1 week ago",
+        repository: "nodejs/node",
+        number: 49876
+      }
+    ]
+  },
+  {
+    date: "2024년 8월 3일",
+    activities: [
+      {
+        type: "issue_closed",
+        title: "Performance optimization in rendering pipeline",
+        author: "username",
+        time: "closed 1 week ago",
+        repository: "facebook/react",
+        number: 54321
+      },
+      {
+        type: "commit",
+        title: "Update build configuration for production",
+        author: "username",
+        time: "committed 1 week ago",
+        repository: "webpack/webpack"
+      }
+    ]
+  },
+  {
+    date: "2024년 8월 2일",
+    activities: [
+      {
+        type: "pr_opened",
+        title: "Add support for Web Components integration",
+        author: "username",
+        time: "opened 10 days ago",
+        repository: "facebook/react",
+        number: 35500
+      },
+      {
+        type: "commit",
+        title: "Implement lazy loading for components",
+        author: "username",
+        time: "committed 10 days ago",
+        repository: "facebook/react"
+      }
+    ]
+  },
+  {
+    date: "2024년 8월 1일",
+    activities: [
+      {
+        type: "pr_merged",
+        title: "Fix memory leak in development mode",
+        author: "username",
+        time: "merged 11 days ago",
+        repository: "facebook/react",
+        number: 35490
+      },
+      {
+        type: "issue_closed",
+        title: "Hot reload not working in development",
+        author: "username",
+        time: "closed 11 days ago",
+        repository: "webpack/webpack-dev-server",
+        number: 4567
+      }
+    ]
+  },
+  {
+    date: "2024년 7월 31일",
+    activities: [
+      {
+        type: "commit",
+        title: "Add TypeScript strict mode configuration",
+        author: "username",
+        time: "committed 12 days ago",
+        repository: "microsoft/TypeScript"
+      },
+      {
+        type: "pr_opened",
+        title: "Implement new JSX transform",
+        author: "username",
+        time: "opened 12 days ago",
+        repository: "babel/babel",
+        number: 15432
+      }
+    ]
+  },
+  {
+    date: "2024년 7월 30일",
+    activities: [
+      {
+        type: "issue_opened",
+        title: "CSS modules not working with latest version",
+        author: "username",
+        time: "opened 13 days ago",
+        repository: "css-modules/css-modules",
+        number: 987
+      },
+      {
+        type: "commit",
+        title: "Fix compatibility with Node.js 20",
+        author: "username",
+        time: "committed 13 days ago",
+        repository: "nodejs/node"
+      }
+    ]
+  },
+  {
+    date: "2024년 7월 29일",
+    activities: [
+      {
+        type: "pr_merged",
+        title: "Improve bundle splitting algorithm",
+        author: "username",
+        time: "merged 2 weeks ago",
+        repository: "webpack/webpack",
+        number: 17100
+      }
+    ]
+  },
+  {
+    date: "2024년 7월 28일",
+    activities: [
+      {
+        type: "commit",
+        title: "Add unit tests for new feature",
+        author: "username",
+        time: "committed 2 weeks ago",
+        repository: "microsoft/vscode"
+      },
+      {
+        type: "issue_closed",
+        title: "Extension marketplace search issues",
+        author: "username",
+        time: "closed 2 weeks ago",
+        repository: "microsoft/vscode",
+        number: 189234
+      }
+    ]
+  },
+  {
+    date: "2024년 7월 27일",
+    activities: [
+      {
+        type: "pr_opened",
+        title: "Add dark mode support for editor",
+        author: "username",
+        time: "opened 2 weeks ago",
+        repository: "microsoft/vscode",
+        number: 189200
+      },
+      {
+        type: "commit",
+        title: "Optimize syntax highlighting performance",
+        author: "username",
+        time: "committed 2 weeks ago",
+        repository: "microsoft/vscode"
+      }
+    ]
+  },
+  {
+    date: "2024년 7월 26일",
+    activities: [
+      {
+        type: "pr_merged",
+        title: "Fix accessibility issues in navigation",
+        author: "username",
+        time: "merged 2 weeks ago",
+        repository: "microsoft/vscode",
+        number: 189150
+      },
+      {
+        type: "issue_opened",
+        title: "Screen reader compatibility problems",
+        author: "username",
+        time: "opened 2 weeks ago",
+        repository: "microsoft/vscode",
+        number: 189100
+      }
+    ]
   }
 ];
