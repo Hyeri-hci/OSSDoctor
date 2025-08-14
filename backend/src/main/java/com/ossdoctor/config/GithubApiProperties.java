@@ -18,7 +18,7 @@ public class GithubApiProperties {
         private String baseUrl = "https://api.github.com";
         private String graphqlUrl = "https://api.github.com/graphql";
 
-        private int rateLimitMaxRatries = 3;
+        private int rateLimitMaxRetries = 3;
         private int cacheExpiryMinutes = 10;
         private int timeoutSeconds = 30;
     }
