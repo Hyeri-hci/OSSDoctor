@@ -238,7 +238,7 @@ public class GitHubApiService {
     public Mono<List<ActivityDTO>> getRecentActivities(String owner, String repo) {
         log.info("Fetching recent activities for {}/{}", owner, repo);
 
-        LocalDateTime since = LocalDateTime.now().minusDays(7);
+        //LocalDateTime since = LocalDateTime.now().minusDays(7);
 
         Map<String, Object> variables = Map.of(
                 "owner", owner,
@@ -346,12 +346,12 @@ public class GitHubApiService {
 
         // data 내부의 repository 필드를 꺼내라
         /*
-        * {
-        *   "data": {
-        *       "repository": { ... }
-        *   }
-        * }
-        **/
+         * {
+         *   "data": {
+         *       "repository": { ... }
+         *   }
+         * }
+         **/
         JsonNode repository = response.path("data").path("repository");
 
         // 언어 통계 계산
@@ -468,13 +468,13 @@ public class GitHubApiService {
                     : "pr_merged";
 
             activities.add(ActivityDTO.builder()
-                            .type(type)
-                            .title(pr.path("title").asText())
-                            .author(pr.path("author").path(("login")).asText())
-                            .startDate(pr.path("createdAt").asText())
-                            .endDate(pr.path("mergedAt").asText().isEmpty() ?
-                                    pr.path("updatedAt").asText() : pr.path("mergedAt").asText())
-                            .number(pr.path("number").asInt())
+                    .type(type)
+                    .title(pr.path("title").asText())
+                    .author(pr.path("author").path(("login")).asText())
+                    .startDate(pr.path("createdAt").asText())
+                    .endDate(pr.path("mergedAt").asText().isEmpty() ?
+                            pr.path("updatedAt").asText() : pr.path("mergedAt").asText())
+                    .number(pr.path("number").asInt())
                     .build());
         }
 
@@ -509,11 +509,11 @@ public class GitHubApiService {
 
         for (JsonNode contributor : response) {
             contributors.add(ContributorDTO.builder()
-                            .name(contributor.path("login").asText())
-                            .contributions(contributor.path("contributions").asInt())
-                            .avatarUrl(contributor.path("avatarUrl").asText())
-                            .htmlUrl(contributor.path("htmlUrl").asText())
-                            .type(contributor.path("type").asText())
+                    .name(contributor.path("login").asText())
+                    .contributions(contributor.path("contributions").asInt())
+                    .avatarUrl(contributor.path("avatarUrl").asText())
+                    .htmlUrl(contributor.path("htmlUrl").asText())
+                    .type(contributor.path("type").asText())
                     .build());
         }
 
@@ -535,8 +535,8 @@ public class GitHubApiService {
                 .build();
     }
 
-    public ScoreDTO getHealthScore(String owner, String repo) {
-        return calculateHealthScore(repositoryService.findByFullName(owner, repo));
+    public ScoreDTO getTotalScore(String owner, String repo) {
+        return calculateTotalScore(repositoryService.findByFullName(owner, repo));
     }
 
     // 건강 점수 계산 최종
@@ -559,7 +559,6 @@ public class GitHubApiService {
                 .repositoryId(repo.getIdx())
                 .scoreType(SCORE_TYPE.HEALTH)
                 .score(healthScore)
-                .createdAt(LocalDateTime.now())
                 .build());
     }
 
@@ -586,14 +585,28 @@ public class GitHubApiService {
         else return 0;
     }
 
-    // 건강 점수 계산3 - PR Merge 비율
+    // 건강 점수 계산3 - PR 활동 점수
     private int calculatePrMergeScore(RepositoryDTO repo) {
         int mergedPR = repo.getMergedPullRequests();
         int totalPR = repo.getTotalPullRequests();
 
-        // 로직
+        int activityScore = mergedPR + totalPR;
 
-        return 0;
+        if (activityScore <= 1) return 0;
+        else if (activityScore <= 3) return 3;
+        else if (activityScore <= 5) return 5;
+        else if (activityScore <= 8) return 7;
+        else if (activityScore <= 12) return 10;
+        else if (activityScore <= 16) return 12;
+        else if (activityScore <= 20) return 14;
+        else if (activityScore <= 25) return 16;
+        else if (activityScore <= 30) return 18;
+        else if (activityScore <= 40) return 20;
+        else if (activityScore <= 50) return 22;
+        else if (activityScore <= 70) return 24;
+        else if (activityScore <= 100) return 26;
+        else if (activityScore <= 150) return 28;
+        else return 30;
     }
 
     // 건강 점수 계산4 - Issue 해결율
@@ -601,11 +614,93 @@ public class GitHubApiService {
         int closedIssue = repo.getClosedIssues();
         int totalIssue = repo.getTotalIssues();
 
-        // 로직
+        // totalIssue가 0이면 점수 0점
+        if (totalIssue == 0) {
+            return 0;
+        }
 
-        return 0;
+        double ratio = (double) closedIssue / totalIssue; // 해결율
+        return (int) Math.round(ratio * 25);    // 25점 만점
     }
 
+    // 소셜 점수 계산 최종
+    private ScoreDTO calculateSocialScore(RepositoryDTO repo) {
+
+        int star = repo.getStar();
+        int fork = repo.getFork();
+        int watchers = repo.getWatchers();
+        int contributors = repo.getContributors();
+
+        int starScore = calculateStarScore(star);
+        int forkScore = calculateForkAndWatcherScore(fork);
+        int watcherScore = calculateForkAndWatcherScore(watchers);
+        int contributorScore = calculateContributorScore(contributors);
+
+        log.info("repo: " + repo.getName());
+        log.info("starScore: " + starScore);
+        log.info("forkScore: " + forkScore);
+        log.info("watcherScore: " + watcherScore);
+        log.info("contributorScore: " + contributorScore);
+
+        int socialScore = starScore + forkScore + watcherScore + contributorScore;
+
+        return scoreService.save(ScoreDTO.builder()
+                .repositoryId(repo.getIdx())
+                .scoreType(SCORE_TYPE.SOCIAL)
+                .score(socialScore)
+                .build());
+    }
+
+    // 소셜 점수 계산1 - star 수
+    private int calculateStarScore(int count) {
+
+        if (count >= 1024) return 25;
+        else if (count >= 512) return 20;
+        else if (count >= 256) return 15;
+        else if (count >= 128) return 10;
+        else if (count >= 64) return 5;
+        else if (count >= 32) return 3;
+        else return 0;
+    }
+
+    // 소셜 점수 계산2, 3 - fork 수, watcher 수
+    private int calculateForkAndWatcherScore(int count) {
+
+        if (count >= 100) return 25;
+        else if (count >= 75) return 20;
+        else if (count >= 50) return 15;
+        else if (count >= 25) return 10;
+        else if (count >= 10) return 5;
+        else if (count >= 5) return 3;
+        else return 0;
+    }
+
+    // 소셜 점수 계산4 - contributor 수
+    private int calculateContributorScore(int count) {
+
+        if (count >= 50) return 25;
+        else return count / 2;
+    }
+
+    // 종합 점수 계산
+    private ScoreDTO calculateTotalScore(RepositoryDTO repo) {
+
+        int healthScore = calculateHealthScore(repo).getScore() * 5;
+        int socialScore = calculateSocialScore(repo).getScore() * 2;
+
+        log.info("repo: " + repo.getName());
+        log.info("healthScore: " + healthScore);
+        log.info("socialScore: " + socialScore);
+
+        // 최종 점수는 반올림
+        int totalScore = (healthScore + socialScore) / 10;
+
+        return scoreService.save(ScoreDTO.builder()
+                .repositoryId(repo.getIdx())
+                .scoreType(SCORE_TYPE.TOTAL)
+                .score(totalScore)
+                .build());
+    }
 
     // ========== 유틸리티 메서드들 ==========
 
