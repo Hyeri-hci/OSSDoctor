@@ -2,6 +2,7 @@
  * @param {Object} options - 인증 옵션
  * @param {string} options.scope - GitHub에서 요청할 권한 범위 (예: 'read:user, repo, user:email')
  * @param {string} options.state - CSRF 공격 방지를 위한 상태 값 (보안용 랜덤 문자열)
+ * @param {string} options.redirectAfterLogin - 로그인 후 이동할 페이지 경로
  */
 
 export const initiateGitHubLogin = (options = {}) => {
@@ -24,7 +25,13 @@ export const initiateGitHubLogin = (options = {}) => {
     const {
         scope = 'read:user,user:email,public_repo', // 기본 권한 범위: 사용자 정보 읽기, 저장소 접근, 이메일 읽기
         state = generateRandomState(), // CSRF 방지를 위한 랜덤 문자열
+        redirectAfterLogin = null, // 로그인 후 이동할 페이지
     } = options;
+
+    // 로그인 후 리다이렉션할 페이지를 sessionStorage에 저장
+    if (redirectAfterLogin) {
+        sessionStorage.setItem('redirectAfterLogin', redirectAfterLogin);
+    }
 
     const authUrl = new URL('https://github.com/login/oauth/authorize');
 
@@ -58,7 +65,7 @@ const generateRandomState = () => {
 };
 
 /** * GitHub 로그인 후 상태 검증
- * 
+ *
  * @returns {Promise<Object>} 로그인 상태와 사용자 정보
  * - isLoggedIn: {boolean} - 로그인 여부
  * - user: {Object|null} - 사용자 정보 (로그인하지 않은 경우 null)
@@ -88,7 +95,7 @@ export const checkAuthStatus = async () => {
             console.log('로그인 상태 확인 성공:', data);
 
             return {
-                isLoggedIn: true,
+                isLoggedIn: data.isLoggedIn || false,
                 user: data.user || null,
                 ...data,
             };
@@ -110,7 +117,7 @@ export const checkAuthStatus = async () => {
 };
 
 /** * GitHub 로그아웃
- * @returns {Promise<boolean>} 로그아웃 성공 여부 
+ * @returns {Promise<boolean>} 로그아웃 성공 여부
  */
 export const logout = async () => {
     try {

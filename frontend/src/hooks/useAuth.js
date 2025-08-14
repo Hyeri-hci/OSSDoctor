@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
     checkAuthStatus,
     logout
@@ -48,10 +48,10 @@ export const useAuth = () => {
         }
     }, []);
 
-    /** 
+    /**
      * 로그인 처리 함수 (OAuth 콜백 후 상태 업데이트)
      * @param {Object} authResult - OAuth 인증 결과 (백엔드에서 반환된 사용자 정보)
-     * 
+     *
      * - authResult가 유효한 경우, 사용자 정보 설정
      * - authResult가 유효하지 않은 경우, 백엔드에서 상태 다시 확인
      */
@@ -69,7 +69,7 @@ export const useAuth = () => {
                 // 백엔드에서 현재 인증 상태 확인
                 console.log('백엔드에서 현재 인증 상태 확인 중...');
                 const authStatus = await checkAuthStatus();
-                
+
                 if (authStatus.isLoggedIn && authStatus.user) {
                     console.log('백엔드 인증 상태 확인 성공:', authStatus.user);
                     setIsAuthenticated(true);
@@ -78,7 +78,7 @@ export const useAuth = () => {
                     console.log('백엔드 인증 상태 확인 결과: 로그인되지 않음');
                     setIsAuthenticated(false);
                     setUser(null);
-                    
+
                     if (authStatus.error) {
                         setError(authStatus.error);
                     }
@@ -141,6 +141,11 @@ export const useAuth = () => {
             setIsLoading(false);
         }
     }, [isAuthenticated]);
+
+    // 컴포넌트 마운트 시 자동으로 인증 상태 확인
+    useEffect(() => {
+        loadUserData();
+    }, [loadUserData]);
 
     return {
         isAuthenticated,
