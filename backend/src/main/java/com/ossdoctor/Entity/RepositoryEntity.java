@@ -35,7 +35,7 @@ public class RepositoryEntity {
     @Column(length = 50, nullable = false)
     private String owner;
 
-    @Column(length = 50, nullable = false)
+    @Column(length = 50)
     private String language;
 
     @Column(name = "source_type")
