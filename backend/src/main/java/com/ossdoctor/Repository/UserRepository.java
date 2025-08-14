@@ -13,4 +13,7 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
     Optional<UserEntity> findById(Long id);
 
     Optional<UserEntity> findByNickname(String nickname);
+
+    // GitHub ID로 사용자 조회 (중복 가입 방지)
+    Optional<UserEntity> findByGithubId(Long githubId);
 }
