@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import { Layout } from "../../../components/layout";
 import { useAuth } from "../../../hooks/useAuth";
 import { initiateGitHubLogin } from "../../../utils/github-auth";
@@ -18,13 +18,26 @@ export default function MainPage() {
         if (authStatus === 'success' && user) {
             console.log('OAuth 로그인 성공:', user);
             handleLogin(); // 로그인 상태 업데이트
-            
-            // URL에서 파라미터 제거
+
+            // 저장된 리다이렉션 페이지가 있는지 확인
+            const redirectAfterLogin = sessionStorage.getItem('redirectAfterLogin');
+            if (redirectAfterLogin) {
+                // 저장된 페이지로 리다이렉션
+                sessionStorage.removeItem('redirectAfterLogin'); // 사용 후 제거
+                console.log('로그인 완료, 리다이렉션:', redirectAfterLogin);
+                window.location.href = redirectAfterLogin;
+                return;
+            }
+
+            // URL에서 파라미터 제거 (기본 동작)
             window.history.replaceState({}, document.title, window.location.pathname);
         } else if (authStatus === 'error') {
             console.error('OAuth 로그인 실패');
             alert('로그인에 실패했습니다. 다시 시도해주세요.');
-            
+
+            // 저장된 리다이렉션 정보 정리
+            sessionStorage.removeItem('redirectAfterLogin');
+
             // URL에서 파라미터 제거
             window.history.replaceState({}, document.title, window.location.pathname);
         }
@@ -40,7 +53,7 @@ export default function MainPage() {
             const trimmedUrl = url.trim();
             const githubUrlPattern = /^(https?:\/\/)?(www\.)?github\.com\/[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+$/;
 
-            if(githubUrlPattern.test(trimmedUrl)) { 
+            if(githubUrlPattern.test(trimmedUrl)) {
                 // github url에서 owner/name 추출하여 진단 페이지로 이동
                 const githubUrlMatch = trimmedUrl.match(/github\.com\/([^/]+)\/([^/]+)/);
                 if(githubUrlMatch) {
@@ -55,18 +68,20 @@ export default function MainPage() {
             alert('유효한 URL을 입력해주세요.');
         }
     };
-    
+
     // 기여 기능 클릭 핸들러
     const handleContributionClick = async () => {
+        // 로그인 체크
         if (!isAuthenticated) {
             await checkAuthStatus();
-            
+
             if (!isAuthenticated) {
                 alert('GitHub 로그인이 필요한 서비스입니다.');
                 try {
                     console.log("GitHub 로그인 시작");
                     initiateGitHubLogin({
                         scope: "read:user,user:email,public_repo",
+                        redirectAfterLogin: "/myactivity"
                     });
                 } catch (error) {
                     console.error('GitHub 로그인 시작 실패:', error);
