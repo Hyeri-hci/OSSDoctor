@@ -4,6 +4,9 @@ import React, { useState } from 'react';
 // CVE 상세 정보를 표시하는 모달 컴포넌트 import
 import CVEDetailModal from './CVEDetailModal';
 
+// 공통 컴포넌트 import
+import { TimelineContainer } from '../../../components/common';
+
 // 공통 유틸리티와 타입 import
 import { getSeverityColor, getStatusColor } from '../utils/diagnoseUtils';
 import { ProjectDataType } from '../types/proTypes';
@@ -25,6 +28,22 @@ const SecurityHistory = ({ projectData }) => {
     // 실제 데이터가 없는 경우 mock 데이터 사용
     const securityIssues = projectData?.security?.vulnerabilities || getMockSecurityData();
 
+    // 날짜별로 보안 이슈 그룹화
+    const groupedIssues = securityIssues.reduce((groups, issue) => {
+        const date = issue.date;
+        if (!groups[date]) {
+            groups[date] = [];
+        }
+        groups[date].push(issue);
+        return groups;
+    }, {});
+
+    // 그룹화된 데이터를 TimelineContainer 형식으로 변환
+    const timelineData = Object.entries(groupedIssues).map(([date, issues]) => ({
+        date,
+        activities: issues
+    }));
+
     // CVE 클릭 핸들러 - 모달 열기
     const handleCVEClick = (cve) => {
         setSelectedCVE(cve);
@@ -36,16 +55,6 @@ const SecurityHistory = ({ projectData }) => {
         setIsModalOpen(false);
         setSelectedCVE(null);
     };
-
-    // 날짜별로 보안 이슈 그룹화
-    const groupedIssues = securityIssues.reduce((groups, issue) => {
-        const date = issue.date;
-        if (!groups[date]) {
-            groups[date] = [];
-        }
-        groups[date].push(issue);
-        return groups;
-    }, {});
 
     // 심각도에 따른 아이콘 반환
     const getSeverityIcon = (severity) => {
@@ -80,57 +89,45 @@ const SecurityHistory = ({ projectData }) => {
                         최근 발견된 보안 취약점과 대응 현황을 확인할 수 있습니다.
                     </p>
 
-                    {/* 스크롤 가능한 CVE 목록 컨테이너 */}
-                    <div className="max-h-[40rem] overflow-y-auto border border-gray-200 rounded-lg p-4">
-                        <div className="space-y-4">
-                            {Object.entries(groupedIssues).map(([date, issues]) => (
-                                <div key={date} className="border-l-2 border-gray-200 pl-4 relative">
-                                    <div className="absolute -left-2 top-0 w-4 h-4 bg-white border-2 border-gray-300 rounded-full"></div>
-                                    <div className="mb-3">
-                                        <h4 className="text-sm font-semibold text-gray-900">{date}</h4>
+                    {/* TimelineContainer 사용 */}
+                    <TimelineContainer
+                        data={timelineData}
+                        maxHeight="40rem"
+                        renderItem={(issue) => (
+                            <div
+                                onClick={() => handleCVEClick(issue)}
+                                className={`p-3 rounded-lg border cursor-pointer hover:shadow-md transition-shadow ${getSeverityBackgroundColor(issue.severity)}`}
+                            >
+                                <div className="flex items-start space-x-2">
+                                    <div className="flex-shrink-0 mt-1">
+                                        <span className="text-sm">{getSeverityIcon(issue.severity)}</span>
                                     </div>
-
-                                    <div className="space-y-3">
-                                        {issues.map((issue, index) => (
-                                            <div
-                                                key={`${issue.id}-${index}`}
-                                                onClick={() => handleCVEClick(issue)}
-                                                className={`p-3 rounded-lg border cursor-pointer hover:shadow-md transition-shadow ${getSeverityBackgroundColor(issue.severity)}`}
-                                            >
-                                                <div className="flex items-start space-x-2">
-                                                    <div className="flex-shrink-0 mt-1">
-                                                        <span className="text-sm">{getSeverityIcon(issue.severity)}</span>
-                                                    </div>
-                                                    <div className="flex-1 min-w-0">
-                                                        <div className="flex items-center justify-between mb-2">
-                                                            <div className="flex items-center space-x-2">
-                                                                <span className="font-mono text-xs font-semibold text-gray-900">
-                                                                    {issue.id}
-                                                                </span>
-                                                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getSeverityColor(issue.severity)}`}>
-                                                                    {issue.severity}
-                                                                </span>
-                                                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(issue.status)}`}>
-                                                                    {issue.status}
-                                                                </span>
-                                                            </div>
-                                                            <span className="text-xs text-gray-500">{issue.date}</span>
-                                                        </div>
-                                                        <h5 className="text-sm font-medium text-gray-900 mb-1">
-                                                            {issue.title}
-                                                        </h5>
-                                                        <p className="text-xs text-gray-600 line-clamp-2">
-                                                            {issue.description}
-                                                        </p>
-                                                    </div>
-                                                </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <div className="flex items-center space-x-2">
+                                                <span className="font-mono text-xs font-semibold text-gray-900">
+                                                    {issue.id}
+                                                </span>
+                                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getSeverityColor(issue.severity)}`}>
+                                                    {issue.severity}
+                                                </span>
+                                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(issue.status)}`}>
+                                                    {issue.status}
+                                                </span>
                                             </div>
-                                        ))}
+                                            <span className="text-xs text-gray-500">{issue.date}</span>
+                                        </div>
+                                        <h5 className="text-sm font-medium text-gray-900 mb-1">
+                                            {issue.title}
+                                        </h5>
+                                        <p className="text-xs text-gray-600 line-clamp-2">
+                                            {issue.description}
+                                        </p>
                                     </div>
                                 </div>
-                            ))}
-                        </div>
-                    </div>
+                            </div>
+                        )}
+                    />
                 </div>
 
                 {/* CVE Detail Modal */}

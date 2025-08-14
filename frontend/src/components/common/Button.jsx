@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 const Button = ({
     children,
     variant = "primary", // "primary", "secondary", "outline", "ghost"
-    size = "default", // "small", "default", "large"
+    size = "default", // "xs", "sm", "small", "default", "large"
     className = "",
     onClick,
     disabled = false,
@@ -21,6 +21,8 @@ const Button = ({
     };
 
     const sizeClasses = {
+        xs: "px-2 py-1 text-xs",
+        sm: "px-3 py-1.5 text-xs",
         small: "px-3 py-1.5 text-xs",
         default: "px-4 py-2 text-sm",
         large: "px-6 py-3 text-base"
@@ -44,7 +46,7 @@ const Button = ({
 Button.propTypes = {
     children: PropTypes.node,
     variant: PropTypes.oneOf(['primary', 'secondary', 'outline', 'ghost']),
-    size: PropTypes.oneOf(['small', 'default', 'large']),
+    size: PropTypes.oneOf(['xs', 'sm', 'small', 'default', 'large']),
     className: PropTypes.string,
     onClick: PropTypes.func,
     disabled: PropTypes.bool,
