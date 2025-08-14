@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ossdoctor.DTO.*;
 import com.ossdoctor.Entity.SCORE_TYPE;
+import com.ossdoctor.Entity.SOURCE_TYPE;
 import com.ossdoctor.config.GithubApiProperties;
 import com.ossdoctor.exception.GitHubApiException;
 import lombok.AllArgsConstructor;
@@ -373,11 +374,10 @@ public class GitHubApiService {
 
         // 비율 높은 상위 3개 언어를 이름만 추출해서 쉼표로 연결
         String topLanguages = languages.entrySet().stream()
-                // 내림차순 정렬
-                .sorted((e1, e2) -> Double.compare(e2.getValue(), e1.getValue())) // 내림차순
+                .sorted((e1, e2) -> Double.compare(e2.getValue(), e1.getValue()))
                 .limit(3)
-                .map(Map.Entry::getKey) // 언어 이름만
-                .collect(Collectors.joining(","));
+                .map(Map.Entry::getKey)
+                .collect(Collectors.collectingAndThen(Collectors.joining(","), s -> s.isEmpty() ? null : s));
 
         // 토픽 추출
         List<String> topics = new ArrayList<>();
@@ -405,16 +405,17 @@ public class GitHubApiService {
                 .githubRepoId(repository.get("databaseId").asLong())
                 .name(repository.get("name").asText())
                 //.fullName(repository.path("nameWithOwner").asText())
-                .description(repository.path("description").asText())
+                .description(repository.path("description").asText(null))
                 .url(repository.path("url").asText())
                 .owner(owner)
                 .language(topLanguages) // top3 언어, 예시) "C,Java,Python"
+                .sourceType(SOURCE_TYPE.ANALYZED) // 프로젝트 분석용
                 .star(repository.path("stargazerCount").asInt()) // star
                 .fork(repository.path("forkCount").asInt())
                 .watchers(repository.path("watchers").path("totalCount").asInt())
-                .license(repository.path("licenseInfo").path("name").asText())
+                .license(repository.path("licenseInfo").asText(null))
                 .topics(topics)
-                .lastCommitedAt(commitedAt)
+                .lastCommitedAt(commitedAt) // 모니터링 점수
                 //.openPullRequests(repository.path("openPullRequests").path("totalCount").asInt())
                 //.closedPullRequests(repository.path("closedPullRequests").path("totalCount").asInt())
                 .mergedPullRequests(repository.path("mergedPullRequests").path("totalCount").asInt())
@@ -422,7 +423,7 @@ public class GitHubApiService {
                 //.openIssues(repository.path("openIssues").path("totalCount").asInt())
                 .closedIssues(repository.path("closedIssues").path("totalCount").asInt())
                 .totalIssues(repository.path("issues").path("totalCount").asInt())
-                .lastUpdatedAt(pushedAt)
+                .lastUpdatedAt(pushedAt) // 모니터링 점수
                 .build();
     }
 
