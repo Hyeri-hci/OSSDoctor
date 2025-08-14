@@ -10,15 +10,17 @@ const HeaderSection = () => {
     const { isAuthenticated, user, isLoading, checkAuthStatus, handleLogout } = useAuth();
 
     const handleMyActivityClick = async () => {
+        // 로그인 체크
         if (!isAuthenticated) {
             await checkAuthStatus();
-            
+
             if (!isAuthenticated) {
                 alert('GitHub 로그인이 필요한 서비스입니다.');
                 try {
                     console.log("GitHub 로그인 시작");
                     initiateGitHubLogin({
                         scope: "read:user,user:email,public_repo",
+                        redirectAfterLogin: "/myactivity"
                     });
                 } catch (error) {
                     console.error('GitHub 로그인 시작 실패:', error);
@@ -68,7 +70,7 @@ const HeaderSection = () => {
         {
             label: "나의 기여도",
             href: "/myactivity",
-            onClick: handleMyActivityClick 
+            onClick: handleMyActivityClick
         },
         { label: "업사이클링", href: "/ecosystem" },
         { label: "정보", href: "#" }
