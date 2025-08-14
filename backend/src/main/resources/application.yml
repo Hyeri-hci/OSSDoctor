@@ -37,12 +37,12 @@ spring:
 # JWT 설정
 jwt:
   secret:
-    key: ${JWT_SECRET_KEY:default-secret-key-for-development-only-please-change-in-production}
+    key: ${JWT_SECRET_KEY}
 
 # 프론트엔드 URL 설정
 app:
   frontend:
-    url: ${FRONTEND_URL:http://localhost:5173}
+    url: ${FRONTEND_URL}
 
 # GitHub API 설정
 github:
