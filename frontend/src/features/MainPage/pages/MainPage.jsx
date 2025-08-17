@@ -51,21 +51,28 @@ export default function MainPage() {
     const handleAnalyze = (url) => {
         if(url && url.trim() !== "") {
             const trimmedUrl = url.trim();
+
+            // GitHub URL 패턴 (full URL)
             const githubUrlPattern = /^(https?:\/\/)?(www\.)?github\.com\/[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+$/;
+            // owner/repo 패턴
+            const ownerRepoPattern = /^[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+$/;
 
             if(githubUrlPattern.test(trimmedUrl)) {
-                // github url에서 owner/name 추출하여 진단 페이지로 이동
+                // GitHub URL에서 owner/name 추출
                 const githubUrlMatch = trimmedUrl.match(/github\.com\/([^/]+)\/([^/]+)/);
                 if(githubUrlMatch) {
                     const [, owner, name] = githubUrlMatch;
                     const cleanName = name.replace(/\.git$/, ""); // .git 제거
-                    window.location.href = `/diagnose?owner=${encodeURIComponent(owner)}&name=${encodeURIComponent(cleanName)}`;
+                    window.location.href = `/diagnose?repo=${encodeURIComponent(owner)}/${encodeURIComponent(cleanName)}`;
                 }
+            } else if(ownerRepoPattern.test(trimmedUrl)) {
+                // owner/repo 형식 직접 사용
+                window.location.href = `/diagnose?repo=${encodeURIComponent(trimmedUrl)}`;
             } else {
-                alert('유효한 GitHub URL을 입력해주세요.\n예: https://github.com/user/repo');
+                alert('올바른 GitHub 주소를 입력해 주세요.\n예: microsoft/vscode 또는 https://github.com/microsoft/vscode');
             }
         } else {
-            alert('유효한 URL을 입력해주세요.');
+            alert('GitHub 레포지토리 주소를 입력해주세요.');
         }
     };
 

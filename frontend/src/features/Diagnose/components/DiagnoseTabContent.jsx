@@ -19,29 +19,30 @@ const DiagnoseTabContent = ({ activeTab, loading, projectData, fullProjectName }
     }
 
     // 프로젝트 데이터 없을 때
-    // if (!projectData) {
-    //     return (
-    //         <EmptyState
-    //             title="프로젝트 데이터를 찾을 수 없습니다."
-    //             message="진단 결과가 없습니다. 프로젝트를 다시 확인해 주세요."
-    //             action={
-    //                 <Button
-    //                     onClick={() => window.location.reload()}
-    //                     variant="primary"
-    //                 >
-    //                     다시 시도하기
-    //                 </Button>
-    //             }
-    //         />
-    //     );
-    // }
+    if (!projectData) {
+        return (
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <EmptyState
+                    title="프로젝트를 찾을 수 없습니다"
+                    message="입력하신 레포지토리 주소가 올바르지 않거나 존재하지 않습니다. 다른 주소로 다시 시도해 주세요."
+                    action={
+                        <Button
+                            onClick={() => window.location.reload()}
+                            variant="primary"
+                        >
+                            다시 시도하기
+                        </Button>
+                    }
+                />
+            </div>
+        );
+    }
 
     // 활성화된 탭에 따라 다른 컴포넌트 렌더링
     const renderTabContent = () => {
         switch (activeTab) {
             case 'overview':
                 return <OverallOverview projectData={projectData} />;
-                // return <div>종합 점수 탭 내용</div>; // 임시 내용
             case 'health':
                 return <HealthOverview projectData={projectData} />;
             case 'security':

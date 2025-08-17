@@ -3,86 +3,71 @@ import { StarIcon, CodeBracketIcon, EyeIcon } from "@heroicons/react/24/solid";
 import { Badge } from "../../../components/common";
 import { getMockProjectInfoData } from '../mockData';
 
-const ProjectInfo = () => {
-    // Mock 데이터 사용
-    const projectData = getMockProjectInfoData();
+const ProjectInfo = ({ projectData }) => {
+    // 실제 데이터가 없으면 Mock 데이터 사용
+    const displayData = projectData || getMockProjectInfoData();
 
     return (
         <div className="bg-white p-4 md:p-6 border-b border-gray-200">
             <div className="flex flex-col lg:flex-row lg:items-start lg:gap-6">
-                {/* Project Image - visible on large screens only */}
-                <div className="hidden lg:block lg:flex-shrink-0">
-                    <div className="w-32 h-32 bg-gray-200 rounded-lg flex items-center justify-center">
-                        <div className="text-gray-400 text-xs text-center">
-                            <CodeBracketIcon className="w-8 h-8 mx-auto mb-2" />
-                            <span>프로젝트 이미지</span>
-                        </div>
-                    </div>
-                </div>
-
                 {/* Project Information */}
                 <div className="flex-1 min-w-0">
                     <div className="mb-3">
                         <div className="flex items-center gap-3 mb-2">
                             <h2 className="text-lg font-bold text-gray-900 break-words">
-                                {projectData.name}
+                                {displayData.name || displayData.fullName}
                             </h2>
                             <Badge variant="info" size="small">
-                                {projectData.license}
+                                {displayData.license || 'N/A'}
                             </Badge>
                         </div>
 
                         <div className="flex items-center gap-2 mb-2">
-                            <div className="w-4 h-4 bg-gray-300 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0">
-                                <img
-                                    src={projectData.owner.avatar}
-                                    alt={`${projectData.owner.name} avatar`}
-                                    className="w-full h-full object-cover"
-                                />
-                            </div>
                             <span className="text-xs text-gray-600">
-                                {projectData.owner.name}
+                                By {displayData.repository?.owner || displayData.owner?.name || displayData.owner}
                             </span>
                         </div>
                     </div>
 
                     <p className="text-gray-600 text-xs leading-relaxed mb-2 line-clamp-3">
-                        {projectData.description}
+                        {displayData.description}
                     </p>
 
                     <div className="flex flex-wrap items-center gap-3 mb-3 text-sm text-gray-500">
-                        <span>Last Push: {projectData.lastPush}</span>
+                        <span>Last Push: {displayData.lastPush || displayData.pushedAt}</span>
 
                         <div className="flex items-center gap-1">
                             <StarIcon className="w-4 h-4" />
-                            <span>{projectData.stats.stars.toLocaleString()}</span>
+                            <span>{(displayData.stats?.stars || displayData.stars || 0).toLocaleString()}</span>
                         </div>
 
                         <div className="flex items-center gap-1">
                             <CodeBracketIcon className="w-4 h-4" />
-                            <span>{projectData.stats.forks.toLocaleString()}</span>
+                            <span>{(displayData.stats?.forks || displayData.forks || 0).toLocaleString()}</span>
                         </div>
 
                         <div className="flex items-center gap-1">
                             <EyeIcon className="w-3 h-3" />
-                            <span>{projectData.stats.watchers.toLocaleString()}</span>
+                            <span>{(displayData.stats?.watchers || displayData.watchers || 0).toLocaleString()}</span>
                         </div>
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2 mb-3">
-                        
-                        <Badge variant="secondary" size="small">
-                            {projectData.language}
-                        </Badge>
+                        {/* 언어를 쉼표 기준으로 분리하여 각각 표시 */}
+                        {displayData.language && displayData.language.split(',').map((lang, index) => (
+                            <Badge key={index} variant="secondary" size="small">
+                                {lang.trim()}
+                            </Badge>
+                        ))}
 
-                        {projectData.topics.slice(0, 3).map((topic, index) => (
+                        {(displayData.topics || []).slice(0, 3).map((topic, index) => (
                             <Badge key={index} variant="default" size="small">
                                 {topic}
                             </Badge>
                         ))}
-                        {projectData.topics.length > 3 && (
+                        {(displayData.topics || []).length > 3 && (
                             <Badge variant="outline" size="small">
-                                +{projectData.topics.length - 3}
+                                +{(displayData.topics || []).length - 3}
                             </Badge>
                         )}
                     </div>
