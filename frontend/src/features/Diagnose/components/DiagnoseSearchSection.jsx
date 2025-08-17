@@ -80,7 +80,7 @@ const DiagnoseSearchSection = forwardRef(({ onSearch }, ref) => {
                                 {/* 안내 메시지 */}
                                 <div className="text-xs text-center md:text-left">
                                 <span className="text-gray-500">
-                                    예시: https://github.com/facebook/react 또는 facebook/react
+                                    예시: https://github.com/microsoft/vscode 또는 microsoft/vscode
                                 </span>
                                 </div>
                             </div>
