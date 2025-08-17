@@ -23,6 +23,10 @@ public class UserService {
                 .map(this::toDTO);
     }
 
+    public Optional<UserDTO> findByUsername(String username) {
+        return userRepository.findByNickname(username).map(this::toDTO);
+    }
+
     /**
      * GitHub 사용자 정보를 데이터베이스에 저장 또는 업데이트
      * @param userJson GitHub API에서 받은 사용자 정보
