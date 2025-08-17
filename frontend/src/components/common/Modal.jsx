@@ -77,55 +77,16 @@ const Modal = ({
   // 모달이 열릴 때 body 스크롤 차단 및 레이아웃 시프트 방지
   useEffect(() => {
     if (isOpen) {
-      // 현재 스크롤 위치 저장
-      const scrollY = window.scrollY;
-      
-      // CSS로 이미 scrollbar-gutter: stable이 설정되어 있어도
-      // 일부 브라우저에서는 추가 처리가 필요할 수 있음
       const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-      
-      // body 스크롤 차단
-      document.body.style.overflow = 'hidden';
-      document.body.style.position = 'fixed';
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.width = '100%';
-      
-      // 스크롤바 너비만큼 패딩 추가 (CSS scrollbar-gutter가 작동하지 않는 경우 대비)
-      if (scrollbarWidth > 0) {
-        document.body.style.paddingRight = `${scrollbarWidth}px`;
-      }
-
-      // cleanup에서 사용할 스크롤 위치 저장
-      document.body.setAttribute('data-scroll-y', scrollY.toString());
+      document.body.style.top = `-${scrollbarWidth}px`;
     } else {
-      // 원래 상태로 복원
-      const scrollY = parseInt(document.body.getAttribute('data-scroll-y') || '0', 10);
-      
-      document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
-      document.body.style.paddingRight = '';
-      document.body.removeAttribute('data-scroll-y');
-      
-      // 스크롤 위치 복원
-      window.scrollTo(0, scrollY);
+      document.body.style.overflow = 'unset';
+      document.body.style.paddingRight = '0px';
     }
 
     return () => {
-      // 컴포넌트 언마운트 시 원래 상태로 복원
-      const scrollY = parseInt(document.body.getAttribute('data-scroll-y') || '0', 10);
-      
-      document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
-      document.body.style.paddingRight = '';
-      document.body.removeAttribute('data-scroll-y');
-      
-      if (scrollY > 0) {
-        window.scrollTo(0, scrollY);
-      }
+     document.body.style.overflow = 'unset';
+      document.body.style.paddingRight = '0px';
     };
   }, [isOpen]);
 
