@@ -8,6 +8,8 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.util.List;
 
 /**
@@ -17,6 +19,7 @@ import java.util.List;
  * - GitHub 사용자 정보 조회
  * - GitHub OAuth 설정 검증
  */
+@Slf4j
 @Service
 public class GitHubOAuthService {
 
@@ -44,11 +47,10 @@ public class GitHubOAuthService {
         params.add("client_secret", clientSecret);
         params.add("code", code);
 
-        System.out.println("=== GitHub OAuth 디버깅 정보 ===");
-        System.out.println("GitHub OAuth 요청 - Client ID: " + clientId);
-        System.out.println("GitHub OAuth 요청 - Client Secret 길이: " + (clientSecret != null ? clientSecret.length() : "null"));
-        System.out.println("GitHub OAuth 요청 - Code: " + code);
-        System.out.println("요청 URL: https://github.com/login/oauth/access_token");
+        log.info("GitHub OAuth 토큰 교환 시작 - Code: {}", code != null ? "[PRESENT]" : "[MISSING]");
+        log.debug("Client ID: {}", clientId);
+        log.debug("Client Secret 길이: {}", clientSecret != null ? clientSecret.length() : "null");
+        log.debug("요청 URL: https://github.com/login/oauth/access_token");
 
         // 요청 헤더 설정
         HttpHeaders headers = new HttpHeaders();
@@ -62,19 +64,19 @@ public class GitHubOAuthService {
             ResponseEntity<String> response = restTemplate.postForEntity(
                     "https://github.com/login/oauth/access_token", request, String.class);
 
-            System.out.println("GitHub OAuth 응답 상태: " + response.getStatusCode());
-            System.out.println("GitHub OAuth 응답 헤더: " + response.getHeaders());
-            System.out.println("GitHub OAuth 응답 본문: " + response.getBody());
+            log.info("GitHub OAuth 응답 성공 - 상태: {}", response.getStatusCode());
+            log.debug("GitHub OAuth 응답 헤더: {}", response.getHeaders());
+            log.debug("GitHub OAuth 응답 본문: {}", response.getBody());
 
             String responseBody = response.getBody();
             return parseAccessToken(responseBody);
 
         } catch (Exception e) {
-            System.err.println("=== GitHub OAuth 오류 상세 정보 ===");
-            System.err.println("오류 메시지: " + e.getMessage());
-            System.err.println("오류 타입: " + e.getClass().getSimpleName());
+            log.error("GitHub OAuth 토큰 교환 실패", e);
+            log.error("오류 상세 정보 - 타입: {}, 메시지: {}",
+                    e.getClass().getSimpleName(), e.getMessage());
             if (e.getCause() != null) {
-                System.err.println("근본 원인: " + e.getCause().getMessage());
+                log.error("근본 원인: {}", e.getCause().getMessage());
             }
             throw new RuntimeException("GitHub OAuth token request failed: " + e.getMessage(), e);
         }
