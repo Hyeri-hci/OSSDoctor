@@ -1,6 +1,7 @@
 package com.ossdoctor.controller;
 
 import com.ossdoctor.DTO.RepositoryDTO;
+import com.ossdoctor.Service.DiagnoseService;
 import com.ossdoctor.Service.GitHubApiService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,83 +16,62 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/diagnose")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:5173") // Frontend 개발 서버 주소
+@CrossOrigin(origins = "http://localhost:5173")
 public class DiagnoseController {
 
+    private final DiagnoseService diagnoseService;
     private final GitHubApiService gitHubApiService;
 
     /**
-     * 저장소 진단 - 저장소 정보 조회 및 점수 계산
+     * 저장소 전체 진단 - 저장소 정보 + 기여자 + 언어분포 + 커밋활동 + 점수 등 모든 정보 조회
      * @param owner 저장소 소유자
      * @param repo 저장소 이름
-     * @return 진단 결과 (저장소 정보 + 점수)
+     * @return 통합 진단 결과
      */
     @GetMapping("/{owner}/{repo}")
     public Mono<ResponseEntity<Map<String, Object>>> diagnoseRepository(
             @PathVariable String owner,
             @PathVariable String repo) {
 
-        log.info("진단 요청: {}/{}", owner, repo);
+        log.info("🔍 진단 요청: {}/{}", owner, repo);
 
-        return gitHubApiService.getRepositoryInfo(owner, repo)
-                .flatMap(repositoryDTO -> {
-                    // 기여자 정보 조회
-                    return gitHubApiService.getContributors(owner, repo)
-                            .flatMap(contributors -> {
-                                // 언어 분포 정보 조회
-                                return gitHubApiService.getLanguages(owner, repo)
-                                        .flatMap(languages -> {
-                                            // 커밋 활동 데이터 조회
-                                            return gitHubApiService.getCommitActivity(owner, repo)
-                                                    .flatMap(commitActivities -> {
-                                                        // 최근 활동 이력 조회
-                                                        return gitHubApiService.getRecentActivitiesForFrontend(owner, repo)
-                                                                .map(recentActivities -> {
-                                                                    // GitHubApiService 통해 모든 점수 정보 조회 (소셜 점수 상세 포함)
-                                                                    Map<String, Object> allScores = gitHubApiService.getAllScores(owner, repo);
-
-                                                                    // 응답 데이터 구성
-                                                                    Map<String, Object> response = new HashMap<>();
-                                                                    response.put("repository", repositoryDTO); // 저장소 정보
-                                                                    response.put("contributors", contributors); // 주요 기여자 리스트
-                                                                    response.put("totalContributors", repositoryDTO.getTotalContributors()); // 총 기여자 수
-                                                                    response.put("languages", languages); // 언어 분포
-                                                                    response.put("commitActivities", commitActivities); // 커밋 활동 (7일 기준)
-                                                                    response.put("recentActivities", recentActivities); // 최근 활동 이력 (PR, ISSUE)
-                                                                    response.put("scores", allScores); // 점수 정보 (소셜 점수 포함)
-
-                                                                    return ResponseEntity.ok(response);
-                                                                });
-                                                    });
-                                        });
-                            });
-                })
+        return diagnoseService.getFullDiagnosisData(owner, repo)
+                .map(ResponseEntity::ok)
                 .onErrorResume(throwable -> {
-                    log.error("진단 중 오류 발생: {}/{}", owner, repo, throwable);
-                    Map<String, Object> errorResponse = new HashMap<>();
-                    errorResponse.put("error", "진단 중 오류가 발생했습니다: " + throwable.getMessage());
-                    return Mono.just(ResponseEntity.badRequest().body(errorResponse));
-                });
+                    log.error("❌ 진단 중 오류 발생: {}/{}", owner, repo, throwable);
+                    return Mono.just(ResponseEntity.badRequest().body(createErrorResponse(throwable)));
+                })
+                .doOnSuccess(response -> log.info("✅ 진단 완료: {}/{}", owner, repo));
     }
 
     /**
-     * 저장소 기본 정보만 조회 (점수 계산 없이)
+     * 저장소 기본 정보만 조회
      * @param owner 저장소 소유자
      * @param repo 저장소 이름
-     * @return 저장소 정보
+     * @return 저장소 기본 정보
      */
     @GetMapping("/{owner}/{repo}/info")
     public Mono<ResponseEntity<RepositoryDTO>> getRepositoryInfo(
             @PathVariable String owner,
             @PathVariable String repo) {
 
-        log.info("저장소 정보 조회: {}/{}", owner, repo);
+        log.info("📋 저장소 정보 조회: {}/{}", owner, repo);
 
         return gitHubApiService.getRepositoryInfo(owner, repo)
                 .map(ResponseEntity::ok)
                 .onErrorResume(throwable -> {
-                    log.error("저장소 정보 조회 중 오류: {}/{}", owner, repo, throwable);
+                    log.error("❌ 저장소 정보 조회 중 오류: {}/{}", owner, repo, throwable);
                     return Mono.just(ResponseEntity.badRequest().build());
-                });
+                })
+                .doOnSuccess(response -> log.debug("✅ 저장소 정보 조회 완료: {}/{}", owner, repo));
+    }
+
+    // 에러 응답 생성
+    private Map<String, Object> createErrorResponse(Throwable throwable) {
+        Map<String, Object> errorResponse = new HashMap<>();
+        errorResponse.put("error", "진단 중 오류가 발생했습니다");
+        errorResponse.put("message", throwable.getMessage());
+        errorResponse.put("timestamp", System.currentTimeMillis());
+        return errorResponse;
     }
 }
