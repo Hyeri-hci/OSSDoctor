@@ -37,7 +37,7 @@ const DiagnoseSearchSection = forwardRef(({ onSearch }, ref) => {
     };
 
     return (
-        <section className="bg-[#F3F3F3] py-16">
+        <section className="bg-gray-50 py-16">
             <div className="container mx-auto px-6 xl:px-8 2xl:px-12">
                 <div className="max-w-7xl mx-auto">
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 md:gap-8">
@@ -91,6 +91,7 @@ const DiagnoseSearchSection = forwardRef(({ onSearch }, ref) => {
         </section>
     );
 });
+
 
 DiagnoseSearchSection.propTypes = {
     onSearch: PropTypes.func.isRequired
