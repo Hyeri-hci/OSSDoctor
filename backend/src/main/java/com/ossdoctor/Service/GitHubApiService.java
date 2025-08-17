@@ -43,9 +43,7 @@ public class GitHubApiService {
     private final RepositoryService repositoryService;
     private final ActivityService activityService;
     private final ScoreService scoreService;
-    private final ScoreCalculator scoreCalculator;
-
-    // ========== REST API 사용 메서드 ==========
+    private final ScoreCalculatorService scoreCalculator;
 
     // Repository 기본 정보 GraphQL Query (databaseId, watcher 추가)
     private static final String REPOSITORY_QUERY = """
@@ -241,9 +239,7 @@ public class GitHubApiService {
                 .onErrorMap(this::handleApiError);
     }
 
-    /**
-     * 최근 활동 이력을 프론트엔드용 Map 형태로 반환
-     */
+    // 최근 활동 이력 프론트엔드용 Map 형태 변환 
     public Mono<List<Map<String, Object>>> getRecentActivitiesForFrontend(String owner, String repo) {
         return getRecentActivities(owner, repo)
                 .map(activities -> activities.stream()
@@ -251,9 +247,7 @@ public class GitHubApiService {
                         .collect(Collectors.toList()));
     }
 
-    /**
-     * ActivityDTO를 프론트엔드에서 사용할 수 있는 Map 형태로 변환
-     */
+    // ActivityDTO 프론트엔드용 사용할 수 있는 Map 형태로 변환
     private Map<String, Object> convertActivityToMap(ActivityDTO activity) {
         Map<String, Object> result = new HashMap<>();
         result.put("type", activity.getType());
