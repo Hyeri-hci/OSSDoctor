@@ -21,22 +21,29 @@ public class ContributionEntity {
     private Long idx;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "repository_id", nullable = false)
-    private RepositoryEntity repository;
-
-    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private UserEntity user;
+
+    @Column(name = "repository_name", length = 100, nullable = false)
+    private String repositoryName;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "reference_type", nullable = false)
     private REFERENCE_TYPE referenceType;
 
-    @Column(name = "reference_id", nullable = false)
-    private Long referenceId;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private PR_STATE state; // 똑같아서 사용
+
+    @Column(nullable = false)
+    private Integer number;
+
+    @Column(nullable = false)
+    private String title;
 
     @Column(name = "contributed_at", nullable = false)
     private LocalDateTime contributedAt;
 
-    private String description;
+    @Column(name = "end_at")
+    private LocalDateTime endAt;
 }
