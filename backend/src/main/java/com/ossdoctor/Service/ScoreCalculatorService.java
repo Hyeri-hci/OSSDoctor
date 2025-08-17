@@ -3,39 +3,45 @@ package com.ossdoctor.Service;
 import org.springframework.stereotype.Component;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 @Component
 public class ScoreCalculatorService {
 
-    // 점수 구간 정의 (내림차순 정렬)
-    private static final Map<Integer, Integer> COMMIT_THRESHOLDS = Map.of(
-            1024, 25, 512, 20, 256, 15, 128, 10, 64, 5
-    );
+    // 점수 구간 정의 (내림차순 정렬) - LinkedHashMap 순서 보장
+    private static final Map<Integer, Integer> COMMIT_THRESHOLDS = new LinkedHashMap<>() {{
+        put(1024, 25); put(512, 20); put(256, 15); put(128, 10); put(64, 5);
+    }};
 
-    private static final Map<Integer, Integer> STAR_THRESHOLDS = Map.of(
-            1024, 25, 512, 20, 256, 15, 128, 10, 64, 5
-    );
+    private static final Map<Integer, Integer> STAR_THRESHOLDS = new LinkedHashMap<>() {{
+        put(1024, 25); put(512, 20); put(256, 15); put(128, 10); put(64, 5);
+    }};
 
-    private static final Map<Integer, Integer> FORK_THRESHOLDS = Map.of(
-            256, 25, 128, 20, 64, 15, 32, 10, 16, 5
-    );
+    private static final Map<Integer, Integer> FORK_THRESHOLDS = new LinkedHashMap<>() {{
+        put(256, 25); put(128, 20); put(64, 15); put(32, 10); put(16, 5);
+    }};
 
-    private static final Map<Integer, Integer> WATCHER_THRESHOLDS = Map.of(
-            128, 25, 64, 20, 32, 15, 16, 10, 8, 5
-    );
+    private static final Map<Integer, Integer> WATCHER_THRESHOLDS = new LinkedHashMap<>() {{
+        put(128, 25); put(64, 20); put(32, 15); put(16, 10); put(8, 5);
+    }};
 
-    private static final Map<Integer, Integer> CONTRIBUTOR_THRESHOLDS = Map.of(
-            128, 25, 64, 20, 32, 15, 16, 10, 8, 5
-    );
+    private static final Map<Integer, Integer> CONTRIBUTOR_THRESHOLDS = new LinkedHashMap<>() {{
+        put(128, 25); put(64, 20); put(32, 15); put(16, 10); put(8, 5);
+    }};
 
-    private static final Map<Integer, Integer> PR_THRESHOLDS = Map.of(
-            512, 25, 256, 20, 128, 15, 64, 10, 32, 5
-    );
+    private static final Map<Integer, Integer> PR_THRESHOLDS = new LinkedHashMap<>() {{
+        put(512, 25); put(256, 20); put(128, 15); put(64, 10); put(32, 5);
+    }};
 
-    private static final Map<Integer, Integer> ISSUE_THRESHOLDS = Map.of(
-            512, 25, 256, 20, 128, 15, 64, 10, 32, 5
-    );
+    private static final Map<Integer, Integer> ISSUE_THRESHOLDS = new LinkedHashMap<>() {{
+        put(512, 25); put(256, 20); put(128, 15); put(64, 10); put(32, 5);
+    }};
+
+    // 업데이트 점수 임계값 (일수 기준)
+    private static final Map<Long, Integer> UPDATE_THRESHOLDS = new LinkedHashMap<>() {{
+        put(7L, 25); put(30L, 20); put(90L, 15); put(180L, 10); put(365L, 5);
+    }};
 
     // ========== 건강도 점수 계산 메서드들 ==========
     // 커밋 점수 계산 - 전체 커밋 수 기준
@@ -46,13 +52,7 @@ public class ScoreCalculatorService {
     // 업데이트 점수 계산 - 마지막 업데이트로부터 경과 일수 기준
     public int calculateUpdateScore(LocalDate lastUpdated) {
         long daysSince = getDaysSinceLast(lastUpdated);
-
-        if (daysSince <= 7) return 25;
-        else if (daysSince <= 30) return 20;
-        else if (daysSince <= 90) return 15;
-        else if (daysSince <= 180) return 10;
-        else if (daysSince <= 365) return 5;
-        else return 0;
+        return calculateScoreByDaysThreshold(daysSince);
     }
 
     // PR 점수 계산 - 병합된 PR 수 기준
@@ -88,10 +88,29 @@ public class ScoreCalculatorService {
 
     // ========== 유틸리티 메서드 ==========
 
-    // 점수 계산을 위한 공통 메서드
+    /**
+     * 임계값 맵을 기반으로 점수 계산하는 공통 메서드
+     * @param value 평가할 값
+     * @param thresholds 임계값-점수 맵 (내림차순 정렬 필요)
+     * @return 계산된 점수
+     */
     private int calculateScoreByThreshold(int value, Map<Integer, Integer> thresholds) {
         return thresholds.entrySet().stream()
                 .filter(entry -> value >= entry.getKey())
+                .findFirst()
+                .map(Map.Entry::getValue)
+                .orElse(0);
+    }
+
+    /**
+     * 일수 임계값 맵을 기반으로 점수 계산하는 메서드
+     *
+     * @param daysSince 경과 일수
+     * @return 계산된 점수
+     */
+    private int calculateScoreByDaysThreshold(long daysSince) {
+        return ScoreCalculatorService.UPDATE_THRESHOLDS.entrySet().stream()
+                .filter(entry -> daysSince <= entry.getKey())
                 .findFirst()
                 .map(Map.Entry::getValue)
                 .orElse(0);
