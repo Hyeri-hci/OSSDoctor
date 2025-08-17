@@ -61,10 +61,14 @@ const ProjectExplorer = ({ onBack, initialSearchQuery = '' }) => {
         window.scrollTo({ top: 0, behavior: 'instant' });
     }, []);
 
-    // 초기 검색어가 있으면 자동으로 검색 실행
+    // 초기 검색어 실행 여부를 추적하는 ref
+    const hasExecutedInitialSearch = useRef(false);
+
+    // 초기 검색어가 있으면 자동으로 검색 실행 (한 번만)
     useEffect(() => {
-        if (initialSearchQuery.trim()) {
+        if (initialSearchQuery.trim() && !hasExecutedInitialSearch.current) {
             setSearchQuery(initialSearchQuery);
+            hasExecutedInitialSearch.current = true;
             // 검색어가 설정된 후 검색 실행
             setTimeout(() => {
                 performSearch();
@@ -107,11 +111,8 @@ const ProjectExplorer = ({ onBack, initialSearchQuery = '' }) => {
         }
     };
 
-    // 검색 결과 표시 여부 (필터가 적용되거나 검색이 수행되면 true)
-    const showSearchResults = hasSearched || hasActiveFilters;
-
     return (
-        <div className="container mx-auto px-6 xl:px-8 2xl:px-12 py-8">
+        <div className="py-8">
             <div className="max-w-7xl mx-auto">
                 {/* 페이지 상단 앵커 */}
                 <div ref={pageTopRef} className="absolute -top-4" />
@@ -146,7 +147,6 @@ const ProjectExplorer = ({ onBack, initialSearchQuery = '' }) => {
                     loading={loading}
                     filterOptions={filterOptions}
                     hasActiveFilters={hasActiveFilters}
-                    canSearch={canSearch}
                     onlyTimeFilterSelected={onlyTimeFilterSelected}
                     onSearchChange={setSearchQuery}
                     onLanguageChange={setSelectedLanguage}
@@ -169,7 +169,7 @@ const ProjectExplorer = ({ onBack, initialSearchQuery = '' }) => {
 
                 {/* 검색 결과가 있으면 필터링 및 검색 내역 표시 */}
                 {hasSearched && (
-                    <div className="mb-8">
+                    <div className="transition-all duration-300 ease-in-out">
                         {/* 검색 결과 헤더 */}
                         <SearchResultsHeader
                             hasSearched={hasSearched}
@@ -188,37 +188,37 @@ const ProjectExplorer = ({ onBack, initialSearchQuery = '' }) => {
                         />
 
                         {/* 검색된 프로젝트 목록 */}
-                        <ProjectCardList
-                            projects={displayedProjects}
-                            onClearFilters={clearAllFilters}
-                            containerRef={projectCardsRef}
-                        />
+                                <ProjectCardList
+                                    projects={displayedProjects}
+                                    onClearFilters={clearAllFilters}
+                                    containerRef={projectCardsRef}
+                                />
 
-                        {/* 페이지네이션 및 배치 컨트롤 */}
-                        <ProjectPagination
-                            displayedProjects={displayedProjects}
-                            currentPage={currentPage}
-                            totalPagesInBatch={totalPagesInBatch}
-                            currentBatch={currentBatch}
-                            maxBatchReached={maxBatchReached}
-                            hasMoreInBatch={hasMoreInBatch}
-                            canLoadMoreBatches={canLoadMoreBatches}
-                            onPageChange={handlePageChange}
-                            onOpenExplorationModal={() => setIsProjectModalOpen(true)}
-                        />
+                                {/* 페이지네이션 및 배치 컨트롤 */}
+                                <ProjectPagination
+                                    displayedProjects={displayedProjects}
+                                    currentPage={currentPage}
+                                    totalPagesInBatch={totalPagesInBatch}
+                                    currentBatch={currentBatch}
+                                    maxBatchReached={maxBatchReached}
+                                    hasMoreInBatch={hasMoreInBatch}
+                                    canLoadMoreBatches={canLoadMoreBatches}
+                                    onPageChange={handlePageChange}
+                                    onOpenExplorationModal={() => setIsProjectModalOpen(true)}
+                                />
 
-                        {/* 프로젝트 탐색 모달 */}
-                        <ProjectExplorationModal
-                            isOpen={isProjectModalOpen}
-                            onClose={() => setIsProjectModalOpen(false)}
-                            currentBatch={currentBatch}
-                            maxBatchReached={maxBatchReached}
-                            canLoadMoreBatches={canLoadMoreBatches}
-                            loadingNextBatch={loadingNextBatch}
-                            onGoToBatch={goToBatch}
-                            onLoadNextBatch={loadNextBatch}
-                        />
-                    </div>
+                    {/* 프로젝트 탐색 모달 */}
+                    <ProjectExplorationModal
+                        isOpen={isProjectModalOpen}
+                        onClose={() => setIsProjectModalOpen(false)}
+                        currentBatch={currentBatch}
+                        maxBatchReached={maxBatchReached}
+                        canLoadMoreBatches={canLoadMoreBatches}
+                        loadingNextBatch={loadingNextBatch}
+                        onGoToBatch={goToBatch}
+                        onLoadNextBatch={loadNextBatch}
+                    />
+                </div>
                 )}
             </div>
         </div>

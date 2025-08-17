@@ -399,7 +399,11 @@ const EcosystemPage = () => {
                 return (
                     <div className="container mx-auto px-6 xl:px-8 2xl:px-12">
                         <ProjectExplorer
-                            onBack={navigateToMain}
+                            onBack={() => {
+                                // 뒤로가기 시 초기 검색어 초기화
+                                setInitialSearchQuery('');
+                                navigateToMain();
+                            }}
                             initialSearchQuery={initialSearchQuery}
                         />
                     </div>
