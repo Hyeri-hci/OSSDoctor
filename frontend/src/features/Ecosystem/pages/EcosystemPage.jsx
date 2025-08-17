@@ -5,8 +5,7 @@ import useEcosystemView from '../hooks/useEcosystemView';
 import useLeaderboardData from '../hooks/useLeaderboardData';
 import ActivityLeaderboard from '../components/ActivityLeaderboard';
 import ProjectExplorer from '../components/ProjectExplorer';
-import { getRecommendedProjectsService } from '../api/project-service';
-import { getTechColor } from '../utils/ecosystemUtils';
+import { getRecommendedProjectsService } from '../api/index.js';
 
 const EcosystemPage = () => {
 
