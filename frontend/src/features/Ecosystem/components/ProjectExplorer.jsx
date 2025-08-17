@@ -112,7 +112,7 @@ const ProjectExplorer = ({ onBack, initialSearchQuery = '' }) => {
     };
 
     return (
-        <div className="py-8">
+        <div className="py-8 min-h-screen">
             <div className="max-w-7xl mx-auto">
                 {/* 페이지 상단 앵커 */}
                 <div ref={pageTopRef} className="absolute -top-4" />
