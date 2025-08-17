@@ -215,7 +215,7 @@ const OverallOverview = ({ projectData }) => {
                 </div>
 
                 {/* 언어 분포 및 기여자 정보 */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className="grid gap-8">
                     {/* 왼쪽: 언어 분포 차트 */}
                     <div>
                         <h3 className="text-base font-semibold text-gray-900 mb-3">
@@ -237,7 +237,7 @@ const OverallOverview = ({ projectData }) => {
 
                         {/* PieChart를 중앙에 배치 */}
                         <div className="flex justify-center">
-                            <PieChart data={languageData} width={200} height={200} />
+                            <PieChart data={languageData} />
                         </div>
 
                         {/* 언어별 상세 정보 */}
