@@ -5,8 +5,7 @@ import useEcosystemView from '../hooks/useEcosystemView';
 import useLeaderboardData from '../hooks/useLeaderboardData';
 import ActivityLeaderboard from '../components/ActivityLeaderboard';
 import ProjectExplorer from '../components/ProjectExplorer';
-import { getRecommendedProjectsService } from '../api/project-service';
-import { getTechColor } from '../utils/ecosystemUtils';
+import { getRecommendedProjectsService } from '../api/index.js';
 
 const EcosystemPage = () => {
 
@@ -17,6 +16,9 @@ const EcosystemPage = () => {
     const [currentProjectPage, setCurrentProjectPage] = useState(0); // 현재 보여주는 페이지 (0부터 시작)
     const [allRecommendedProjects, setAllRecommendedProjects] = useState([]); // 전체 프로젝트
     const [projectsLoading, setProjectsLoading] = useState(false);
+
+    // HeaderSection에서 검색어가 전달된 경우 처리
+    const [initialSearchQuery, setInitialSearchQuery] = useState('');
 
     const PROJECTS_PER_PAGE = 6; // 한 번에 보여줄 프로젝트 수
 
@@ -47,6 +49,23 @@ const EcosystemPage = () => {
         error: leaderboardError
     } = useLeaderboardData(timePeriod);
 
+    // URL 파라미터에서 검색어 확인 및 초기화
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const searchParam = urlParams.get('search');
+
+        if (searchParam) {
+            setInitialSearchQuery(decodeURIComponent(searchParam));
+            // URL 파라미터 제거 (깔끔한 URL 유지)
+            window.history.replaceState({}, document.title, window.location.pathname);
+
+            // ProjectExplorer 뷰로 이동하고 검색어 전달
+            if (currentView !== 'ecosystem') {
+                navigateToEcosystem();
+            }
+        }
+    }, [currentView, navigateToEcosystem]);
+
     // 추천 프로젝트 로딩 (초보자 친화적인 기준으로 30개 조회)
     useEffect(() => {
         const loadRecommendedProjects = async () => {
@@ -63,7 +82,7 @@ const EcosystemPage = () => {
                 ];
 
                 const allProjects = [];
-                
+
                 for (const query of searchQueries) {
                     try {
                         const result = await getRecommendedProjectsService(query, 4);
@@ -73,14 +92,14 @@ const EcosystemPage = () => {
                     } catch (queryError) {
                         console.warn(`검색 쿼리 "${query}" 실패:`, queryError);
                     }
-                    
+
                     // 30개 이상 수집되면 중단
                     if (allProjects.length >= 30) break;
                 }
 
                 // 중복 제거 및 실제 데이터 개수로 제한
                 const uniqueProjects = allProjects
-                    .filter((project, index, self) => 
+                    .filter((project, index, self) =>
                         index === self.findIndex(p => p.id === project.id)
                     );
 
@@ -167,7 +186,7 @@ const EcosystemPage = () => {
                                 <p className="text-base text-gray-600 max-w-3xl mx-auto mb-6">
                                     커뮤니티에서 선별한 업사이클링하기 좋은 오픈소스 프로젝트들을 만나보세요
                                 </p>
-                                
+
                                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                                     {/* 네비게이션 버튼들 */}
                                     <div className="flex items-center gap-2">
@@ -178,7 +197,7 @@ const EcosystemPage = () => {
                                         >
                                             ← 이전
                                         </button>
-                                        
+
                                         <button
                                             onClick={handleGetNextProjects}
                                             disabled={allRecommendedProjects.length === 0 || projectsLoading}
@@ -188,15 +207,15 @@ const EcosystemPage = () => {
                                             {hasNextPage ? '→' : ''}
                                         </button>
                                     </div>
-                                    
+
                                     {/* 페이지 정보 */}
                                     {totalAvailablePages > 1 && (
                                         <div className="text-sm text-gray-600 bg-gray-50 px-3 py-1 rounded-full">
                                             {currentProjectPage + 1} / {totalAvailablePages} 페이지
                                         </div>
                                     )}
-                                    
-                                    
+
+
                                 </div>
                             </div>
 
@@ -274,7 +293,7 @@ const EcosystemPage = () => {
                                                 className={`px-3 py-1 text-sm rounded-md transition-colors ${timePeriod === 'realtime'
                                                     ? 'bg-white text-gray-900 shadow-sm'
                                                     : 'text-gray-600 hover:text-gray-900'
-                                                    }`}
+                                                }`}
                                             >
                                                 실시간
                                             </button>
@@ -283,7 +302,7 @@ const EcosystemPage = () => {
                                                 className={`px-3 py-1 text-sm rounded-md transition-colors ${timePeriod === 'week'
                                                     ? 'bg-white text-gray-900 shadow-sm'
                                                     : 'text-gray-600 hover:text-gray-900'
-                                                    }`}
+                                                }`}
                                             >
                                                 이번 주
                                             </button>
@@ -292,7 +311,7 @@ const EcosystemPage = () => {
                                                 className={`px-3 py-1 text-sm rounded-md transition-colors ${timePeriod === 'month'
                                                     ? 'bg-white text-gray-900 shadow-sm'
                                                     : 'text-gray-600 hover:text-gray-900'
-                                                    }`}
+                                                }`}
                                             >
                                                 이번 달
                                             </button>
@@ -379,7 +398,10 @@ const EcosystemPage = () => {
             case 'ecosystem':
                 return (
                     <div className="container mx-auto px-6 xl:px-8 2xl:px-12">
-                        <ProjectExplorer onBack={navigateToMain} />
+                        <ProjectExplorer
+                            onBack={navigateToMain}
+                            initialSearchQuery={initialSearchQuery}
+                        />
                     </div>
                 );
             case 'leaderboard':

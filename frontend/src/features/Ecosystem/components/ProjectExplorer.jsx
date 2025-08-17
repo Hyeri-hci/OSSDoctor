@@ -5,17 +5,17 @@ import { ProjectSearchSection, ProjectCardList, SearchResultsHeader, ProjectPagi
 import useProjectPagination from '../hooks/useProjectPagination';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 
-const ProjectExplorer = ({ onBack }) => {
+const ProjectExplorer = ({ onBack, initialSearchQuery = '' }) => {
     // 모달 상태 관리
     const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
-    
+
     // 페이지 상단 참조 (페이지 진입 시 상단 유지용)
     const pageTopRef = useRef(null);
     // 프로젝트 카드 섹션 참조 (페이지네이션 시 스크롤용)
     const projectCardsRef = useRef(null);
     // 검색 결과 섹션 참조 (페이지네이션 시 스크롤용)
     const searchResultsRef = useRef(null);
-    
+
     const {
         // 페이지네이션 상태
         displayedProjects,
@@ -25,13 +25,13 @@ const ProjectExplorer = ({ onBack }) => {
         totalPagesInBatch,
         hasMoreInBatch,
         canLoadMoreBatches,
-        
+
         // API 상태
         loading,
         loadingNextBatch,
         error,
         hasSearched,
-        
+
         // 검색 필터 상태
         searchQuery,
         setSearchQuery,
@@ -43,12 +43,12 @@ const ProjectExplorer = ({ onBack }) => {
         setSelectedCommitDate,
         sortBy,
         setSortBy,
-        
+
         // 페이지네이션 액션
         goToPage,
         loadNextBatch,
         goToBatch,
-        
+
         // 필터 관련
         filterOptions,
         hasActiveFilters,
@@ -61,14 +61,25 @@ const ProjectExplorer = ({ onBack }) => {
         window.scrollTo({ top: 0, behavior: 'instant' });
     }, []);
 
+    // 초기 검색어가 있으면 자동으로 검색 실행
+    useEffect(() => {
+        if (initialSearchQuery.trim()) {
+            setSearchQuery(initialSearchQuery);
+            // 검색어가 설정된 후 검색 실행
+            setTimeout(() => {
+                performSearch();
+            }, 100);
+        }
+    }, [initialSearchQuery, setSearchQuery, performSearch]);
+
     // 페이지 변경 시 검색 결과 부분으로 스크롤
     const handlePageChange = (page) => {
         goToPage(page);
         // 검색 결과 헤더로 부드럽게 스크롤 (약간의 딜레이로 DOM 업데이트 후 스크롤)
         setTimeout(() => {
             if (searchResultsRef.current) {
-                searchResultsRef.current.scrollIntoView({ 
-                    behavior: 'smooth', 
+                searchResultsRef.current.scrollIntoView({
+                    behavior: 'smooth',
                     block: 'start',
                     inline: 'nearest'
                 });
@@ -78,7 +89,7 @@ const ProjectExplorer = ({ onBack }) => {
 
     // 검색 가능한 상태인지 확인 (최근 업데이트와 정렬 기준은 제외)
     const canSearch = searchQuery.trim() || selectedLanguage || selectedLicense;
-    
+
     // 최근 업데이트만 선택된 상황 감지 (실제 검색 조건 없이)
     const onlyTimeFilterSelected = selectedCommitDate && !canSearch;
 
@@ -88,7 +99,7 @@ const ProjectExplorer = ({ onBack }) => {
             alert('검색하려면 프로젝트 이름을 입력하거나 프로그래밍 언어, 라이선스 중 하나 이상을 선택해주세요.');
             return;
         }
-        
+
         try {
             await performSearch();
         } catch (error) {
@@ -182,7 +193,7 @@ const ProjectExplorer = ({ onBack }) => {
                             onClearFilters={clearAllFilters}
                             containerRef={projectCardsRef}
                         />
-                        
+
                         {/* 페이지네이션 및 배치 컨트롤 */}
                         <ProjectPagination
                             displayedProjects={displayedProjects}
@@ -195,7 +206,7 @@ const ProjectExplorer = ({ onBack }) => {
                             onPageChange={handlePageChange}
                             onOpenExplorationModal={() => setIsProjectModalOpen(true)}
                         />
-                        
+
                         {/* 프로젝트 탐색 모달 */}
                         <ProjectExplorationModal
                             isOpen={isProjectModalOpen}
@@ -215,7 +226,8 @@ const ProjectExplorer = ({ onBack }) => {
 };
 
 ProjectExplorer.propTypes = {
-    onBack: PropTypes.func.isRequired
+    onBack: PropTypes.func.isRequired,
+    initialSearchQuery: PropTypes.string
 };
 
 export default ProjectExplorer;
