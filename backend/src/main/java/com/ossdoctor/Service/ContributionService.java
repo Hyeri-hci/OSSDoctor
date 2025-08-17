@@ -203,15 +203,8 @@ public class ContributionService {
                 .flatMapMany(user -> {
                     LocalDateTime since = LocalDateTime.now().minusMonths(1);
                     // 닉네임으로 조회하는 Repository 메서드 사용
-                    List<ContributionEntity> contributions = contributionRepository
-                            .findByUser_NicknameAndContributedAtAfter(owner, since);
-
-                    // DTO 변환
-                    List<ContributionDTO> dtos = contributions.stream()
-                            .map(this::toDTO)
-                            .toList();
-
-                    return Flux.fromIterable(dtos);
+                    List<ContributionDTO> contributions = findByUserIdxAndContributedAtAfter(owner, since);
+                    return Flux.fromIterable(contributions);
                 })
                 .collect(Collectors.groupingBy(
                         ContributionDTO::getReferenceType,

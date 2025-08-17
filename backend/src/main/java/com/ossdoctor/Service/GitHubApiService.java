@@ -192,6 +192,7 @@ public class GitHubApiService {
     private static final String FULL_CONTRIBUTIONS_QUERY = """
     query GetFullContributions($login: String!, $since: DateTime!) {
       user(login: $login) {
+        login
         contributionsCollection(from: $since) {
           commitContributionsByRepository(maxRepositories: 50) {
             repository {
@@ -249,9 +250,12 @@ public class GitHubApiService {
             contributions(first: 100) {
               nodes {
                 pullRequestReview {
-                  url
                   state
                   submittedAt
+                  pullRequest {
+                    number
+                    title
+                  }
                 }
               }
             }
@@ -594,27 +598,34 @@ public class GitHubApiService {
     }
 
     public Flux<ContributionDTO> parseContributions(JsonNode response) {
-        JsonNode contributionsCollection = response.path("data").path("user").path("contributionsCollection");
+        // user.login 가져오기
+        JsonNode userNode = response.path("data").path("user");
+        String userLogin = userNode.path("login").asText();
 
+        JsonNode contributionsCollection = userNode.path("contributionsCollection");
+
+        // PR 기여
         Flux<ContributionDTO> prFlux = Flux.fromIterable(contributionsCollection.path("pullRequestContributionsByRepository"))
                 .flatMap(repoNode -> {
                     JsonNode repo = repoNode.path("repository");
-                    String repoName = repo.path("owner").path("login").asText() + "/" + repo.path("name").asText();
+                    String owner = repo.path("owner").path("login").asText();
+                    String repoName = owner + "/" + repo.path("name").asText();
+
+                    if (owner.equals(userLogin)) return Flux.empty();
+
                     return Flux.fromIterable(repoNode.path("contributions").path("nodes"))
                             .map(node -> {
                                 JsonNode pr = node.path("pullRequest");
 
-                                PR_STATE type = pr.path("mergedAt").isNull() || pr.path("mergedAt").isMissingNode()
-                                        ? (pr.path("state").asText().equals("OPEN") ? PR_STATE.OPEN : PR_STATE.CLOSED)
-                                        : PR_STATE.MERGED;
+                                CONTRIBUTION_TYPE type = pr.path("mergedAt").isNull() || pr.path("mergedAt").isMissingNode()
+                                        ? (pr.path("state").asText().equals("OPEN") ? CONTRIBUTION_TYPE.OPEN : CONTRIBUTION_TYPE.CLOSED)
+                                        : CONTRIBUTION_TYPE.MERGED;
 
                                 LocalDateTime createdAt = parseDate(pr.path("createdAt").asText());
-
-                                // endAt: MERGED → mergedAt / CLOSED → closedAt / OPEN → null
                                 LocalDateTime endAt = null;
-                                if (type == PR_STATE.MERGED) {
+                                if (type == CONTRIBUTION_TYPE.MERGED) {
                                     endAt = parseDate(pr.path("mergedAt").asText());
-                                } else if (type == PR_STATE.CLOSED) {
+                                } else if (type == CONTRIBUTION_TYPE.CLOSED) {
                                     endAt = parseDate(pr.path("closedAt").asText());
                                 }
 
@@ -622,25 +633,30 @@ public class GitHubApiService {
                                         .repositoryName(repoName)
                                         .referenceType(REFERENCE_TYPE.PR)
                                         .state(type)
-                                        .number(pr.path("number").asInt())
-                                        .title(pr.path("title").asText())
+                                        .number(pr.path("number").isMissingNode() ? null : pr.path("number").asInt())
+                                        .title(pr.path("title").isMissingNode() ? null : pr.path("title").asText())
                                         .contributedAt(createdAt)
                                         .endAt(endAt)
                                         .build();
                             });
                 });
 
+        // Issue 기여
         Flux<ContributionDTO> issueFlux = Flux.fromIterable(contributionsCollection.path("issueContributionsByRepository"))
                 .flatMap(repoNode -> {
                     JsonNode repo = repoNode.path("repository");
-                    String repoName = repo.path("owner").path("login").asText() + "/" + repo.path("name").asText();
+                    String owner = repo.path("owner").path("login").asText();
+                    String repoName = owner + "/" + repo.path("name").asText();
+
+                    if (owner.equals(userLogin)) return Flux.empty();
+
                     return Flux.fromIterable(repoNode.path("contributions").path("nodes"))
                             .map(node -> {
                                 JsonNode issue = node.path("issue");
-                                PR_STATE type = issue.path("state").asText().equals("OPEN") ? PR_STATE.OPEN : PR_STATE.CLOSED;
+                                CONTRIBUTION_TYPE type = issue.path("state").asText().equals("OPEN") ? CONTRIBUTION_TYPE.OPEN : CONTRIBUTION_TYPE.CLOSED;
 
                                 LocalDateTime createdAt = parseDate(issue.path("createdAt").asText());
-                                LocalDateTime endAt = (type == PR_STATE.CLOSED)
+                                LocalDateTime endAt = (type == CONTRIBUTION_TYPE.CLOSED)
                                         ? parseDate(issue.path("closedAt").asText())
                                         : null;
 
@@ -648,16 +664,56 @@ public class GitHubApiService {
                                         .referenceType(REFERENCE_TYPE.ISSUE)
                                         .state(type)
                                         .repositoryName(repoName)
-                                        .number(issue.path("number").asInt())
-                                        .title(issue.path("title").asText())
+                                        .number(issue.path("number").isMissingNode() ? null : issue.path("number").asInt())
+                                        .title(issue.path("title").isMissingNode() ? null : issue.path("title").asText())
                                         .contributedAt(createdAt)
                                         .endAt(endAt)
                                         .build();
                             });
                 });
 
-        return Flux.concat(prFlux, issueFlux);
+        // Review 기여
+        Flux<ContributionDTO> reviewFlux = Flux.fromIterable(contributionsCollection
+                        .path("pullRequestReviewContributionsByRepository"))
+                .flatMap(repoNode -> {
+                    JsonNode repo = repoNode.path("repository");
+                    String owner = repo.path("owner").path("login").asText();
+                    String repoName = owner + "/" + repo.path("name").asText();
+
+                    if (owner.equals(userLogin)) return Flux.empty();
+
+                    return Flux.fromIterable(repoNode.path("contributions").path("nodes"))
+                            .map(node -> {
+                                JsonNode review = node.path("pullRequestReview");
+                                JsonNode pr = review.path("pullRequest");
+
+                                String state = review.path("state").asText();
+                                CONTRIBUTION_TYPE reviewState;
+                                try {
+                                    reviewState = CONTRIBUTION_TYPE.valueOf(state);
+                                } catch (IllegalArgumentException e) {
+                                    // DISMISSED, PENDING 등 기여로 인정 안되는 상태는 스킵
+                                    return null;
+                                }
+
+                                LocalDateTime submittedAt = parseDate(review.path("submittedAt").asText());
+
+                                return ContributionDTO.builder()
+                                        .referenceType(REFERENCE_TYPE.REVIEW)
+                                        .state(reviewState)
+                                        .repositoryName(repoName)
+                                        .number(pr.isMissingNode() ? null : pr.path("number").asInt())
+                                        .title(pr.isMissingNode() ? null : pr.path("title").asText())
+                                        .contributedAt(submittedAt)
+                                        .endAt(null)
+                                        .build();
+                            })
+                            .filter(Objects::nonNull);
+                });
+
+        return Flux.concat(prFlux, issueFlux, reviewFlux);
     }
+
 
 
     /*public Mono<RepositoryDTO> getOrFetchRepository(String owner, String repoName) {

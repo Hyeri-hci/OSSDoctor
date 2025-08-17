@@ -1,5 +1,6 @@
 package com.ossdoctor.DTO;
 
+import com.ossdoctor.Entity.CONTRIBUTION_TYPE;
 import com.ossdoctor.Entity.PR_STATE;
 import com.ossdoctor.Entity.REFERENCE_TYPE;
 import com.ossdoctor.Entity.UserEntity;
@@ -20,7 +21,7 @@ public class ContributionDTO {
     private Long userId;
     private String repositoryName;
     private REFERENCE_TYPE referenceType;
-    private PR_STATE state;
+    private CONTRIBUTION_TYPE state;
     private int number;
     private String title;
     private LocalDateTime contributedAt;

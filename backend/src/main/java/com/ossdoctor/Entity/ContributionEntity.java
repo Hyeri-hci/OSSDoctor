@@ -33,7 +33,7 @@ public class ContributionEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private PR_STATE state; // 똑같아서 사용
+    private CONTRIBUTION_TYPE state;
 
     @Column(nullable = false)
     private Integer number;
