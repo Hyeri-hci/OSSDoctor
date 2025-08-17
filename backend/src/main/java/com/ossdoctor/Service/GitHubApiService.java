@@ -3,8 +3,7 @@ package com.ossdoctor.Service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ossdoctor.DTO.*;
-import com.ossdoctor.Entity.SCORE_TYPE;
-import com.ossdoctor.Entity.SOURCE_TYPE;
+import com.ossdoctor.Entity.*;
 import com.ossdoctor.config.GithubApiProperties;
 import com.ossdoctor.exception.GitHubApiException;
 import lombok.AllArgsConstructor;
@@ -18,6 +17,8 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
+import org.springframework.web.servlet.mvc.method.annotation.ContinuationHandlerMethodArgumentResolver;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 import reactor.util.retry.Retry;
@@ -45,6 +46,8 @@ public class GitHubApiService {
     private final RepositoryService repositoryService;
     private final ActivityService activityService;
     private final ScoreService scoreService;
+    private final UserService userService;
+
 
     // ========== REST API 사용 메서드 ==========
 
@@ -186,6 +189,79 @@ public class GitHubApiService {
         }
         """;
 
+    private static final String FULL_CONTRIBUTIONS_QUERY = """
+    query GetFullContributions($login: String!, $since: DateTime!) {
+      user(login: $login) {
+        contributionsCollection(from: $since) {
+          commitContributionsByRepository(maxRepositories: 50) {
+            repository {
+              name
+              owner { login }
+            }
+            contributions(first: 100) {
+              nodes {
+                commitCount
+                occurredAt
+              }
+            }
+          }
+          pullRequestContributionsByRepository(maxRepositories: 50) {
+            repository {
+              name
+              owner { login }
+            }
+            contributions(first: 100) {
+              nodes {
+                pullRequest {
+                  title
+                  number
+                  state
+                  createdAt
+                  closedAt
+                  mergedAt
+                }
+              }
+            }
+          }
+          issueContributionsByRepository(maxRepositories: 50) {
+            repository {
+              name
+              owner { login }
+            }
+            contributions(first: 100) {
+              nodes {
+                issue {
+                  title
+                  number
+                  state
+                  createdAt
+                  closedAt
+                  comments { totalCount }
+                }
+              }
+            }
+          }
+          pullRequestReviewContributionsByRepository(maxRepositories: 50) {
+            repository {
+              name
+              owner { login }
+            }
+            contributions(first: 100) {
+              nodes {
+                pullRequestReview {
+                  url
+                  state
+                  submittedAt
+                }
+              }
+            }
+          }
+
+        }
+      }
+    }
+    """;
+
     // =========== 공개 API 메서드 ===========
 
     // Repository 기본 정보 조회
@@ -251,6 +327,19 @@ public class GitHubApiService {
                 .map(this::parseRecentActivities)
                 // ActivityDTO -> PR, Issue 저장(비동기식)
                 .flatMap(result -> activityService.saveActivities(result.getActivities(), result.getRepositoryId()))
+                .onErrorMap(this::handleApiError);
+    }
+
+    public Mono<List<ContributionDTO>> getContributionSince(String owner, LocalDateTime since) {
+        Map<String, Object> variables = Map.of(
+                "login", owner,
+                "since", since.format(DateTimeFormatter.ISO_DATE_TIME)
+                //"to", to.format(DateTimeFormatter.ISO_DATE_TIME)
+        );
+
+        return executeGraphQLQuery(FULL_CONTRIBUTIONS_QUERY, variables)
+                .flatMapMany(this::parseContributions) // Flux<ContributionDTO> 반환
+                .collectList() // Flux -> Mono<List<ContributionDTO>>
                 .onErrorMap(this::handleApiError);
     }
 
@@ -504,6 +593,182 @@ public class GitHubApiService {
         return new ActivitiesWithRepoId(sortedLimited, repoId);
     }
 
+    public Flux<ContributionDTO> parseContributions(JsonNode response) {
+        JsonNode contributionsCollection = response.path("data").path("user").path("contributionsCollection");
+
+        Flux<ContributionDTO> prFlux = Flux.fromIterable(contributionsCollection.path("pullRequestContributionsByRepository"))
+                .flatMap(repoNode -> {
+                    JsonNode repo = repoNode.path("repository");
+                    String repoName = repo.path("owner").path("login").asText() + "/" + repo.path("name").asText();
+                    return Flux.fromIterable(repoNode.path("contributions").path("nodes"))
+                            .map(node -> {
+                                JsonNode pr = node.path("pullRequest");
+
+                                PR_STATE type = pr.path("mergedAt").isNull() || pr.path("mergedAt").isMissingNode()
+                                        ? (pr.path("state").asText().equals("OPEN") ? PR_STATE.OPEN : PR_STATE.CLOSED)
+                                        : PR_STATE.MERGED;
+
+                                LocalDateTime createdAt = parseDate(pr.path("createdAt").asText());
+
+                                // endAt: MERGED → mergedAt / CLOSED → closedAt / OPEN → null
+                                LocalDateTime endAt = null;
+                                if (type == PR_STATE.MERGED) {
+                                    endAt = parseDate(pr.path("mergedAt").asText());
+                                } else if (type == PR_STATE.CLOSED) {
+                                    endAt = parseDate(pr.path("closedAt").asText());
+                                }
+
+                                return ContributionDTO.builder()
+                                        .repositoryName(repoName)
+                                        .referenceType(REFERENCE_TYPE.PR)
+                                        .state(type)
+                                        .number(pr.path("number").asInt())
+                                        .title(pr.path("title").asText())
+                                        .contributedAt(createdAt)
+                                        .endAt(endAt)
+                                        .build();
+                            });
+                });
+
+        Flux<ContributionDTO> issueFlux = Flux.fromIterable(contributionsCollection.path("issueContributionsByRepository"))
+                .flatMap(repoNode -> {
+                    JsonNode repo = repoNode.path("repository");
+                    String repoName = repo.path("owner").path("login").asText() + "/" + repo.path("name").asText();
+                    return Flux.fromIterable(repoNode.path("contributions").path("nodes"))
+                            .map(node -> {
+                                JsonNode issue = node.path("issue");
+                                PR_STATE type = issue.path("state").asText().equals("OPEN") ? PR_STATE.OPEN : PR_STATE.CLOSED;
+
+                                LocalDateTime createdAt = parseDate(issue.path("createdAt").asText());
+                                LocalDateTime endAt = (type == PR_STATE.CLOSED)
+                                        ? parseDate(issue.path("closedAt").asText())
+                                        : null;
+
+                                return ContributionDTO.builder()
+                                        .referenceType(REFERENCE_TYPE.ISSUE)
+                                        .state(type)
+                                        .repositoryName(repoName)
+                                        .number(issue.path("number").asInt())
+                                        .title(issue.path("title").asText())
+                                        .contributedAt(createdAt)
+                                        .endAt(endAt)
+                                        .build();
+                            });
+                });
+
+        return Flux.concat(prFlux, issueFlux);
+    }
+
+
+    /*public Mono<RepositoryDTO> getOrFetchRepository(String owner, String repoName) {
+        return Mono.fromCallable(() -> repositoryService.findByFullName(owner, repoName))
+                .subscribeOn(Schedulers.boundedElastic())
+                .flatMap(repoOpt -> repoOpt
+                        .map(Mono::just) // 존재하면 그대로 반환
+                        .orElseGet(() -> getRepositoryInfo(owner, repoName)) // 없으면 GitHub에서 가져오기
+                );
+    }
+
+    // PullRequestDTO 반환
+    public Flux<PullRequestDTO> getPullRequests(String owner, LocalDateTime since) {
+        Map<String, Object> variables = Map.of(
+                "login", owner,
+                "since", since.format(DateTimeFormatter.ISO_DATE_TIME)
+        );
+
+        return executeGraphQLQuery(FULL_CONTRIBUTIONS_QUERY, variables)
+                .flatMapMany(this::parsePullRequests);
+    }
+
+    // IssueDTO 반환
+    public Flux<IssueDTO> getIssues(String owner, LocalDateTime since) {
+        Map<String, Object> variables = Map.of(
+                "login", owner,
+                "since", since.format(DateTimeFormatter.ISO_DATE_TIME)
+        );
+
+        return executeGraphQLQuery(FULL_CONTRIBUTIONS_QUERY, variables)
+                .flatMapMany(this::parseIssues);
+    }
+
+    private Flux<PullRequestDTO> parsePullRequests(JsonNode response) {
+        JsonNode userNode = response.path("data").path("user");
+        final String userName = userNode.path("login").asText();
+
+        final UserDTO actualUser = userService.findByUsername(userName)
+                .orElseGet(() -> userService.findByUsername("dabbun").orElseThrow());
+
+        JsonNode repositoryCollection = userNode.path("contributionsCollection");
+
+        return Flux.fromIterable(repositoryCollection.path("pullRequestContributionsByRepository"))
+                .flatMap(repoNode -> {
+                    JsonNode repo = repoNode.path("repository");
+                    String repoName = repo.path("name").asText();
+                    String repoOwner = repo.path("owner").path("login").asText();
+
+                    // getOrFetchRepository()를 Mono 체인 안에서 호출
+                    return getOrFetchRepository(repoOwner, repoName)
+                            .flatMapMany(repositoryDTO ->
+                                    Flux.fromIterable(repoNode.path("contributions").path("nodes"))
+                                            .map(node -> {
+                                                JsonNode pr = node.path("pullRequest");
+                                                PR_STATE type = pr.path("mergedAt").isNull() ?
+                                                        (pr.path("state").asText().equals("OPEN") ? PR_STATE.OPEN : PR_STATE.CLOSED)
+                                                        : PR_STATE.MERGED;
+
+                                                return PullRequestDTO.builder()
+                                                        .repositoryId(repositoryDTO.getIdx())
+                                                        .userId(actualUser.getIdx())
+                                                        .userName(userName)
+                                                        .title(pr.path("title").asText())
+                                                        .prNumber(pr.path("number").asInt())
+                                                        .state(type)
+                                                        .createdAt(parseDate(pr.path("createdAt").asText()))
+                                                        .mergedAt(type == PR_STATE.MERGED ? parseDate(pr.path("mergedAt").asText()) : null)
+                                                        .build();
+                                            })
+                            );
+                });
+    }
+
+    private Flux<IssueDTO> parseIssues(JsonNode response) {
+        JsonNode userNode = response.path("data").path("user");
+        final String userName = userNode.path("login").asText();
+
+        final UserDTO actualUser = userService.findByUsername(userName)
+                .orElseGet(() -> userService.findByUsername("dabbun").orElseThrow());
+
+        JsonNode repositoryCollection = userNode.path("contributionsCollection");
+
+        return Flux.fromIterable(repositoryCollection.path("issueContributionsByRepository"))
+                .flatMap(repoNode -> {
+                    JsonNode repo = repoNode.path("repository");
+                    String repoName = repo.path("name").asText();
+                    String repoOwner = repo.path("owner").path("login").asText();
+
+                    // getOrFetchRepository를 Mono 체인 안에서 사용
+                    return getOrFetchRepository(repoOwner, repoName)
+                            .flatMapMany(repositoryDTO ->
+                                    Flux.fromIterable(repoNode.path("contributions").path("nodes"))
+                                            .map(node -> {
+                                                JsonNode issue = node.path("issue");
+                                                ISSUE_STATE type = issue.path("state").asText().equals("OPEN") ? ISSUE_STATE.OPEN : ISSUE_STATE.CLOSED;
+
+                                                return IssueDTO.builder()
+                                                        .repositoryId(repositoryDTO.getIdx())
+                                                        .userId(actualUser.getIdx())
+                                                        .userName(userName)
+                                                        .title(issue.path("title").asText())
+                                                        .issueNumber(issue.path("number").asInt())
+                                                        .state(type)
+                                                        .createdAt(parseDate(issue.path("createdAt").asText()))
+                                                        .closedAt(parseDate(issue.path("closedAt").asText()))
+                                                        .build();
+                                            })
+                            );
+                });
+    }*/
+
     // Contributors 파싱
     private List<ContributorDTO> parseContributors(JsonNode response) {
         List<ContributorDTO> contributors = new ArrayList<>();
@@ -537,7 +802,11 @@ public class GitHubApiService {
     }
 
     public ScoreDTO getTotalScore(String owner, String repo) {
-        return calculateTotalScore(repositoryService.findByFullName(owner, repo));
+        Optional<RepositoryDTO> repository = repositoryService.findByFullName(owner, repo);
+
+        return repository.map(this::calculateTotalScore).orElse(null);
+
+        //return calculateTotalScore(repositoryService.findByFullName(owner, repo));
     }
 
     // 건강 점수 계산 최종
@@ -731,6 +1000,13 @@ public class GitHubApiService {
         }
     }
 
+    private LocalDateTime parseDate(String dateStr) {
+        if (dateStr == null || dateStr.isBlank() || "null".equalsIgnoreCase(dateStr)) {
+            return null;
+        }
+        return LocalDateTime.parse(dateStr, DateTimeFormatter.ISO_DATE_TIME);
+    }
+
     // GitHub Api 예외 처리
     private GitHubApiException handleApiError(Throwable throwable) {
         // WebClientResponseException : HTTP 결과 4xx or 5xx
@@ -756,6 +1032,4 @@ public class GitHubApiService {
         private final List<ActivityDTO> activities;
         private final Long repositoryId;
     }
-
-
 }
