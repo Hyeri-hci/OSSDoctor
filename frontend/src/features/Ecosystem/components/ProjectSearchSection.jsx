@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, Input, Select, LoadingSpinner } from '../../../components/common';
+import { Button, Input, Select } from '../../../components/common';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 
 /**
@@ -14,7 +14,6 @@ import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
  * @param {boolean} props.loading - 로딩 상태
  * @param {Object} props.filterOptions - 필터 옵션들
  * @param {boolean} props.hasActiveFilters - 활성화된 필터 여부
- * @param {boolean} props.canSearch - 검색 가능 여부
  * @param {boolean} props.onlyTimeFilterSelected - 시간 필터만 선택된 상태
  * @param {Function} props.onSearchChange - 검색어 변경 핸들러
  * @param {Function} props.onLanguageChange - 언어 변경 핸들러
@@ -33,7 +32,6 @@ const ProjectSearchSection = ({
     loading,
     filterOptions,
     hasActiveFilters,
-    canSearch,
     onlyTimeFilterSelected,
     onSearchChange,
     onLanguageChange,
@@ -112,15 +110,17 @@ const ProjectSearchSection = ({
                     </div>
                     
                     {/* 검색 안내 메시지 - 최근 업데이트만 선택되었을 때만 표시 */}
-                    {onlyTimeFilterSelected && (
-                        <div className="mt-3 text-sm text-orange-600 bg-orange-50 border border-orange-200 rounded-lg p-3">
-                            <p className="font-medium">💡 검색 도움말</p>
-                            <p className="mt-1"><strong>최근 업데이트</strong>는 다른 검색 조건과 함께 사용할 수 있는 필터입니다.</p>
-                            <p className="mt-2 text-xs text-orange-500 bg-orange-100 rounded px-2 py-1">
-                                <strong>검색하려면:</strong> 프로젝트 이름을 검색하시거나 프로그래밍 언어, 라이선스 중 하나 이상을 선택해주세요.
-                            </p>
-                        </div>
-                    )}
+                    <div className="mt-3 min-h-0 transition-all duration-200">
+                        {onlyTimeFilterSelected && (
+                            <div className="text-sm text-orange-600 bg-orange-50 border border-orange-200 rounded-lg p-3">
+                                <p className="font-medium">💡 검색 도움말</p>
+                                <p className="mt-1"><strong>최근 업데이트</strong>는 다른 검색 조건과 함께 사용할 수 있는 필터입니다.</p>
+                                <p className="mt-2 text-xs text-orange-500 bg-orange-100 rounded px-2 py-1">
+                                    <strong>검색하려면:</strong> 프로젝트 이름을 검색하시거나 프로그래밍 언어, 라이선스 중 하나 이상을 선택해주세요.
+                                </p>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* 검색 버튼과 필터 상태 */}
@@ -189,7 +189,6 @@ ProjectSearchSection.propTypes = {
         sortOptions: PropTypes.array.isRequired
     }).isRequired,
     hasActiveFilters: PropTypes.bool.isRequired,
-    canSearch: PropTypes.bool.isRequired,
     onlyTimeFilterSelected: PropTypes.bool.isRequired,
     onSearchChange: PropTypes.func.isRequired,
     onLanguageChange: PropTypes.func.isRequired,

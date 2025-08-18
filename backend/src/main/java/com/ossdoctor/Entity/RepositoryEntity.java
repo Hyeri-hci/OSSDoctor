@@ -55,21 +55,43 @@ public class RepositoryEntity {
     private Integer watchers = 0;
 
     @Column(nullable = false)
+    @Builder.Default
     private Integer contributors = 0;
 
+    @Column(name = "total_contributors", nullable = false)
+    @Builder.Default
+    private Integer totalContributors = 0;
+
     @Column(name = "view_count", nullable = false)
+    @Builder.Default
     private Long viewCount = 0L;
 
+    @Column(name = "total_commit_count", nullable = false)
+    @Builder.Default
+    private Integer totalCommits = 0;
+
+    @Column(name = "open_pr_count", nullable = false)
+    @Builder.Default
+    private Integer openPullRequests = 0;
+
     @Column(name = "merged_pr_count", nullable = false)
+    @Builder.Default
     private Integer mergedPullRequests = 0;
 
     @Column(name = "total_pr_count", nullable = false)
+    @Builder.Default
     private Integer totalPullRequests = 0;
 
+    @Column(name = "open_issue_count", nullable = false)
+    @Builder.Default
+    private Integer openIssues = 0;
+
     @Column(name = "closed_issue_count", nullable = false)
+    @Builder.Default
     private Integer closedIssues = 0;
 
     @Column(name = "total_issue_count", nullable = false)
+    @Builder.Default
     private Integer totalIssues = 0;
 
     @Column(name = "last_updated_at")

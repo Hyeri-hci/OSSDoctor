@@ -1,40 +1,44 @@
 package com.ossdoctor.Service;
 
-import com.ossdoctor.DTO.ScoreDTO;
-import com.ossdoctor.Entity.SCORE_TYPE;
 import com.ossdoctor.Entity.ScoreEntity;
-import com.ossdoctor.Repository.RepositoryRepository;
 import com.ossdoctor.Repository.ScoreRepository;
-import com.ossdoctor.Repository.UserRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
 @AllArgsConstructor
 public class ScoreService {
 
     private final ScoreRepository scoreRepository;
-    private final RepositoryRepository repositoryRepository;
 
-    public ScoreDTO save(ScoreDTO scoreDTO) {
-        return toDTO(scoreRepository.save(toEntity(scoreDTO)));
+    // 저장소 ID로 점수 조회 (최소 형태)
+    public Map<String, Integer> getScoresByRepositoryId(Long repositoryId) {
+        List<ScoreEntity> scores = scoreRepository.findByRepositoryIdx(repositoryId);
+        Map<String, Integer> scoreMap = new HashMap<>();
+        for (ScoreEntity score : scores) {
+            scoreMap.put(score.getScoreType().name().toLowerCase() + "Score", score.getScore());
+        }
+        return scoreMap;
     }
 
-    private ScoreDTO toDTO(ScoreEntity entity) {
-        return ScoreDTO.builder()
-                .idx(entity.getIdx())
-                .repositoryId(entity.getRepository().getIdx())
-                .scoreType(entity.getScoreType())
-                .score(entity.getScore())
-                .createdAt(entity.getCreatedAt())
+    // 점수 저장 기능 추가
+    public com.ossdoctor.DTO.ScoreDTO save(com.ossdoctor.DTO.ScoreDTO scoreDTO) {
+        ScoreEntity scoreEntity = ScoreEntity.builder()
+                .repository(com.ossdoctor.Entity.RepositoryEntity.builder().idx(scoreDTO.getRepositoryId()).build())
+                .scoreType(scoreDTO.getScoreType())
+                .score(scoreDTO.getScore())
                 .build();
-    }
-
-    private ScoreEntity toEntity(ScoreDTO dto) {
-        return ScoreEntity.builder()
-                .repository(repositoryRepository.findById(dto.getRepositoryId()).get())
-                .scoreType(dto.getScoreType())
-                .score(dto.getScore())
+        ScoreEntity saved = scoreRepository.save(scoreEntity);
+        return com.ossdoctor.DTO.ScoreDTO.builder()
+                .idx(saved.getIdx())
+                .repositoryId(saved.getRepository().getIdx())
+                .scoreType(saved.getScoreType())
+                .score(saved.getScore())
+                .createdAt(saved.getCreatedAt())
                 .build();
     }
 }

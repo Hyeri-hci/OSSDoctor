@@ -4,11 +4,13 @@ import com.ossdoctor.DTO.UserDTO;
 import com.ossdoctor.Entity.UserEntity;
 import com.ossdoctor.Repository.UserRepository;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.json.JSONObject;
 
 import java.util.Optional;
 
+@Slf4j
 @Service
 @AllArgsConstructor
 public class UserService {
@@ -43,18 +45,12 @@ public class UserService {
             String avatarUrl = userJson.optString("avatar_url", null);
             String bio = userJson.optString("bio", null);
 
-            System.out.println("GitHub 사용자 정보 처리:");
-            System.out.println("- GitHub ID: " + githubId);
-            System.out.println("- Nickname: " + nickname);
-            System.out.println("- Avatar URL: " + avatarUrl);
-            System.out.println("- Bio: " + bio);
-
             // 기존 사용자 확인
             Optional<UserDTO> existingUser = findByGithubId(githubId);
 
             if (existingUser.isPresent()) {
                 // 기존 사용자 업데이트 - 기존 엔터티의 ID와 가입 시점 유지
-                System.out.println("기존 사용자 정보 업데이트: " + nickname);
+                log.info("기존 사용자 정보 업데이트: " + nickname);
                 UserDTO userDto = existingUser.get();
                 userDto.setNickname(nickname);
                 userDto.setAvatarUrl(avatarUrl);
@@ -63,7 +59,7 @@ public class UserService {
                 return save(userDto);
             } else {
                 // 신규 사용자 생성
-                System.out.println("신규 사용자 생성: " + nickname);
+                log.info("신규 사용자 생성: " + nickname);
                 UserDTO newUser = UserDTO.builder()
                         .githubId(githubId)
                         .nickname(nickname)
@@ -75,7 +71,7 @@ public class UserService {
                 return save(newUser);
             }
         } catch (Exception e) {
-            System.err.println("사용자 정보 저장 중 오류 발생: " + e.getMessage());
+            log.error("사용자 정보 저장 중 오류 발생: " + e.getMessage());
             throw new RuntimeException("사용자 정보 저장 실패: " + e.getMessage(), e);
         }
     }

@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import * as d3 from 'd3';
 
-const BarChart = ({ data, width = 600, height = 300 }) => {
+const BarChart = ({ data, width = "100%", height = 300 }) => {
     const svgRef = useRef();      // SVG 요소 참조
     const containerRef = useRef(); // 컨테이너 div 참조
     const [containerWidth, setContainerWidth] = useState(0); // 반응형을 위한 컨테이너 너비

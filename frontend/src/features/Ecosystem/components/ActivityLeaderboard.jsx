@@ -21,7 +21,7 @@ const ActivityLeaderboard = ({ onBack }) => {
     // 로딩 상태 처리 - 로딩 중일 때 스피너 표시
     if (loading && !leaderboardData.length) {
         return (
-            <div className='container mx-auto p-6 xl:px-8 2xl:px-12 py-8'>
+            <div className='py-8'>
                 <LoadingSpinner
                     message='리더보드 데이터를 불러오고 있습니다...'
                     size='large'
@@ -34,7 +34,7 @@ const ActivityLeaderboard = ({ onBack }) => {
     // 에러 처리
     if (error) {
         return (
-            <div className='container mx-auto p-6 xl:px-8 2xl:px-12 py-8'>
+            <div className='py-8'>
                 <EmptyState
                     title='리더보드 데이터를 불러오는 데 실패했습니다.'
                     description={error.message}
@@ -49,7 +49,7 @@ const ActivityLeaderboard = ({ onBack }) => {
     }
 
     return (
-        <div className="container mx-auto px-6 xl:px-8 2xl:px-12 py-8">
+        <div className="py-8">
             <div className="max-w-7xl mx-auto">
                 {/* 뒤로가기 버튼 */}
                 <Button

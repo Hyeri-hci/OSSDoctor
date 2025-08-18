@@ -9,6 +9,22 @@ const HeaderSection = () => {
     const [searchQuery, setSearchQuery] = useState("");
     const { isAuthenticated, user, isLoading, checkAuthStatus, handleLogout } = useAuth();
 
+    // SearchBar 검색 기능 - 에코시스템 페이지로 이동
+    const handleSearchSubmit = () => {
+        if (searchQuery.trim()) {
+            // 검색어를 URL 파라미터로 인코딩하여 에코시스템 페이지로 이동
+            const encodedQuery = encodeURIComponent(searchQuery.trim());
+            window.location.href = `/ecosystem?search=${encodedQuery}`;
+        }
+    };
+
+    // Enter 키 처리
+    const handleSearchKeyDown = (e) => {
+        if (e.key === 'Enter') {
+            handleSearchSubmit();
+        }
+    };
+
     const handleMyActivityClick = async () => {
         // 로그인 체크
         if (!isAuthenticated) {
@@ -97,9 +113,10 @@ const HeaderSection = () => {
                         <div className="hidden sm:block w-64">
                             <SearchBar
                                 placeholder="업사이클링할 프로젝트 찾기"
-                                // onSubmit={}
+                                onSubmit={handleSearchSubmit}
                                 value={searchQuery}
                                 onChange={setSearchQuery}
+                                onKeyDown={handleSearchKeyDown}
                                 size="small"
                             />
                         </div>

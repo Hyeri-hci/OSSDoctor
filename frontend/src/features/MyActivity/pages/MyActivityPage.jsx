@@ -52,7 +52,7 @@ const MyActivityPage = () => {
     return (
         <Layout>
             <div>
-                <section className="bg-[#f3f3f3] py-8">
+                <section className="bg-gray-50 py-8">
                     <div className="container mx-auto px-6 xl:px-8 2xl:px-12">
                         <div className="max-w-6xl mx-auto">
 

@@ -26,46 +26,48 @@ const SearchResultsHeader = ({
     totalPagesInBatch,
     currentBatch,
     searchQuery,
-    selectedLanguage,
-    selectedLicense,
-    selectedCommitDate,
-    filterOptions,
     onClearFilters,
     containerRef
 }) => {
-    if (!hasSearched && !hasActiveFilters) {
-        return null;
-    }
-
     return (
         <div className="mb-8">
             {/* 활성 필터 표시 */}
-            {hasActiveFilters && (
-                <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <div className="flex items-center justify-between">
-                        <div className="text-sm text-blue-800">
-                            <strong>활성 필터:</strong> {searchQuery && `"${searchQuery}"`}
-                            {selectedLanguage && ` • ${selectedLanguage}`}
-                            {selectedLicense && ` • ${selectedLicense}`}
-                            {selectedCommitDate && ` • ${filterOptions.commitDates.find(opt => opt.value === selectedCommitDate)?.label}`}
+            <div className="transition-all duration-300 ease-in-out overflow-hidden">
+                {hasActiveFilters && (
+                    <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg transform transition-all duration-300 ease-out opacity-100 translate-y-0">
+                        <div className="flex flex-wrap items-center justify-between gap-4">
+                            <div className="text-sm text-blue-600">
+                                검색 조건 적용됨
+                            </div>
+                            
+                            <div className="flex flex-wrap items-center gap-2">
+                                {searchQuery && (
+                                    <span className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-blue-600 bg-white border border-blue-300 rounded-lg">
+                                        검색어: &quot;{searchQuery}&quot;
+                                    </span>
+                                )}
+                                
+                                <button 
+                                    onClick={onClearFilters}
+                                    className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-blue-600 bg-white hover:bg-blue-50 border border-blue-300 rounded-lg transition-colors duration-200"
+                                >
+                                    모든 필터 지우기
+                                </button>
+                            </div>
                         </div>
-                        <button 
-                            onClick={onClearFilters}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-blue-600 bg-white hover:bg-blue-50 border border-blue-300 rounded-lg transition-colors duration-200"
-                        >
-                            ✕ 필터 초기화
-                        </button>
                     </div>
+                )}
+            </div>
+
+            {/* 검색 결과 헤더 - 검색이 수행된 경우에만 표시 */}
+            {hasSearched && (
+                <div ref={containerRef} className="mb-6 transform transition-all duration-300 ease-out opacity-100 translate-y-0">
+                    <h2 className="text-2xl font-bold mb-2">검색 결과</h2>
+                    <p className="text-gray-600">
+                        {displayedProjects.length}개의 프로젝트를 찾았습니다 (배치 {currentBatch}, 페이지 {currentPage}/{totalPagesInBatch})
+                    </p>
                 </div>
             )}
-
-            {/* 검색 결과 헤더 */}
-            <div ref={containerRef} className="mb-6">
-                <h2 className="text-2xl font-bold mb-2">검색 결과</h2>
-                <p className="text-gray-600">
-                    {displayedProjects.length}개의 프로젝트를 찾았습니다 (배치 {currentBatch}, 페이지 {currentPage}/{totalPagesInBatch})
-                </p>
-            </div>
         </div>
     );
 };
