@@ -37,12 +37,10 @@ public class ContributionService {
 
     private final ContributionRepository contributionRepository;
     private final UserRepository userRepository;
-    private final RepositoryRepository  repositoryRepository;
 
     private final UserService userService;
     private final GitHubApiService  gitHubApiService;
-    private final PullRequestService pullRequestService;
-    private final IssueService issueService;
+    private final UserExperienceService userExperienceService;
 
     private Optional<ContributionDTO> findLatestByUserId(Long userId) {
         return contributionRepository.findTopByUserIdxOrderByContributedAtDesc(userId).map(this::toDTO);
@@ -188,13 +186,18 @@ public class ContributionService {
         }
 
         return gitHubApiService.getContributionSince(owner, since)
+                .doOnNext(list -> log.info("Fetched contributions: {}", list.size()))
                 .flatMapMany(Flux::fromIterable) // List<ContributionDTO> -> Flux<ContributionDTO>
                 .map(dto -> {
                     dto.setUserId(user.getIdx()); // user 주입
                     return dto;
                 })
                 .map(this::save) // DTO -> Entity -> 저장 -> DTO 반환
-                .collectList();   // Mono<List<ContributionDTO>> 반환
+                .collectList()
+                .doOnSuccess(contributions -> {
+                    // 저장 완료 후 경험치/레벨 계산
+                    userExperienceService.addUserExperience(contributions);
+                });   // Mono<List<ContributionDTO>> 반환
     }
 
 

@@ -14,7 +14,15 @@ public class LevelService {
 
     private LevelRepository levelRepository;
 
-    private LevelDTO save(LevelDTO levelDTO) {
+    public boolean existsByLevelId(Long levelId){
+        return levelRepository.existsById(levelId);
+    }
+
+    public LevelDTO findTopByRequiredExpLessThanEqualOrderByLevelIdDesc(Integer requiredExp){
+        return toDTO(levelRepository.findTopByRequiredExpLessThanEqualOrderByLevelIdDesc(requiredExp));
+    }
+
+    public LevelDTO save(LevelDTO levelDTO) {
         return toDTO(levelRepository.save(toEntity(levelDTO)));
     }
 
