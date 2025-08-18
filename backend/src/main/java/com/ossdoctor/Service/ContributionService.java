@@ -28,8 +28,38 @@ public class ContributionService {
     private final ContributionRepository contributionRepository;
     private final UserExperienceService userExperienceService;
 
-    private ContributionDTO save(ContributionDTO dto) {
-        return toDTO(contributionRepository.save(toEntity(dto)));
+    // 저장 결과를 담는 클래스
+    private static class SaveResult {
+        private final ContributionDTO dto;
+        private final boolean isNewlySaved;
+        
+        public SaveResult(ContributionDTO dto, boolean isNewlySaved) {
+            this.dto = dto;
+            this.isNewlySaved = isNewlySaved;
+        }
+        
+        public ContributionDTO getDto() { return dto; }
+        public boolean isNewlySaved() { return isNewlySaved; }
+    }
+    
+    private SaveResult saveWithResult(ContributionDTO dto) {
+        // 중복 체크: 실제 엔티티를 조회해서 확인
+        Optional<ContributionEntity> existingEntity = contributionRepository
+            .findByUserAndRepositoryAndNumberAndReferenceType(
+                dto.getUserId(), dto.getRepositoryName(), dto.getNumber(), dto.getReferenceType()
+            );
+        
+        if (existingEntity.isPresent()) {
+            log.debug("중복 데이터 발견, 기존 데이터 반환: {} #{} in {} (idx={})", 
+                dto.getReferenceType(), dto.getNumber(), dto.getRepositoryName(), 
+                existingEntity.get().getIdx());
+            return new SaveResult(toDTO(existingEntity.get()), false);
+        }
+        
+        log.debug("새 데이터 저장: {} #{} in {}", dto.getReferenceType(), dto.getNumber(), dto.getRepositoryName());
+        ContributionDTO savedDto = toDTO(contributionRepository.save(toEntity(dto)));
+        log.debug("저장 완료: idx={}", savedDto.getIdx());
+        return new SaveResult(savedDto, true);
     }
 
     private ContributionDTO toDTO(ContributionEntity entity) {
@@ -61,23 +91,51 @@ public class ContributionService {
 
     public Mono<List<ContributionDTO>> saveContributions(String owner) {
         return Mono.justOrEmpty(userService.findByUsername(owner))
-                .switchIfEmpty(Mono.defer(() ->
-                        Mono.justOrEmpty(userService.findByUsername("dabbun")) // 임시
-                                .switchIfEmpty(Mono.error(new RuntimeException("Default user 'dabbun' not found")))
-                ))
+                .switchIfEmpty(Mono.defer(() -> {
+                    log.warn("사용자 {}를 찾을 수 없어 dabbun으로 대체 시도", owner);
+                    return Mono.justOrEmpty(userService.findByUsername("dabbun")) // 임시
+                            .switchIfEmpty(Mono.error(new RuntimeException("Default user 'dabbun' not found")));
+                }))
                 .flatMap(user -> {
                     LocalDateTime since = findLatestContribution(user)
                             .map(latest -> latest.getContributedAt().plusSeconds(1))
                             .orElse(user.getJoinedAt().minusDays(30));
 
-                    log.info("Fetching contributions for {} since {}", owner, since);
-
                     return gitHubApiService.getContributionSince(owner, since)
+                            .doOnError(error -> log.error("GitHub API 호출 실패: {}", error.getMessage()))
                             .flatMapMany(Flux::fromIterable)
-                            .map(dto -> { dto.setUserId(user.getIdx()); return dto; })
-                            .map(this::save)
+                            .map(dto -> { 
+                                dto.setUserId(user.getIdx()); 
+                                return dto; 
+                            })
                             .collectList()
-                            .doOnSuccess(userExperienceService::addUserExperience);
+                            .flatMap(dtoList -> {
+                                // 각 DTO를 저장하면서 새로 저장된 것들만 별도로 추적
+                                List<SaveResult> saveResults = dtoList.stream()
+                                    .map(this::saveWithResult)
+                                    .collect(java.util.stream.Collectors.toList());
+                                
+                                List<ContributionDTO> allSaved = saveResults.stream()
+                                    .map(SaveResult::getDto)
+                                    .collect(java.util.stream.Collectors.toList());
+                                    
+                                List<ContributionDTO> newContributions = saveResults.stream()
+                                    .filter(SaveResult::isNewlySaved)
+                                    .map(SaveResult::getDto)
+                                    .collect(java.util.stream.Collectors.toList());
+                                
+                                log.info("전체 처리된 기여: {}개, 새로 저장된 기여: {}개", 
+                                    allSaved.size(), newContributions.size());
+                                
+                                if (!newContributions.isEmpty()) {
+                                    userExperienceService.addUserExperience(newContributions);
+                                    log.info("{}개의 새로운 기여에 대해 경험치를 부여했습니다", newContributions.size());
+                                } else {
+                                    log.info("새로운 기여가 없어 경험치 부여를 건너뜁니다");
+                                }
+                                
+                                return Mono.just(allSaved);
+                            });
                 });
     }
 
@@ -86,29 +144,24 @@ public class ContributionService {
                 .map(this::toDTO);
     }
 
-
     // 날짜별 기여 이력 가져오기
     public Mono<Map<LocalDate, List<ContributionDTO>>> getContributionsByNickname(String nickname) {
         return Mono.fromCallable(() -> userRepository.findByNickname(nickname))
                 .subscribeOn(Schedulers.boundedElastic())
-                .doOnNext(user -> System.out.println("User found: " + user)) // 유저 조회 로그
                 .flatMap(user -> {
                     if (user.isEmpty()) {
-                        System.out.println("User not found for nickname: " + nickname);
                         return Mono.just(Collections.emptyMap());
                     }
                     return Mono.fromCallable(() -> contributionRepository.findByUserOrderByContributedAtDesc(user))
                             .subscribeOn(Schedulers.boundedElastic())
                             .flatMapMany(Flux::fromIterable)
                             .map(this::toDTO)
-                            .doOnNext(dto -> System.out.println("ContributionDTO: " + dto)) // 각 DTO 로그
                             .collectMultimap(dto -> dto.getContributedAt().toLocalDate())
                             .map(map -> {
                                 Map<LocalDate, List<ContributionDTO>> result = new TreeMap<>();
                                 map.forEach((date, coll) -> result.put(date, new ArrayList<>(coll)));
                                 return result;
-                            })
-                            .doOnSuccess(res -> System.out.println("Grouped result: " + res)); // 최종 Map 로그
+                            });
                 });
     }
 
