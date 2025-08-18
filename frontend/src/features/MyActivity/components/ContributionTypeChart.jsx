@@ -25,8 +25,20 @@ const ContributionTypeChart = ({ data }) => {
             </div>
 
             {/* Chart Legend */}
-            <div className="text-center text-sm text-gray-600 mt-2">
-                Contributions Type
+            <div className="mt-4">
+                <div className="flex flex-wrap justify-center gap-4">
+                    {data.map((item, index) => (
+                        <div key={index} className="flex items-center space-x-2">
+                            <div 
+                                className="w-3 h-3 rounded-full"
+                                style={{ backgroundColor: item.color }}
+                            ></div>
+                            <span className="text-sm text-gray-600">
+                                {item.label}: {item.value}%
+                            </span>
+                        </div>
+                    ))}
+                </div>
             </div>
 
         </div>
