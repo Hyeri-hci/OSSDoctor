@@ -20,9 +20,17 @@ public class UserService {
         return toDTO(userRepository.save(toEntity(dto)));
     }
 
+    public Optional<UserDTO> findById(Long id){
+        return userRepository.findById(id).map(this::toDTO);
+    }
+
     public Optional<UserDTO> findByGithubId(Long githubId) {
         return userRepository.findByGithubId(githubId)
                 .map(this::toDTO);
+    }
+
+    public Optional<UserDTO> findByUsername(String username) {
+        return userRepository.findByNickname(username).map(this::toDTO);
     }
 
     /**

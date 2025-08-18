@@ -16,7 +16,7 @@ public class PullRequestService {
     private final UserRepository userRepository;
     private final RepositoryRepository repositoryRepository;
 
-    private PullRequestDTO save(PullRequestDTO pullRequestDTO) {
+    public PullRequestDTO save(PullRequestDTO pullRequestDTO) {
         return toDTO(pullRequestRepository.save(toEntity(pullRequestDTO)));
     }
 

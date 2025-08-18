@@ -16,7 +16,7 @@ public class IssueService {
     private final UserRepository userRepository;
     private final RepositoryRepository repositoryRepository;
 
-    private IssueDTO save(IssueDTO issueDTO) {
+    public IssueDTO save(IssueDTO issueDTO) {
         return toDTO(issueRepository.save(toEntity(issueDTO)));
     }
 
