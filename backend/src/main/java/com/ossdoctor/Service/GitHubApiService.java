@@ -43,7 +43,6 @@ public class GitHubApiService {
     private final RepositoryService repositoryService;
     private final ActivityService activityService;
     private final ScoreService scoreService;
-    private final UserService userService;
 
 
     // ========== REST API 사용 메서드 ==========
@@ -189,6 +188,7 @@ public class GitHubApiService {
               nodes {
                 commitCount
                 occurredAt
+                url
               }
             }
           }
@@ -345,9 +345,13 @@ public class GitHubApiService {
                 "login", owner,
                 "since", since.format(DateTimeFormatter.ISO_DATE_TIME)
         );
-
+        
         return executeGraphQLQuery(FULL_CONTRIBUTIONS_QUERY, variables)
+                .doOnError(error -> {
+                    log.error("GitHub GraphQL API 호출 실패: {}", error.getMessage());
+                })
                 .flatMap(this::parseContributions)
+                .doOnError(error -> log.error("GraphQL 응답 파싱 실패: {}", error.getMessage()))
                 .onErrorMap(this::handleApiError);
     }
 
@@ -430,7 +434,6 @@ public class GitHubApiService {
     // ========== 내부 유틸리티 메서드들 ==========
     // Webclient 사용해서 GraphQL Query를 비동기로 호출하는 메서드
     private Mono<JsonNode> executeGraphQLQuery(String query, Map<String, Object> variables) {
-
         // GraphQL Json 형식
         Map<String, Object> body = Map.of(
                 "query", query,
@@ -445,9 +448,9 @@ public class GitHubApiService {
                 .bodyToMono(JsonNode.class)
                 .timeout(Duration.ofSeconds(properties.getApi().getTimeoutSeconds()))
                 // 요청이 실패했을 때 어떻게 재시도할지, Retry.backoff(재시도횟수, 최초대기시간)
-                .retryWhen(Retry.backoff(properties.getApi().getRateLimitMaxRetries(), Duration.ofSeconds(1)))
-                .doOnNext(jsonNode -> log.info("GraphQL Response: {}", jsonNode.toPrettyString())) // 응답 로그 추가
-                .doOnError(error -> log.error("GraphQL query failed: {}", error.getMessage()));
+                .retryWhen(Retry.backoff(properties.getApi().getRateLimitMaxRetries(), Duration.ofSeconds(1))
+                    .doBeforeRetry(retrySignal -> log.warn("GraphQL 재시도 시도 #{}: {}", 
+                        retrySignal.totalRetries() + 1, retrySignal.failure().getMessage())));
     }
 
     // Repository 정보 파싱
@@ -737,7 +740,6 @@ public class GitHubApiService {
                 node -> node.path("pullRequestReview").path("pullRequest").path("title").asText()
         );
     }
-
 
     // Contributors 파싱
     private List<ContributorDTO> parseContributors(JsonNode response) {

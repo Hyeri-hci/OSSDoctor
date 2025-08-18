@@ -63,9 +63,6 @@ const HealthOverview = ({ projectData }) => {
         total: displayData.pullRequests?.total || displayData.pullRequests?.merged + displayData.pullRequests?.open || 0
     };
 
-    const prMergedPercentage = prStats.total > 0 ? (prStats.merged / prStats.total * 100) : 0;
-    const prOpenPercentage = prStats.total > 0 ? (prStats.open / prStats.total * 100) : 0;
-
     // Issue 통계 계산
     const issueStats = {
         closed: displayData.issues?.closed || 0,
@@ -73,44 +70,49 @@ const HealthOverview = ({ projectData }) => {
         total: displayData.issues?.total || displayData.issues?.closed + displayData.issues?.open || 0
     };
 
-    const issueClosedPercentage = issueStats.total > 0 ? (issueStats.closed / issueStats.total * 100) : 0;
-    const issueOpenPercentage = issueStats.total > 0 ? (issueStats.open / issueStats.total * 100) : 0;
-
-    // 커밋 활동 데이터 준비 (BarChart) - 요일별로 처리
+    // 커밋 활동 데이터 준비 (BarChart) - 이번 주 월요일부터 일요일까지 7일간 데이터
     const prepareCommitData = () => {
-        // 요일 순서 정의
-        const dayOrder = ['월', '화', '수', '목', '금', '토', '일'];
+        const today = new Date();
+        const oneWeekData = [];
 
-        if (!displayData.commitActivities || !Array.isArray(displayData.commitActivities)) {
-            // 기본 데이터 - 모든 요일을 0으로 초기화
-            return dayOrder.map(day => ({
-                label: day,
-                value: 0
-            }));
+        // 이번 주 월요일 계산
+        const dayOfWeek = today.getDay(); // 0(일요일) ~ 6(토요일)
+        const daysFromMonday = (dayOfWeek === 0) ? 6 : dayOfWeek - 1; // 월요일로부터의 일수 계산
+        const thisMonday = new Date(today);
+        thisMonday.setDate(today.getDate() - daysFromMonday);
+
+        // 월요일부터 일요일까지 7일간의 데이터 생성
+        for (let i = 0; i < 7; i++) {
+            const date = new Date(thisMonday);
+            date.setDate(thisMonday.getDate() + i);
+            
+            const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+            const dayOfWeek = dayNames[date.getDay()];
+            const dateString = `${date.getMonth() + 1}/${date.getDate()}`;
+            
+            // YYYY-MM-DD 형식으로 변환하여 백엔드 데이터와 매칭
+            const targetDateString = date.toISOString().split('T')[0]; // "2025-08-19" 형식
+            
+            // commitActivities에서 해당 날짜의 커밋 수 찾기
+            let commitCount = 0;
+            
+            if (displayData.commitActivities && Array.isArray(displayData.commitActivities)) {
+                const activityForDate = displayData.commitActivities.find(activity => {
+                    return activity.date === targetDateString;
+                });
+                
+                if (activityForDate) {
+                    commitCount = activityForDate.commits || 0;
+                }
+            }
+
+            oneWeekData.push({
+                label: `${dateString}(${dayOfWeek})`,
+                value: commitCount
+            });
         }
 
-        // 백엔드 데이터를 요일별로 변환
-        const commitMap = {};
-        displayData.commitActivities.forEach(activity => {
-            // activity.day 영어 요일이면 한국어로 변환
-            let koreanDay = activity.day;
-            if (typeof activity.day === 'string') {
-                const dayMap = {
-                    'Monday': '월', 'Tuesday': '화', 'Wednesday': '수',
-                    'Thursday': '목', 'Friday': '금', 'Saturday': '토', 'Sunday': '일',
-                    'Mon': '월', 'Tue': '화', 'Wed': '수', 'Thu': '목',
-                    'Fri': '금', 'Sat': '토', 'Sun': '일'
-                };
-                koreanDay = dayMap[activity.day] || activity.day;
-            }
-            commitMap[koreanDay] = activity.commits || 0;
-        });
-
-        // 요일 순서대로 정렬하여 반환
-        return dayOrder.map(day => ({
-            label: day,
-            value: commitMap[day] || 0
-        }));
+        return oneWeekData;
     };
 
     // 실제 커밋 활동 데이터 사용
@@ -197,10 +199,10 @@ const HealthOverview = ({ projectData }) => {
                 {/* 커밋 활동 분포 섹션 */}
                 <div>
                     <h3 className="text-base font-semibold text-gray-900 mb-3">
-                        커밋 활동 분포
+                        주간 커밋 활동 분포
                     </h3>
                     <div className="text-xs text-gray-600 mb-4">
-                        요일별 커밋 활동 패턴
+                        이번 주 월요일부터 일요일까지 커밋 활동 패턴 (월~일)
                     </div>
                     <div className="w-full overflow-hidden">
                         <div className="min-w-0 w-full">
@@ -212,7 +214,7 @@ const HealthOverview = ({ projectData }) => {
                         </div>
                     </div>
                     <div className="text-center text-xs text-gray-600 mt-2">
-                        요일별 커밋 수
+                        일별 커밋 수
                     </div>
                 </div>
 

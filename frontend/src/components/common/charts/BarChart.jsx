@@ -28,9 +28,16 @@ const BarChart = ({ data, width = "100%", height = 300 }) => {
     useEffect(() => {
         if (containerWidth === 0) return; // 크기가 결정되지 않은 경우 대기
 
+        if (data.length === 0) {
+            return;
+        }
+
         // D3로 SVG 요소 선택 및 초기화
         const svg = d3.select(svgRef.current);
         svg.selectAll('*').remove(); // 기존 차트 내용 모두 제거
+        
+        // 기존 툴팁 제거
+        d3.select(containerRef.current).selectAll('.bar-chart-tooltip').remove();
 
         // 반응형 너비 계산
         const actualWidth = width === "100%" ? containerWidth : width;
@@ -56,10 +63,13 @@ const BarChart = ({ data, width = "100%", height = 300 }) => {
             .range([0, innerWidth])          // 출력 범위: 0부터 차트 너비까지
             .padding(0.1);                   // 막대 사이 간격 (전체 너비의 10%)
 
+        // Y축 스케일 - 데이터 검증과 함께
+        const maxValue = d3.max(data, d => d.value) || 1;
+        
         const yScale = d3.scaleLinear()
-            .domain([0, d3.max(data, d => d.value)]) // 0부터 데이터의 최대값까지
-            .nice()                                   // 축 값을 깔끔하게 조정 (예: 97 → 100)
-            .range([innerHeight, 0]);                 // Y축은 뒤집어야 함 (SVG는 위가 0)
+            .domain([0, maxValue]) // 0부터 데이터의 최대값까지
+            .nice()                // 축 값을 깔끔하게 조정 (예: 97 → 100)
+            .range([innerHeight, 0]); // Y축은 뒤집어야 함 (SVG는 위가 0)
 
         // X축 그리기
         g.append('g')
@@ -68,28 +78,75 @@ const BarChart = ({ data, width = "100%", height = 300 }) => {
             .selectAll('text')
             .style('font-size', '12px');
 
-        // Y축 그리기
+        // Y축 그리기 (정수만 표시, 1단위 간격)
         g.append('g')
-            .call(d3.axisLeft(yScale))
+            .call(d3.axisLeft(yScale)
+                .tickFormat(d3.format('d'))  // 정수 포맷 적용
+                .ticks(Math.min(10, yScale.domain()[1])) // 최대 10개 틱, 최대값 이하로 제한
+            )
             .selectAll('text')
             .style('font-size', '12px');
 
+        // 툴팁 요소 생성
+        const tooltip = d3.select(containerRef.current)
+            .append('div')
+            .attr('class', 'bar-chart-tooltip')
+            .style('position', 'absolute')
+            .style('background', 'rgba(0, 0, 0, 0.8)')
+            .style('color', 'white')
+            .style('padding', '8px 12px')
+            .style('border-radius', '4px')
+            .style('font-size', '12px')
+            .style('pointer-events', 'none')
+            .style('opacity', 0)
+            .style('z-index', 1000);
+
 
         // 막대 그리기 (기존 애니메이션 포함)
-        g.selectAll('.bar')
+        const bars = g.selectAll('.bar')
             .data(data)                                    // 데이터 바인딩
             .enter()                                       // 새 데이터 포인트들
             .append('rect')                                // 각 데이터에 사각형 생성
             .attr('class', 'bar')
-            .attr('x', d => xScale(d.label))              // X 위치: 라벨에 따라
+            .attr('x', d => xScale(d.label))
             .attr('width', xScale.bandwidth())             // 너비: 스케일이 계산한 막대 너비
             .attr('y', innerHeight)                        // 초기 Y 위치: 차트 하단 (애니메이션용)
             .attr('height', 0)                             // 초기 높이: 0 (애니메이션용)
             .attr('fill', '#3B82F6')                       // 막대 색상 (TailwindCSS blue-500)
-            .transition()                                  // 애니메이션 시작
+            .style('cursor', 'pointer')                    // 마우스 포인터 모양 변경
+            .on('mouseover', function(event, d) {
+                // 마우스 오버 시 툴팁 표시
+                tooltip.transition()
+                    .duration(200)
+                    .style('opacity', 0.9);
+                
+                tooltip.html(`${d.label}: ${d.value}개`)
+                    .style('left', (event.pageX + 10) + 'px')
+                    .style('top', (event.pageY - 10) + 'px');
+                
+                // 막대 색상 변경 (호버 효과)
+                d3.select(this).attr('fill', '#2563EB');
+            })
+            .on('mouseout', function() {
+                // 마우스 아웃 시 툴팁 숨기기
+                tooltip.transition()
+                    .duration(200)
+                    .style('opacity', 0);
+                
+                // 막대 색상 원래대로 복구
+                d3.select(this).attr('fill', '#3B82F6');
+            });
+        
+        // 애니메이션과 함께 최종 위치/크기 설정
+        bars.transition()                                  // 애니메이션 시작
             .duration(1000)                                // 1초 동안
-            .attr('y', d => yScale(d.value))              // 최종 Y 위치
-            .attr('height', d => innerHeight - yScale(d.value)); // 최종 높이
+            .attr('y', d => yScale(d.value))
+            .attr('height', d => innerHeight - yScale(d.value));
+
+        // Cleanup 함수: 컴포넌트 업데이트나 언마운트 시 툴팁 제거
+        return () => {
+            d3.select(containerRef.current).selectAll('.bar-chart-tooltip').remove();
+        };
 
     }, [data, width, height, containerWidth]); // 의존성 배열: 이 값들이 변경되면 차트 다시 그리기
 
