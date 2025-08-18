@@ -1,6 +1,6 @@
 package com.ossdoctor.controller;
 
-import com.ossdoctor.service.GitHubDependencyService;
+import com.ossdoctor.Service.GitHubDependencyService;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
