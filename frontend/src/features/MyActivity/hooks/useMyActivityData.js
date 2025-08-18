@@ -51,8 +51,6 @@ const useMyActivityData = () => {
 
                 const currentUser = user.nickname || user.login; // GitHub 사용자명 사용
 
-                console.log('현재 로그인한 사용자:', currentUser);
-
                 // 병렬로 API 호출
                 const [statsResponse, historyResponse, levelResponse] = await Promise.all([
                     getUserStats(currentUser).catch(err => {
@@ -78,8 +76,9 @@ const useMyActivityData = () => {
                     transformHistoryData(historyResponse.data) : 
                     [];
 
+                // 차트 데이터 생성 (history 데이터도 함께 전달)
                 const contributionTypes = generateContributionTypeChart(stats);
-                const activities = generateActivityTrendChart(stats);
+                const activities = generateActivityTrendChart(stats, history);
 
                 setData({
                     stats: stats,
@@ -108,7 +107,7 @@ const useMyActivityData = () => {
         };
 
         fetchData();
-    }, [authLoading, isAuthenticated, user]);
+    }, [authLoading, isAuthenticated, user?.login]); // user.login을 사용하여 사용자 변경 시에도 새로운 요청
 
     return { data, loading, error };
 };
