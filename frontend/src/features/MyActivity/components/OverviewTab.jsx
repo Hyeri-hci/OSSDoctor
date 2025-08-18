@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { LoadingSpinner, Button } from "../../../components/common";
-import useMyActivityData from "../hooks/UseMyActivityData";
+import useMyActivityData from "../hooks/useMyActivityData";
 import ContributionStatsCard from "./ContributionStatsCard";
 import ContributionTypeChart from "./ContributionTypeChart";
 import ActivityTrendChart from "./ActivityTrendChart";
