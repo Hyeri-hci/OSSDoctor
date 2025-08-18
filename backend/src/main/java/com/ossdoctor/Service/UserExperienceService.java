@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -57,72 +58,78 @@ public class UserExperienceService {
                 .build();
     }
 
+
+    // 기여 내역 받아서 경험치 올리기
     @Transactional
     public void addUserExperience(List<ContributionDTO> contributions) {
         if (contributions == null || contributions.isEmpty()) return;
-        log.info("contributions: {}", contributions);
+        log.info("Adding experience for contributions: {}", contributions);
 
-        // 첫 번째 DTO의 userId로 User 조회
-        UserDTO userDTO = userService.findById(contributions.get(0).getUserId())
+        UserDTO user = userService.findById(contributions.get(0).getUserId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        int totalExp = saveContributionExperience(user, contributions); // 활동 경험치
+        totalExp += saveRepositoryExperience(user, contributions); // 저장소 개수 경험치
+        updateUserScoreAndLevel(user, totalExp);
+
+        userService.save(user);
+    }
+
+    // 경험치 이력 저장
+    private int saveContributionExperience(UserDTO user, List<ContributionDTO> contributions) {
         int totalExp = 0;
-        Set<String> contributedRepos = new HashSet<>();
-
-        // 1. 개별 기여 경험치 계산 및 저장
         for (ContributionDTO dto : contributions) {
-            int exp = 0;
-            switch (dto.getReferenceType()) {
-                case PR:
-                    if (dto.getState() == CONTRIBUTION_TYPE.MERGED) exp = 20;
-                    break;
-                case ISSUE:
-                    exp = 10;
-                    break;
-                case REVIEW:
-                    exp = 5;
-                    break;
-            }
-
+            int exp = calculateContributionExp(dto);
             if (exp > 0) {
                 totalExp += exp;
-                contributedRepos.add(dto.getRepositoryName());
-
                 UserExperienceDTO experience = UserExperienceDTO.builder()
-                        .userId(userDTO.getIdx())
-                        .activityId(dto.getIdx()) // Contribution과 연결
+                        .userId(user.getIdx())
+                        .activityId(dto.getIdx())
                         .experience(exp)
                         .build();
-
                 save(experience);
             }
         }
+        return totalExp;
+    }
 
-        // 2. 레포 경험치 저장 (activityId=null)
-        for (String repoName : contributedRepos) {
-            UserExperienceDTO repoExpDTO = UserExperienceDTO.builder()
-                    .userId(userDTO.getIdx())
-                    .activityId(null) // 특정 기여와 연결 안 함
+    // 경험치 계산
+    private int calculateContributionExp(ContributionDTO dto) {
+        switch (dto.getReferenceType()) {
+            case PR: return dto.getState() == CONTRIBUTION_TYPE.MERGED ? 20 : 0;
+            case ISSUE: return 10;
+            case REVIEW: return 5;
+            default: return 0;
+        }
+    }
+
+    // repo당 경험치(50)
+    private int saveRepositoryExperience(UserDTO user, List<ContributionDTO> contributions) {
+        Set<String> repos = contributions.stream()
+                .map(ContributionDTO::getRepositoryName)
+                .collect(Collectors.toSet());
+
+        int totalExp = 0;
+        for (String repo : repos) {
+            UserExperienceDTO repoExp = UserExperienceDTO.builder()
+                    .userId(user.getIdx())
+                    .activityId(null)
                     .experience(50)
                     .build();
-
-            save(repoExpDTO);
+            save(repoExp);
             totalExp += 50;
         }
+        return totalExp;
+    }
 
-        // 3. 누적 점수 업데이트
-        userDTO.setTotalScore(userDTO.getTotalScore() + totalExp);
-
-        // 4. 레벨 계산
+    // 사용자 score와 level 업데이트
+    private void updateUserScoreAndLevel(UserDTO user, int totalExp) {
+        user.setTotalScore(user.getTotalScore() + totalExp);
         LevelDTO nextLevel = levelService
-                .findTopByRequiredExpLessThanEqualOrderByLevelIdDesc(userDTO.getTotalScore());
-
-        if (nextLevel != null && nextLevel.getLevelId() > userDTO.getLevel()) {
-            userDTO.setLevel(nextLevel.getLevelId().intValue());
+                .findTopByRequiredExpLessThanEqualOrderByLevelIdDesc(user.getTotalScore());
+        if (nextLevel != null && nextLevel.getLevelId() > user.getLevel()) {
+            user.setLevel(nextLevel.getLevelId().intValue());
         }
-
-        // 5. User 저장
-        userService.save(userDTO);
     }
 }
 

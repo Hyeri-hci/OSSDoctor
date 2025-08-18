@@ -1,60 +1,35 @@
 package com.ossdoctor.Service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ossdoctor.DTO.ContributionDTO;
-import com.ossdoctor.DTO.RepositoryDTO;
 import com.ossdoctor.DTO.UserDTO;
 import com.ossdoctor.Entity.ContributionEntity;
-import com.ossdoctor.Entity.REFERENCE_TYPE;
-import com.ossdoctor.Entity.UserEntity;
 import com.ossdoctor.Repository.ContributionRepository;
-import com.ossdoctor.Repository.RepositoryRepository;
 import com.ossdoctor.Repository.UserRepository;
-import com.ossdoctor.config.GithubApiProperties;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.OptionalInt;
-import java.util.stream.Collectors;
+import java.util.*;
+
 
 @Slf4j
 @Service
 @AllArgsConstructor
 public class ContributionService {
 
-    private final WebClient webClient;
-    private final GithubApiProperties properties;
-
-    private final ContributionRepository contributionRepository;
-    private final UserRepository userRepository;
-
     private final UserService userService;
-    private final GitHubApiService  gitHubApiService;
+    private final UserRepository userRepository;
+    private final GitHubApiService gitHubApiService;
+    private final ContributionRepository contributionRepository;
     private final UserExperienceService userExperienceService;
 
-    private Optional<ContributionDTO> findLatestByUserId(Long userId) {
-        return contributionRepository.findTopByUserIdxOrderByContributedAtDesc(userId).map(this::toDTO);
-    }
-
-    private List<ContributionDTO> findByUserIdxAndContributedAtAfter(String owner, LocalDateTime since) {
-        return contributionRepository.findByUser_NicknameAndContributedAtAfter(owner, since).stream()
-                .map(this::toDTO)  // Entity -> DTO 변환
-                .toList();         // Stream -> List
-    }
-
-
-    private ContributionDTO save(ContributionDTO contributionDTO) {
-        return toDTO(contributionRepository.save(toEntity(contributionDTO)));
+    private ContributionDTO save(ContributionDTO dto) {
+        return toDTO(contributionRepository.save(toEntity(dto)));
     }
 
     private ContributionDTO toDTO(ContributionEntity entity) {
@@ -84,135 +59,57 @@ public class ContributionService {
                 .build();
     }
 
-    /*public Mono<String> getContributionOnLogin(String owner) {
-        Optional<UserDTO> userOpt = userService.findByUsername(owner);
-
-        if (userOpt.isEmpty()) {
-            log.warn("User not found: {}", owner);
-            return Mono.empty();
-        }
-
-        UserDTO user = userOpt.get();
-        Optional<ContributionDTO> latestOpt = findLatestByUserId(user.getIdx());
-
-        LocalDateTime since;
-
-        if (latestOpt.isPresent()) {
-            // 기존 데이터 있음 → 최신 contributedAt 이후부터 가져오기
-            since = latestOpt.get().getContributedAt().plusDays(1);
-            log.info("Fetching contributions for {} since last saved date: {}", owner, since);
-        } else {
-            // 최초 로그인 → joinedAt 기준으로 30일 전부터 가져오기
-            since = user.getJoinedAt().minusDays(30);
-            log.info("First login for {}, fetching contributions since joinAt-30d: {}", owner, since);
-        }
-
-        LocalDateTime since = LocalDateTime.now().minusDays(30);
-        return gitHubApiService.getContributionSince(owner, since)
-                .flatMap(result -> {
-                    // 받은 기여 데이터 저장 로직
-                    //save();
-                    return Mono.just("Contribution fetched and saved for " + owner);
-                });
-    }*/
-
-    /*public Mono<List<ContributionDTO>> fetchAndSaveContributions(String owner) {
-
-        LocalDateTime since = LocalDateTime.now().minusDays(30);
-
-        Flux<ContributionDTO> prFlux = gitHubApiService.getPullRequests(owner, since)
-                .flatMap(prDTO -> Mono.fromCallable(() -> pullRequestService.save(prDTO))
-                        .subscribeOn(Schedulers.boundedElastic())
-                        .flatMap(savedPR -> {
-                            ContributionDTO contribution = ContributionDTO.builder()
-                                    .referenceType(REFERENCE_TYPE.PR)
-                                    .referenceId(savedPR.getIdx())
-                                    .userId(savedPR.getUserId())
-                                    .repositoryId(savedPR.getRepositoryId())
-                                    .contributedAt(savedPR.getCreatedAt())
-                                    .description(savedPR.getTitle())
-                                    .build();
-                            // Contribution 테이블에 저장
-                            return Mono.fromCallable(() -> save(contribution))
-                                    .subscribeOn(Schedulers.boundedElastic());
-                        })
-                );
-
-        Flux<ContributionDTO> issueFlux = gitHubApiService.getIssues(owner, since)
-                .flatMap(issueDTO -> Mono.fromCallable(() -> issueService.save(issueDTO))
-                        .subscribeOn(Schedulers.boundedElastic())
-                        .flatMap(savedIssue -> {
-                            ContributionDTO contribution = ContributionDTO.builder()
-                                    .referenceType(REFERENCE_TYPE.ISSUE)
-                                    .referenceId(savedIssue.getIdx())
-                                    .userId(savedIssue.getUserId())
-                                    .repositoryId(savedIssue.getRepositoryId())
-                                    .contributedAt(savedIssue.getCreatedAt())
-                                    .description(savedIssue.getTitle())
-                                    .build();
-                            // Contribution 테이블에 저장
-                            return Mono.fromCallable(() -> save(contribution))
-                                    .subscribeOn(Schedulers.boundedElastic());
-                        })
-                );
-
-        return Flux.concat(prFlux, issueFlux)
-                .collectList();
-    }*/
-
     public Mono<List<ContributionDTO>> saveContributions(String owner) {
+        return Mono.justOrEmpty(userService.findByUsername(owner))
+                .switchIfEmpty(Mono.defer(() ->
+                        Mono.justOrEmpty(userService.findByUsername("dabbun")) // 임시
+                                .switchIfEmpty(Mono.error(new RuntimeException("Default user 'dabbun' not found")))
+                ))
+                .flatMap(user -> {
+                    LocalDateTime since = findLatestContribution(user)
+                            .map(latest -> latest.getContributedAt().plusSeconds(1))
+                            .orElse(user.getJoinedAt().minusDays(30));
 
-        LocalDateTime since;
+                    log.info("Fetching contributions for {} since {}", owner, since);
 
-        // 원래 유저 조회
-        // final UserDTO user = userService.findByUsername(owner)
-        //         .orElseThrow(() -> new RuntimeException("User not found"));
+                    return gitHubApiService.getContributionSince(owner, since)
+                            .flatMapMany(Flux::fromIterable)
+                            .map(dto -> { dto.setUserId(user.getIdx()); return dto; })
+                            .map(this::save)
+                            .collectList()
+                            .doOnSuccess(userExperienceService::addUserExperience);
+                });
+    }
 
-        // 임시로 기본 닉네임 사용
-        final UserDTO user = userService.findByUsername(owner)
-                .orElseGet(() -> userService.findByUsername("dabbun")
-                        .orElseThrow(() -> new RuntimeException("Default user 'dabbun' not found")));
-
-        Optional<ContributionDTO> latestOpt = findLatestByUserId(user.getIdx());
-
-        if (latestOpt.isPresent()) {
-            // 기존 데이터 있음 → 최신 contributedAt 이후부터 가져오기
-            since = latestOpt.get().getContributedAt().plusSeconds(1);
-            log.info("Fetching contributions for {} since last saved date: {}", owner, since);
-        } else {
-            // 최초 로그인 → joinedAt 기준으로 30일 전부터 가져오기
-            since = user.getJoinedAt().minusDays(30);
-            log.info("First login for {}, fetching contributions since joinAt-30d: {}", owner, since);
-        }
-
-        return gitHubApiService.getContributionSince(owner, since)
-                .doOnNext(list -> log.info("Fetched contributions: {}", list.size()))
-                .flatMapMany(Flux::fromIterable) // List<ContributionDTO> -> Flux<ContributionDTO>
-                .map(dto -> {
-                    dto.setUserId(user.getIdx()); // user 주입
-                    return dto;
-                })
-                .map(this::save) // DTO -> Entity -> 저장 -> DTO 반환
-                .collectList()
-                .doOnSuccess(contributions -> {
-                    // 저장 완료 후 경험치/레벨 계산
-                    userExperienceService.addUserExperience(contributions);
-                });   // Mono<List<ContributionDTO>> 반환
+    private Optional<ContributionDTO> findLatestContribution(UserDTO user) {
+        return contributionRepository.findTopByUserIdxOrderByContributedAtDesc(user.getIdx())
+                .map(this::toDTO);
     }
 
 
-    public Mono<Map<REFERENCE_TYPE, Long>> getContributionCountsLastMonth(String owner) {
-        return Mono.justOrEmpty(userService.findByUsername(owner))
-                .flatMapMany(user -> {
-                    LocalDateTime since = LocalDateTime.now().minusMonths(1);
-                    // 닉네임으로 조회하는 Repository 메서드 사용
-                    List<ContributionDTO> contributions = findByUserIdxAndContributedAtAfter(owner, since);
-                    return Flux.fromIterable(contributions);
-                })
-                .collect(Collectors.groupingBy(
-                        ContributionDTO::getReferenceType,
-                        Collectors.counting()
-                ));
+    // 날짜별 기여 이력 가져오기
+    public Mono<Map<LocalDate, List<ContributionDTO>>> getContributionsByNickname(String nickname) {
+        return Mono.fromCallable(() -> userRepository.findByNickname(nickname))
+                .subscribeOn(Schedulers.boundedElastic())
+                .doOnNext(user -> System.out.println("User found: " + user)) // 유저 조회 로그
+                .flatMap(user -> {
+                    if (user.isEmpty()) {
+                        System.out.println("User not found for nickname: " + nickname);
+                        return Mono.just(Collections.emptyMap());
+                    }
+                    return Mono.fromCallable(() -> contributionRepository.findByUserOrderByContributedAtDesc(user))
+                            .subscribeOn(Schedulers.boundedElastic())
+                            .flatMapMany(Flux::fromIterable)
+                            .map(this::toDTO)
+                            .doOnNext(dto -> System.out.println("ContributionDTO: " + dto)) // 각 DTO 로그
+                            .collectMultimap(dto -> dto.getContributedAt().toLocalDate())
+                            .map(map -> {
+                                Map<LocalDate, List<ContributionDTO>> result = new TreeMap<>();
+                                map.forEach((date, coll) -> result.put(date, new ArrayList<>(coll)));
+                                return result;
+                            })
+                            .doOnSuccess(res -> System.out.println("Grouped result: " + res)); // 최종 Map 로그
+                });
     }
 
 }

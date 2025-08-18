@@ -1,6 +1,7 @@
 package com.ossdoctor.Entity;
 
 public enum CONTRIBUTION_TYPE {
+    COMMIT,
     OPEN,
     CLOSED,
     MERGED,
