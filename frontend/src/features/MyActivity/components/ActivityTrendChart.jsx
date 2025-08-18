@@ -24,7 +24,7 @@ const ActivityTrendChart = ({ data }) => {
             </div>
 
             {/* Chart Legend */}
-            <div className="text-center text-sm text-gray-600 mt-2">Date</div>
+            <div className="text-center text-sm text-gray-600 mt-2">Month</div>
         </div>
     );
 };
