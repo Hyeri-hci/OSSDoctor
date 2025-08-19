@@ -5,9 +5,11 @@ import com.ossdoctor.Service.LevelService;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class LevelDataInitializer implements CommandLineRunner {
@@ -35,7 +37,7 @@ public class LevelDataInitializer implements CommandLineRunner {
             }
         });
 
-        System.out.println("Level data initialized via DTO.");
+        log.info("Level data initialized via DTO.");
     }
 }
 

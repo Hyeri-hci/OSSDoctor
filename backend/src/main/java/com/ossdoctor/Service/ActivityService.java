@@ -47,7 +47,6 @@ public class ActivityService {
         return Flux.merge(tasks).then(Mono.just(activities));
     }
 
-    //
     private Mono<Void> saveIssueAsync(ActivityDTO dto, Long repositoryId) {
         // 동기식 -> 비동기식
         return Mono.fromCallable(() -> {

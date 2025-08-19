@@ -20,7 +20,6 @@ import com.ossdoctor.model.UserInfo;
 import com.ossdoctor.Service.UserService;
 import com.ossdoctor.Service.JwtService;
 import com.ossdoctor.Service.GitHubOAuthService;
-import com.ossdoctor.DTO.UserDTO;
 import com.ossdoctor.util.CookieUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -64,8 +63,7 @@ public class OAuthController {
             JSONObject userJson = gitHubOAuthService.getUserInfo(accessToken);
 
             // 5. 사용자 정보를 데이터베이스에 저장 또는 업데이트
-            UserDTO savedUser = userService.saveOrUpdateUserFromGithub(userJson);
-            System.out.println("사용자 정보 DB 저장 완료: " + savedUser.getNickname());
+            userService.saveOrUpdateUserFromGithub(userJson);
 
             // 6. 사용자 정보로 JWT 생성
             String jwt = jwtService.createJwtToken(userJson, now, expiryDate);

@@ -642,8 +642,7 @@ const generateSearchKey = (filters) => {
 
 export const searchProjectsWithPagination = async (filters = {}, batchSize = 30, batchNumber = 1) => {
   try {
-    console.log(`🔍 배치 ${batchNumber} 검색:`, filters);
-    
+      // 검색 실행
     const searchKey = generateSearchKey(filters);
     
     // 새로운 검색인 경우 커서 초기화
@@ -755,7 +754,6 @@ export const searchProjectsWithPagination = async (filters = {}, batchSize = 30,
     }
 
     // Mock 데이터 사용 (GitHub API 미사용 또는 실패시)
-    console.log('Mock 데이터 사용');
     const allResults = await searchProjectsService(filters);
     
     if (!allResults || !allResults.projects) {

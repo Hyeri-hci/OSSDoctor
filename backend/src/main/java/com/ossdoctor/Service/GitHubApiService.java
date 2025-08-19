@@ -362,7 +362,6 @@ public class GitHubApiService {
         log.info("Fetching contributors for {}/{}", owner, repo);
 
         return webClient.get()
-                //
                 .uri("/repos/{owner}/{repo}/contributors?per_page=9", owner, repo)
                 .header(HttpHeaders.AUTHORIZATION, "token " + properties.getToken())
                 .retrieve()

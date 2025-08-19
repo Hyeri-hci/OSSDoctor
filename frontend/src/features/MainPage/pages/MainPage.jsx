@@ -16,7 +16,6 @@ export default function MainPage() {
         const user = urlParams.get('user');
 
         if (authStatus === 'success' && user) {
-            console.log('OAuth 로그인 성공:', user);
             handleLogin(); // 로그인 상태 업데이트
 
             // 저장된 리다이렉션 페이지가 있는지 확인
@@ -24,7 +23,6 @@ export default function MainPage() {
             if (redirectAfterLogin) {
                 // 저장된 페이지로 리다이렉션
                 sessionStorage.removeItem('redirectAfterLogin'); // 사용 후 제거
-                console.log('로그인 완료, 리다이렉션:', redirectAfterLogin);
                 window.location.href = redirectAfterLogin;
                 return;
             }
@@ -85,7 +83,6 @@ export default function MainPage() {
             if (!isAuthenticated) {
                 alert('GitHub 로그인이 필요한 서비스입니다.');
                 try {
-                    console.log("GitHub 로그인 시작");
                     initiateGitHubLogin({
                         scope: "read:user,user:email,public_repo",
                         redirectAfterLogin: "/myactivity"

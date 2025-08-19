@@ -50,8 +50,6 @@ const useProjectPagination = () => {
                 offset: 0
             };
 
-            console.log('🔍 검색 실행:', filters);
-
             // 검색 API 호출
             const result = await searchProjectsWithPagination(
                 filters, 
@@ -164,8 +162,7 @@ const useProjectPagination = () => {
             return;
         }
         
-        console.log(`📦 배치 ${batchNumber}로 이동`);
-        
+        // 배치 이동 (다음/이전 배치)
         // 배치 데이터 로드
         setAllProjects(batchData);
         setCurrentBatch(batchNumber);
@@ -215,15 +212,6 @@ const useProjectPagination = () => {
         
         setCurrentPage(pageNumber);
         setDisplayedProjects(pageProjects);
-        
-        console.log(`📄 페이지 이동: ${pageNumber}/${totalPagesInBatch} (${pageProjects.length}개 표시)`);
-        console.log(`🎯 배치 상태:`, {
-            currentPage: pageNumber,
-            totalPagesInBatch,
-            hasMoreInBatch: pageNumber < totalPagesInBatch,
-            canLoadMoreBatches,
-            currentBatch
-        });
     }, [allProjects, totalPagesInBatch]);
 
     const clearAllFilters = useCallback(() => {

@@ -70,7 +70,6 @@ const HeaderSection = () => {
             }
         } else {
             try {
-                console.log("GitHub 로그인 시작");
                 initiateGitHubLogin({
                     scope: "read:user,user:email,public_repo",
                 });
