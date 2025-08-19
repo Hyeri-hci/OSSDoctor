@@ -95,27 +95,6 @@ public class MyActivityController {
     }
 
     /**
-     * 디버깅용: 등록된 사용자 목록 조회
-     */
-    @GetMapping("/debug/users")
-    public ResponseEntity<Map<String, Object>> getRegisteredUsers() {
-        try {
-            // 간단한 디버깅을 위해 ContributionDebugController의 방식을 참고
-            log.info("등록된 사용자 조회 요청");
-            return ResponseEntity.ok(Map.of(
-                "success", true,
-                "message", "현재 이 기능은 구현되지 않았습니다. 로그를 확인하세요."
-            ));
-        } catch (Exception e) {
-            log.error("사용자 목록 조회 중 오류 발생: {}", e.getMessage());
-            return ResponseEntity.badRequest().body(Map.of(
-                "success", false,
-                "error", "사용자 목록을 불러올 수 없습니다."
-            ));
-        }
-    }
-
-    /**
      * 사용자 레벨 및 경험치 조회
      */
     @GetMapping("/level/{nickname}")

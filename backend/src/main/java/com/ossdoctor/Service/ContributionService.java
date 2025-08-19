@@ -50,15 +50,10 @@ public class ContributionService {
             );
         
         if (existingEntity.isPresent()) {
-            log.debug("중복 데이터 발견, 기존 데이터 반환: {} #{} in {} (idx={})", 
-                dto.getReferenceType(), dto.getNumber(), dto.getRepositoryName(), 
-                existingEntity.get().getIdx());
             return new SaveResult(toDTO(existingEntity.get()), false);
         }
         
-        log.debug("새 데이터 저장: {} #{} in {}", dto.getReferenceType(), dto.getNumber(), dto.getRepositoryName());
         ContributionDTO savedDto = toDTO(contributionRepository.save(toEntity(dto)));
-        log.debug("저장 완료: idx={}", savedDto.getIdx());
         return new SaveResult(savedDto, true);
     }
 

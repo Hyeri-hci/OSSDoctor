@@ -292,10 +292,10 @@ const useProjectPagination = () => {
         ],
         sortOptions: [
             { value: 'beginner-friendly', label: '초보자 친화적' },
-            { value: 'good-first-issues', label: '기여 이슈 많은 순' },
             { value: 'stars', label: '인기순 (Stars)' },
-            { value: 'recently-active', label: '최근 활발한 순' },
-            { value: 'created', label: '생성일순' }
+            { value: 'updated', label: '최근 업데이트순' },
+            { value: 'good-first-issues', label: 'Good First Issues 많은 순' },
+            { value: 'easy-contribution', label: '쉬운 기여 (Beginner)' }
         ]
     };
 

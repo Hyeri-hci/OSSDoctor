@@ -44,7 +44,6 @@ public class UserEntity {
 
     @PrePersist
     public void prePersist() {
-        log.info("prePersist");
         this.joinedAt = LocalDateTime.now();
     }
 }

@@ -7,3 +7,4 @@ export { default as ProjectPagination } from './ProjectPagination';
 export { default as SearchResultsHeader } from './SearchResultsHeader';
 export { default as ProjectDetailModal } from './ProjectDetailModal';
 export { default as ProjectExplorationModal } from './ProjectExplorationModal';
+export { default as SortingGuideModal } from './SortingGuideModal';

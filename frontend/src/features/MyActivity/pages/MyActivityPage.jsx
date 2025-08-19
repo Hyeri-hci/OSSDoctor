@@ -1,21 +1,13 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Layout } from "../../../components/layout";
 import OverviewTab from "../components/OverviewTab";
 import ContributionHistoryTab from "../components/ContributionHistoryTab";
 import BadgesTab from "../components/BadgesTab";
 import useMyActivityData from "../hooks/useMyActivityData";
-import { useAuth } from "../../../hooks/useAuth";
 
 const MyActivityPage = () => {
     const [activeTab, setActiveTab] = useState('overview');
     const { data, loading, error } = useMyActivityData();
-    const { user, isAuthenticated } = useAuth();
-
-    useEffect(() => {
-        // 디버깅을 위해 현재 사용자 정보 로그 출력
-        console.log('MyActivityPage - 현재 사용자:', user);
-        console.log('MyActivityPage - 인증 상태:', isAuthenticated);
-    }, [user, isAuthenticated]);
 
     // 탭 변경 핸들러
     const handleTabChange = (newTab) => {

@@ -62,20 +62,16 @@ export const useAuth = () => {
 
             if (authResult && authResult.user) {
                 // OAuth 콜백에서 전달받은 사용자 정보로 직접 설정
-                console.log('OAuth 콜백에서 받은 사용자 정보로 로그인 처리:', authResult.user);
                 setIsAuthenticated(true);
                 setUser(authResult.user);
             } else {
                 // 백엔드에서 현재 인증 상태 확인
-                console.log('백엔드에서 현재 인증 상태 확인 중...');
                 const authStatus = await checkAuthStatus();
 
                 if (authStatus.isLoggedIn && authStatus.user) {
-                    console.log('백엔드 인증 상태 확인 성공:', authStatus.user);
                     setIsAuthenticated(true);
                     setUser(authStatus.user);
                 } else {
-                    console.log('백엔드 인증 상태 확인 결과: 로그인되지 않음');
                     setIsAuthenticated(false);
                     setUser(null);
 
