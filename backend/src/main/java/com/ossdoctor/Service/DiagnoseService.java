@@ -22,11 +22,8 @@ public class DiagnoseService {
      * @return 통합 진단 결과
      */
     public Mono<Map<String, Object>> getFullDiagnosisData(String owner, String repo) {
-        log.debug("진단 데이터 수집 시작: {}/{}", owner, repo);
-
         return gitHubApiService.getRepositoryInfo(owner, repo)
                 .flatMap(repositoryDTO -> collectAllDiagnosisData(owner, repo, repositoryDTO))
-                .doOnSuccess(result -> log.debug("진단 데이터 수집 완료: {}/{} ({}개 항목)", owner, repo, ((Map<?, ?>) result).size()))
                 .doOnError(error -> log.error("진단 데이터 수집 실패: {}/{}", owner, repo, error));
     }
 

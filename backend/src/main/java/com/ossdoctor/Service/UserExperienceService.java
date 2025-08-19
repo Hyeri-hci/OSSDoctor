@@ -31,12 +31,9 @@ public class UserExperienceService {
         // 중복 체크: 이미 해당 사용자의 활동에 대한 경험치가 있는지 확인
         boolean exists = userExperienceRepository.existsByUserIdAndActivityId(dto.getUserId(), dto.getActivityId());
         if (exists) {
-            log.debug("중복 경험치 기록 스킵: userId={}, activityId={}", dto.getUserId(), dto.getActivityId());
             return dto; // 중복이면 저장하지 않고 그대로 반환
         }
         
-        log.debug("새로운 경험치 기록 저장: userId={}, activityId={}, exp={}", 
-            dto.getUserId(), dto.getActivityId(), dto.getExperience());
         return toDTO(userExperienceRepository.save(toEntity(dto)));
     }
 
@@ -140,10 +137,7 @@ public class UserExperienceService {
                             .build();
                     save(repoExp);
                     totalExp += 50;
-                    log.debug("저장소 경험치 지급: userId={}, repo={}, exp=50", user.getIdx(), repoName);
                 }
-            } else {
-                log.debug("이미 저장소 경험치를 받은 저장소: userId={}, repo={}", user.getIdx(), repoName);
             }
         }
         return totalExp;

@@ -62,8 +62,7 @@ public class DiagnoseController {
                 .onErrorResume(throwable -> {
                     log.error("❌ 저장소 정보 조회 중 오류: {}/{}", owner, repo, throwable);
                     return Mono.just(ResponseEntity.badRequest().build());
-                })
-                .doOnSuccess(response -> log.debug("✅ 저장소 정보 조회 완료: {}/{}", owner, repo));
+                });
     }
 
     // 에러 응답 생성

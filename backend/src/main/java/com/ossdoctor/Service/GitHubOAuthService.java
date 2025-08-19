@@ -47,10 +47,7 @@ public class GitHubOAuthService {
         params.add("client_secret", clientSecret);
         params.add("code", code);
 
-        log.info("GitHub OAuth 토큰 교환 시작 - Code: {}", code != null ? "[PRESENT]" : "[MISSING]");
-        log.debug("Client ID: {}", clientId);
-        log.debug("Client Secret 길이: {}", clientSecret != null ? clientSecret.length() : "null");
-        log.debug("요청 URL: https://github.com/login/oauth/access_token");
+
 
         // 요청 헤더 설정
         HttpHeaders headers = new HttpHeaders();
@@ -64,20 +61,13 @@ public class GitHubOAuthService {
             ResponseEntity<String> response = restTemplate.postForEntity(
                     "https://github.com/login/oauth/access_token", request, String.class);
 
-            log.info("GitHub OAuth 응답 성공 - 상태: {}", response.getStatusCode());
-            log.debug("GitHub OAuth 응답 헤더: {}", response.getHeaders());
-            log.debug("GitHub OAuth 응답 본문: {}", response.getBody());
+            log.info("GitHub OAuth 응답 성공");
 
             String responseBody = response.getBody();
             return parseAccessToken(responseBody);
 
         } catch (Exception e) {
             log.error("GitHub OAuth 토큰 교환 실패", e);
-            log.error("오류 상세 정보 - 타입: {}, 메시지: {}",
-                    e.getClass().getSimpleName(), e.getMessage());
-            if (e.getCause() != null) {
-                log.error("근본 원인: {}", e.getCause().getMessage());
-            }
             throw new RuntimeException("GitHub OAuth token request failed: " + e.getMessage(), e);
         }
     }
