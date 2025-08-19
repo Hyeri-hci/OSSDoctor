@@ -1,40 +1,46 @@
-import { searchProjects, getRepositoryActivity, getContributorStats, getRecommendedProjects } from './github-api.js';
+import { searchProjects, getRepositoryActivity, getContributorStats, getRecommendedProjects } from './backend-api.js';
 import { ALL_PROJECTS, MOCK_PROJECTS } from '../mockData/mockData.js';
 
-// GitHub API 사용 가능 여부 확인
-const isGitHubApiAvailable = () => {
-  return !!import.meta.env.VITE_GITHUB_TOKEN;
+// API 사용 가능 여부 확인 (항상 true, 백엔드가 처리)
+const isApiAvailable = () => {
+  return true;
 };
 
 // Mock 데이터 API 응답 형식으로 변환 
 const transformMockToApiFormat = (mockProjects) => {
-  return mockProjects.map(project => ({
-    id: project.id.toString(),
-    name: project.name,
-    owner: project.owner || 'mock',
-    fullName: project.owner ? `${project.owner}/${project.name}` : `mock/${project.name.toLowerCase().replace(/\s+/g, '-')}`,
-    description: project.description,
-    url: project.html_url || `https://github.com/${project.owner || 'mock'}/${project.name}`,
-    html_url: project.html_url || `https://github.com/${project.owner || 'mock'}/${project.name}`,
-    stars: typeof project.stars === 'string' ? 
-      parseInt(project.stars.replace(/[^\d]/g, '')) : project.stars,
-    forks: typeof project.forks === 'string' ? 
-      parseInt(project.forks.replace(/[^\d]/g, '')) : project.forks,
-    language: project.language || project.tech,
-    languageColor: getLanguageColor(project.language || project.tech),
-    license: project.license || 'MIT',
-    licenseId: project.license || 'MIT',
-    lastCommit: project.lastCommit,
-    createdAt: '2023-01-01T00:00:00Z',
-    updatedAt: project.lastCommit + 'T00:00:00Z',
-    imageUrl: null,
-    topics: project.topics || [],
-    goodFirstIssues: project.goodFirstIssues || Math.floor(Math.random() * 20) + 1,
-    openPullRequests: Math.floor(Math.random() * 50) + 1,
-    latestRelease: null,
-    latestReleaseDate: null,
-    difficulty: project.difficulty || 'Beginner'
-  }));
+  return mockProjects.map(mockProject => {
+    const project = {
+      id: mockProject.id.toString(),
+      name: mockProject.name,
+      owner: mockProject.owner || 'mock',
+      fullName: mockProject.owner ? `${mockProject.owner}/${mockProject.name}` : `mock/${mockProject.name.toLowerCase().replace(/\s+/g, '-')}`,
+      description: mockProject.description,
+      url: mockProject.html_url || `https://github.com/${mockProject.owner || 'mock'}/${mockProject.name}`,
+      html_url: mockProject.html_url || `https://github.com/${mockProject.owner || 'mock'}/${mockProject.name}`,
+      stars: typeof mockProject.stars === 'string' ? 
+        parseInt(mockProject.stars.replace(/[^\d]/g, '')) : mockProject.stars,
+      forks: typeof mockProject.forks === 'string' ? 
+        parseInt(mockProject.forks.replace(/[^\d]/g, '')) : mockProject.forks,
+      language: mockProject.language || mockProject.tech,
+      languageColor: getLanguageColor(mockProject.language || mockProject.tech),
+      license: mockProject.license || 'MIT',
+      licenseId: mockProject.license || 'MIT',
+      lastCommit: mockProject.lastCommit,
+      createdAt: '2023-01-01T00:00:00Z',
+      updatedAt: mockProject.lastCommit + 'T00:00:00Z',
+      imageUrl: null,
+      topics: mockProject.topics || [],
+      goodFirstIssues: mockProject.goodFirstIssues || Math.floor(Math.random() * 20) + 1,
+      openPullRequests: Math.floor(Math.random() * 50) + 1,
+      latestRelease: null,
+      latestReleaseDate: null
+    };
+    
+    // Mock 데이터에 이미 difficulty가 있으면 우선 사용, 없으면 동적 계산
+    project.difficulty = mockProject.difficulty || calculateProjectDifficulty(project);
+    
+    return project;
+  });
 };
 
 // 언어별 색상 매핑
@@ -81,6 +87,160 @@ const filterMockProjects = (projects, filters) => {
 
     return true;
   });
+};
+
+// 종합적인 난이도 계산 시스템
+const calculateProjectDifficulty = (project) => {
+  let beginnerScore = 0;
+  let advancedScore = 0;
+  
+  // 1. Good First Issues 기반 점수
+  const goodFirstIssues = project.goodFirstIssues || 0;
+  if (goodFirstIssues >= 5) beginnerScore += 30;
+  else if (goodFirstIssues >= 3) beginnerScore += 20;
+  else if (goodFirstIssues >= 1) beginnerScore += 10;
+  else advancedScore += 15; // Good First Issues가 없으면 진입장벽 높음
+  
+  // 2. 프로젝트 규모 기반 점수
+  const stars = typeof project.stars === 'number' ? project.stars : 
+    parseInt(String(project.stars || 0).replace(/[^\d]/g, '')) || 0;
+  const forks = typeof project.forks === 'number' ? project.forks : 
+    parseInt(String(project.forks || 0).replace(/[^\d]/g, '')) || 0;
+  
+  // 적당한 인기도는 초보자 친화적 (커뮤니티 활성화 + 복잡도 적당)
+  if (stars >= 100 && stars <= 5000) beginnerScore += 25;
+  else if (stars > 5000 && stars <= 15000) beginnerScore += 15;
+  else if (stars > 15000) advancedScore += 20; // 너무 큰 프로젝트는 복잡
+  else if (stars < 100) advancedScore += 10; // 너무 작으면 문서화/안정성 부족
+  
+  // Fork 비율 (활발한 기여 문화 지표)
+  if (stars > 0 && forks > 0) {
+    const forkRatio = forks / stars;
+    if (forkRatio >= 0.1 && forkRatio <= 0.3) beginnerScore += 20; // 적절한 기여 문화
+    else if (forkRatio > 0.3) beginnerScore += 10; // 매우 활발한 기여
+  }
+  
+  // 3. 토픽 기반 점수
+  const topics = project.topics || [];
+  const topicsString = topics.join(' ').toLowerCase();
+  
+  // 초보자 친화적 토픽들
+  const beginnerTopics = [
+    'tutorial', 'beginner', 'starter', 'learning', 'education', 'simple', 'easy',
+    'first-time', 'good-first-issue', 'beginner-friendly', 'documentation',
+    'example', 'demo', 'guide', 'howto', 'introduction'
+  ];
+  
+  // 고급 토픽들
+  const advancedTopics = [
+    'kubernetes', 'docker', 'microservices', 'distributed-systems', 'blockchain',
+    'machine-learning', 'deep-learning', 'ai', 'compiler', 'kernel', 'low-level',
+    'performance', 'optimization', 'scalability', 'architecture', 'enterprise',
+    'cryptography', 'security', 'networking', 'database-engine', 'operating-system'
+  ];
+  
+  beginnerTopics.forEach(topic => {
+    if (topicsString.includes(topic)) beginnerScore += 15;
+  });
+  
+  advancedTopics.forEach(topic => {
+    if (topicsString.includes(topic)) advancedScore += 15;
+  });
+  
+  // 4. 설명 기반 점수
+  const description = (project.description || '').toLowerCase();
+  
+  // 초보자 친화적 키워드
+  const beginnerKeywords = [
+    'beginner', 'starter', 'tutorial', 'learning', 'simple', 'easy',
+    'introduction', 'guide', 'example', 'demo', 'first', 'basic'
+  ];
+  
+  // 고급 키워드
+  const advancedKeywords = [
+    'advanced', 'complex', 'enterprise', 'production', 'scalable', 'performance',
+    'optimization', 'distributed', 'microservice', 'architecture', 'framework',
+    'sophisticated', 'professional'
+  ];
+  
+  beginnerKeywords.forEach(keyword => {
+    if (description.includes(keyword)) beginnerScore += 10;
+  });
+  
+  advancedKeywords.forEach(keyword => {
+    if (description.includes(keyword)) advancedScore += 10;
+  });
+  
+  // 5. 프로그래밍 언어 기반 보정
+  const language = (project.language || '').toLowerCase();
+  const beginnerLanguages = ['html', 'css', 'javascript', 'python', 'go'];
+  const advancedLanguages = ['rust', 'c++', 'c', 'assembly', 'haskell', 'scala'];
+  
+  if (beginnerLanguages.includes(language)) beginnerScore += 10;
+  if (advancedLanguages.includes(language)) advancedScore += 15;
+  
+  // 최종 난이도 결정
+  const totalScore = beginnerScore + advancedScore;
+  const beginnerRatio = totalScore > 0 ? beginnerScore / totalScore : 0;
+  
+  if (beginnerRatio >= 0.7 || (goodFirstIssues >= 5 && beginnerRatio >= 0.5)) {
+    return 'Beginner';
+  } else if (beginnerRatio >= 0.4 || (goodFirstIssues >= 1 && beginnerRatio >= 0.3)) {
+    return 'Intermediate';
+  } else {
+    return 'Advanced';
+  }
+};
+
+// 난이도별 필터링 및 정렬 공통 함수
+const applyDifficultyFiltering = (projects, sortBy) => {
+  if (sortBy === 'easy-contribution') {
+    // 쉬운 기여만 실제 필터링 적용
+    const filtered = projects
+      .filter(project => {
+        const stars = project.stars || 0;
+        const gfi = project.goodFirstIssues || 0;
+        
+        // 초보자 조건: Good First Issues가 3개 이상이거나 작은 프로젝트
+        const isEasy = gfi >= 3 || stars < 5000;
+        return isEasy;
+      })
+      .sort((a, b) => {
+        const aGFI = a.goodFirstIssues || 0;
+        const bGFI = b.goodFirstIssues || 0;
+        if (aGFI !== bGFI) return bGFI - aGFI;
+        return (b.stars || 0) - (a.stars || 0);
+      });
+    return filtered;
+  } else if (sortBy === 'good-first-issues') {
+    // Good First Issues 개수순 정렬
+    const sorted = projects
+      .sort((a, b) => {
+        const aGFI = a.goodFirstIssues || 0;
+        const bGFI = b.goodFirstIssues || 0;
+        if (aGFI !== bGFI) return bGFI - aGFI; // GFI 많은 순
+        return (b.stars || 0) - (a.stars || 0); // 동점일 때 stars 순
+      });
+    return sorted;
+  } else if (sortBy === 'updated') {
+    // 최근 업데이트순: GFI 3개 이상인 프로젝트만 + 업데이트순 정렬
+    const filtered = projects
+      .filter(project => {
+        const gfi = project.goodFirstIssues || 0;
+        const hasEnoughGFI = gfi >= 3;
+        return hasEnoughGFI;
+      })
+      .sort((a, b) => {
+        // 업데이트 날짜순 정렬 (최근 것부터)
+        const aUpdated = a.updatedAt ? new Date(a.updatedAt) : new Date(0);
+        const bUpdated = b.updatedAt ? new Date(b.updatedAt) : new Date(0);
+        return bUpdated - aUpdated;
+      });
+    return filtered;
+  } else {
+    // 기본 정렬 (기존 로직 유지)
+    return projects;
+  }
 };
 
 // 초보자 친화적인 점수 계산
@@ -168,13 +328,65 @@ const getDaysSinceLastCommit = (lastCommit) => {
 export const searchProjectsService = async (filters = {}) => {
   try {
     // GitHub API 사용 시도
-    if (isGitHubApiAvailable()) {
+    if (isApiAvailable()) {
       try {
         const apiResult = await searchProjects(filters);
+        
+        // 백엔드 API 응답 구조 처리
+        if (apiResult && apiResult.search && apiResult.search.edges) {
+          const transformedProjects = apiResult.search.edges.map(edge => {
+            const repo = edge.node;
+            const project = {
+              id: repo.id,
+              name: repo.name,
+              owner: { login: repo.owner.login },  // 기존 구조 유지
+              fullName: repo.nameWithOwner,
+              description: repo.description,
+              url: repo.url,
+              html_url: repo.url,
+              stars: repo.stargazerCount,
+              stargazers_count: repo.stargazerCount,  // 기존 필드명 유지
+              forks: repo.forkCount,
+              forks_count: repo.forkCount,  // 기존 필드명 유지
+              language: repo.primaryLanguage?.name || null,
+              tech: repo.primaryLanguage?.name || null,  // 기존 필드명 유지
+              languageColor: getLanguageColor(repo.primaryLanguage?.name),
+              license: repo.licenseInfo?.name || null,
+              licenseId: repo.licenseInfo?.spdxId || null,
+              lastCommit: repo.updatedAt?.split('T')[0] || null,  // YYYY-MM-DD 형식으로 변환
+              updated_at: repo.updatedAt,
+              pushed_at: repo.pushedAt,
+              createdAt: repo.createdAt,
+              updatedAt: repo.updatedAt,
+              imageUrl: repo.owner.avatarUrl,
+              topics: repo.repositoryTopics?.nodes?.map(topic => topic.topic.name) || [],
+              goodFirstIssues: repo.issues?.totalCount || 0,
+              openPullRequests: Math.floor(Math.random() * 20) + 1,
+              latestRelease: null,
+              latestReleaseDate: null
+            };
+            
+            // 동적 난이도 계산 적용
+            project.difficulty = calculateProjectDifficulty(project);
+            
+            return project;
+          });
+
+          // 난이도별 필터링 및 정렬 적용
+          let finalProjects = applyDifficultyFiltering(transformedProjects, filters.sortBy);
+
+          return {
+            projects: finalProjects,
+            totalCount: apiResult.search.repositoryCount || finalProjects.length,
+            hasNextPage: apiResult.search.pageInfo?.hasNextPage || false,
+            endCursor: apiResult.search.pageInfo?.endCursor || null
+          };
+        }
+        
         return {
-          ...apiResult,
-          projects: apiResult.projects || [],
-          totalCount: apiResult.totalCount || 0
+          projects: [],
+          totalCount: 0,
+          hasNextPage: false
         };
       } catch (error) {
         console.warn('GitHub API 호출 실패, Mock 데이터로 대체:', error);
@@ -185,18 +397,16 @@ export const searchProjectsService = async (filters = {}) => {
     const filteredMockProjects = filterMockProjects(MOCK_PROJECTS, filters);
     const transformedProjects = transformMockToApiFormat(filteredMockProjects);
 
-    // 점수 기반 정렬
-    const scoredProjects = transformedProjects.map(project => ({
-      ...project,
-      score: calculateBeginnerFriendlyScore(project)
-    }));
-
-    scoredProjects.sort((a, b) => b.score - a.score);
+    // 난이도별 필터링 및 정렬
+    let finalProjects;
+    
+    // 공통 필터링 함수 사용
+    finalProjects = applyDifficultyFiltering(transformedProjects, filters.sortBy);
 
     return {
-      projects: scoredProjects.slice(0, filters.limit || 50),
-      totalCount: scoredProjects.length,
-      hasNextPage: scoredProjects.length > (filters.limit || 50)
+      projects: finalProjects.slice(0, filters.limit || 50),
+      totalCount: finalProjects.length,
+      hasNextPage: finalProjects.length > (filters.limit || 50)
     };
   } catch (error) {
     console.error('프로젝트 검색 서비스 에러:', error);
@@ -208,18 +418,67 @@ export const searchProjectsService = async (filters = {}) => {
 export const getRecommendedProjectsService = async (searchQuery = '', limit = 12) => {
   try {
     // GitHub API 사용 시도
-    if (isGitHubApiAvailable()) {
+    if (isApiAvailable()) {
       try {
+        let result;
         if (searchQuery) {
-          const result = await searchProjects({ 
+          result = await searchProjects({ 
             searchQuery,
             limit,
             sortBy: 'stars' 
           });
-          return result;
+        } else {
+          result = await getRecommendedProjects(limit, 'beginner-friendly');
         }
         
-        return await getRecommendedProjects('', limit);
+        // 백엔드 API 응답 구조 처리
+        if (result && result.search && result.search.edges) {
+          const transformedProjects = result.search.edges.map(edge => {
+            const repo = edge.node;
+            const project = {
+              id: repo.id,
+              name: repo.name,
+              owner: { login: repo.owner.login },  // 기존 구조 유지
+              fullName: repo.nameWithOwner,
+              description: repo.description,
+              url: repo.url,
+              html_url: repo.url,
+              stars: repo.stargazerCount,
+              stargazers_count: repo.stargazerCount,  // 기존 필드명 유지
+              forks: repo.forkCount,
+              forks_count: repo.forkCount,  // 기존 필드명 유지
+              language: repo.primaryLanguage?.name || null,
+              tech: repo.primaryLanguage?.name || null,  // 기존 필드명 유지
+              languageColor: getLanguageColor(repo.primaryLanguage?.name),
+              license: repo.licenseInfo?.name || null,
+              licenseId: repo.licenseInfo?.spdxId || null,
+              lastCommit: repo.updatedAt?.split('T')[0] || null,  // YYYY-MM-DD 형식으로 변환
+              updated_at: repo.updatedAt,
+              pushed_at: repo.pushedAt,
+              createdAt: repo.createdAt,
+              updatedAt: repo.updatedAt,
+              imageUrl: repo.owner.avatarUrl,
+              topics: repo.repositoryTopics?.nodes?.map(topic => topic.topic.name) || [],
+              goodFirstIssues: repo.issues?.totalCount || 0,
+              openPullRequests: Math.floor(Math.random() * 20) + 1,
+              latestRelease: null,
+              latestReleaseDate: null
+            };
+            
+            // 동적 난이도 계산 적용
+            project.difficulty = calculateProjectDifficulty(project);
+            
+            return project;
+          });
+
+          return {
+            projects: transformedProjects,
+            totalCount: result.search.repositoryCount || transformedProjects.length,
+            hasNextPage: result.search.pageInfo?.hasNextPage || false
+          };
+        }
+        
+        return { projects: [], totalCount: 0, hasNextPage: false };
       } catch (error) {
         console.warn('GitHub API 호출 실패, Mock 데이터로 대체:', error);
       }
@@ -288,7 +547,7 @@ export const getRecommendedProjectsService = async (searchQuery = '', limit = 12
 // 저장소 활동 정보 조회 (API 또는 Mock 데이터 사용)
 export const getRepositoryActivityService = async (owner, repo) => {
   try {
-    if (isGitHubApiAvailable()) {
+    if (isApiAvailable()) {
       try {
         return await getRepositoryActivity(owner, repo);
       } catch (error) {
@@ -337,7 +596,7 @@ export const getRepositoryActivityService = async (owner, repo) => {
 // 기여자 통계 조회 (API 또는 Mock 데이터 사용)
 export const getContributorStatsService = async (owner, repo) => {
   try {
-    if (isGitHubApiAvailable()) {
+    if (isApiAvailable()) {
       try {
         return await getContributorStats(owner, repo);
       } catch (error) {
@@ -391,11 +650,10 @@ export const searchProjectsWithPagination = async (filters = {}, batchSize = 30,
     if (currentSearchKey !== searchKey) {
       currentSearchKey = searchKey;
       batchCursors = {};
-      console.log('🔄 새로운 검색 - 커서 초기화');
     }
 
     // GitHub API 사용 가능한 경우
-    if (isGitHubApiAvailable()) {
+    if (isApiAvailable()) {
       try {
         // 해당 배치의 커서 찾기
         let cursor = null;
@@ -410,29 +668,82 @@ export const searchProjectsWithPagination = async (filters = {}, batchSize = 30,
         // GitHub API 호출
         const apiResult = await searchProjects(filters, cursor);
         
-        if (!apiResult || !apiResult.projects) {
+        // 백엔드 API 응답 구조 처리
+        let projects = [];
+        let totalCount = 0;
+        let pageInfo = null;
+        
+        if (apiResult && apiResult.search) {
+          // GraphQL 구조 처리
+          if (apiResult.search.edges) {
+            projects = apiResult.search.edges.map(edge => {
+              const repo = edge.node;
+              const project = {
+                id: repo.id,
+                name: repo.name,
+                owner: { login: repo.owner.login },
+                fullName: repo.nameWithOwner,
+                description: repo.description,
+                url: repo.url,
+                html_url: repo.url,
+                stars: repo.stargazerCount,
+                stargazers_count: repo.stargazerCount,
+                forks: repo.forkCount,
+                forks_count: repo.forkCount,
+                language: repo.primaryLanguage?.name || null,
+                tech: repo.primaryLanguage?.name || null,
+                languageColor: getLanguageColor(repo.primaryLanguage?.name),
+                license: repo.licenseInfo?.name || null,
+                licenseId: repo.licenseInfo?.spdxId || null,
+                lastCommit: repo.updatedAt?.split('T')[0] || null,
+                updated_at: repo.updatedAt,
+                pushed_at: repo.pushedAt,
+                createdAt: repo.createdAt,
+                updatedAt: repo.updatedAt,
+                imageUrl: repo.owner.avatarUrl,
+                topics: repo.repositoryTopics?.nodes?.map(topic => topic.topic.name) || [],
+                goodFirstIssues: repo.issues?.totalCount || 0,
+                openPullRequests: Math.floor(Math.random() * 20) + 1,
+                latestRelease: null,
+                latestReleaseDate: null
+              };
+              
+              // 동적 난이도 계산 적용
+              project.difficulty = calculateProjectDifficulty(project);
+              
+              return project;
+            });
+          }
+          totalCount = apiResult.search.repositoryCount || 0;
+          pageInfo = apiResult.search.pageInfo;
+        }
+        
+        if (!projects || projects.length === 0) {
           throw new Error('GitHub API에서 데이터를 가져올 수 없습니다.');
         }
 
+        // 난이도별 필터링 적용
+        const filteredProjects = applyDifficultyFiltering(projects, filters.sortBy);
+
         // 다음 배치 커서 저장
-        if (apiResult.pageInfo && apiResult.pageInfo.hasNextPage) {
-          batchCursors[batchNumber] = apiResult.pageInfo.endCursor;
+        if (pageInfo && pageInfo.hasNextPage) {
+          batchCursors[batchNumber] = pageInfo.endCursor;
         }
 
         // 배치 정보 계산
-        const hasMoreBatches = apiResult.pageInfo?.hasNextPage || false;
+        const hasMoreBatches = pageInfo?.hasNextPage || false;
 
         return {
-          projects: apiResult.projects,
-          totalCount: apiResult.totalCount,
+          projects: filteredProjects,
+          totalCount: totalCount,
           batchInfo: {
             batchNumber,
             batchSize,
             totalBatches: -1, // GitHub API에서는 정확한 총 배치 수를 알 수 없음
             hasMoreBatches,
             startIndex: (batchNumber - 1) * batchSize,
-            endIndex: (batchNumber - 1) * batchSize + apiResult.projects.length,
-            actualBatchSize: apiResult.projects.length,
+            endIndex: (batchNumber - 1) * batchSize + filteredProjects.length,
+            actualBatchSize: filteredProjects.length,
             usingGitHubAPI: true
           }
         };
