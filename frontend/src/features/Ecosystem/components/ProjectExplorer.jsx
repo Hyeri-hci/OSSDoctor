@@ -52,6 +52,7 @@ const ProjectExplorer = ({ onBack, initialSearchQuery = '' }) => {
         // 필터 관련
         filterOptions,
         hasActiveFilters,
+        activeFiltersCount,
         clearAllFilters,
         performSearch
     } = useProjectPagination();
@@ -147,6 +148,7 @@ const ProjectExplorer = ({ onBack, initialSearchQuery = '' }) => {
                     loading={loading}
                     filterOptions={filterOptions}
                     hasActiveFilters={hasActiveFilters}
+                    activeFiltersCount={activeFiltersCount}
                     onlyTimeFilterSelected={onlyTimeFilterSelected}
                     onSearchChange={setSearchQuery}
                     onLanguageChange={setSelectedLanguage}
