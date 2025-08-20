@@ -499,7 +499,7 @@ OSSDoctor 프로젝트에 기여해주셔서 감사합니다! 다음과 같은 �
 
 - **GitHub Issues**: 버그 리포트, 기능 요청
 - **GitHub Discussions**: 일반적인 질문, 아이디어 공유
-- **Email**: hyeri-hci@gmail.com
+- **Email**: hyeri.hci.du@gmail.com
 
 ---
 
