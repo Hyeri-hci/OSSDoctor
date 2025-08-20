@@ -60,7 +60,7 @@
 
 - **건강도 스코어링**: 최근 업데이트, Issue 해결율, PR 머지율 분석
 - **보안 취약점 분석(개발중)**: CVE 데이터베이스 연동 실시간 취약점 검사
-- **커뮤니티 활성도**: Star, Frk, Watcher, Contributor 수 분석
+- **커뮤니티 활성도**: Star, Fork, Watcher, Contribution 수 분석
 - **라이선스 유효성**: 프로젝트 라이선스 검사
 
 **진단 항목:**
@@ -85,10 +85,13 @@
 **탐색 필터:**
 - 🔤 프로그래밍 언어
 - 📄 라이선스 타입
-- ⭐ 인기도 (Stars/Forks)
 - 📅 최근 활동 (Last Update)
-- 🎯 기여 난이도
-- 🏷️ 프로젝트 토픽
+- ⚙️ 정렬 기준
+  - 🐣 초보자 친화적
+  - ⭐ 인기도 (Stars) 
+  - ⏱️ 최근 업데이트
+  - 🏷️ Good First Issue
+  - 🛠️ 쉬운 기여도
 
 </details>
 
@@ -384,8 +387,7 @@ GET /api/diagnose/{owner}/{repo}/security  # 보안 분석
 #### 🌍 탐색 (Ecosystem)
 ```http
 GET /api/ecosystem/search              # 프로젝트 검색
-GET /api/ecosystem/trending            # 트렌딩 프로젝트
-GET /api/ecosystem/recommendations     # 개인화 추천
+GET /api/ecosystem/recommended         # 추천시스템
 ```
 
 #### 📊 활동 (Activity)
