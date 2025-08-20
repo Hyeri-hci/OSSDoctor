@@ -386,16 +386,17 @@ GET /api/diagnose/{owner}/{repo}/security  # 보안 분석
 
 #### 🌍 탐색 (Ecosystem)
 ```http
-GET /api/ecosystem/search              # 프로젝트 검색
-GET /api/ecosystem/recommended         # 추천시스템
+GET /api/ecosystem/search                    # 프로젝트 검색
+GET /api/ecosystem/recommended               # 추천시스템
+GET /api/repository/{owner}/{name}/activity  # 저장소 활동 정보 조회
 ```
 
 #### 📊 활동 (Activity)
 ```http
-GET /api/myactivity/stats         # 기여 통계
-GET /api/myactivity/badges        # 보유 뱃지
-GET /api/myactivity/history       # 기여 히스토리
-GET /api/myactivity/ranking       # 전체 랭킹
+GET /api/stats/{nickname}        # 기여 통계
+GET /api/badges/{nickname}        # 보유 뱃지
+GET /api/history/{nickname}       # 기여 히스토리
+GET /api/level/{nickname}       # 레벨 및 경험치 조회
 ```
 
 ---
