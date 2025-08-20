@@ -4,12 +4,11 @@
 
 <div align="center">
 
-![Java](https://img.shields.io/badge/Java-17-orange?style=for-the-badge&logo=java&logoColor=white)
+![Java](https://img.shields.io/badge/Java-24-orange?style=for-the-badge&logo=java&logoColor=white)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2-brightgreen?style=for-the-badge&logo=springboot&logoColor=white)
 ![React](https://img.shields.io/badge/React-18-blue?style=for-the-badge&logo=react&logoColor=white)
 ![MySQL](https://img.shields.io/badge/MySQL-8.0-blue?style=for-the-badge&logo=mysql&logoColor=white)
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 ![Build Status](https://img.shields.io/badge/Build-Passing-brightgreen?style=for-the-badge)
 
 [🚀 데모 보기](#) | [🐛 이슈 제보](https://github.com/Hyeri-hci/OSSDoctor/issues)
@@ -61,7 +60,7 @@
 
 - **건강도 스코어링**: 최근 업데이트, Issue 해결율, PR 머지율 분석
 - **보안 취약점 분석(개발중)**: CVE 데이터베이스 연동 실시간 취약점 검사
-- **커뮤니티 활성도**: Star, Frk, Watcher, Contributor 수 분석석
+- **커뮤니티 활성도**: Star, Frk, Watcher, Contributor 수 분석
 - **라이선스 유효성**: 프로젝트 라이선스 검사
 
 **진단 항목:**
@@ -498,36 +497,6 @@ OSSDoctor 프로젝트에 기여해주셔서 감사합니다! 다음과 같은 �
 - **GitHub Issues**: 버그 리포트, 기능 요청
 - **GitHub Discussions**: 일반적인 질문, 아이디어 공유
 - **Email**: hyeri-hci@gmail.com
-
----
-
-## 📄 라이선스
-
-이 프로젝트는 [MIT 라이선스](LICENSE)하에 배포됩니다.
-
-```
-MIT License
-
-Copyright (c) 2024 OSSDoctor Team
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-```
 
 ---
 
