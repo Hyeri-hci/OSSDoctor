@@ -79,11 +79,6 @@ public class MyActivityController {
             }
         })
         .flatMap(contributionService::getContributionsByNickname)
-        .flatMap(_ -> {
-            // 매번 GitHub에서 최신 데이터를 가져와서 업데이트
-            return contributionService.saveContributions(nickname)
-                .then(contributionService.getContributionsByNickname(nickname));
-        })
         .map(history -> ResponseEntity.ok().body(Map.of(
             "success", true,
             "data", history
