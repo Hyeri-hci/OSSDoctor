@@ -23,6 +23,13 @@ public class BadgeEntity {
 
     private String description;
 
-    @Column(name = "icon_url")
-    private String iconUrl;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, name = "category")
+    private BADGE_CATEGORY category;
+
+    @Column(nullable = false)
+    private Integer level = 1;
+
+    @Column(length = 100, nullable = false)
+    private String requirement;
 }

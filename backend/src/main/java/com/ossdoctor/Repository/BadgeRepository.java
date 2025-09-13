@@ -9,6 +9,8 @@ import java.util.Optional;
 @Repository
 public interface BadgeRepository extends JpaRepository<BadgeEntity, Long> {
 
+    boolean existsByName(String name);
+
     @Override
     Optional<BadgeEntity> findById(Long aLong);
 }

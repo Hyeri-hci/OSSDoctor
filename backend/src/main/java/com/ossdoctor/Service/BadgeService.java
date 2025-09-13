@@ -1,6 +1,7 @@
 package com.ossdoctor.Service;
 
 import com.ossdoctor.DTO.BadgeDTO;
+import com.ossdoctor.Entity.BADGE_CATEGORY;
 import com.ossdoctor.Entity.BadgeEntity;
 import com.ossdoctor.Repository.BadgeRepository;
 import lombok.AllArgsConstructor;
@@ -12,7 +13,11 @@ public class BadgeService {
 
     private final BadgeRepository badgeRepository;
 
-    private BadgeDTO save(BadgeDTO badgeDTO) {
+    public boolean existsByName(String name){
+        return badgeRepository.existsByName(name);
+    }
+
+    public BadgeDTO save(BadgeDTO badgeDTO) {
         return toDto(badgeRepository.save(toEntity(badgeDTO)));
     }
 
@@ -21,7 +26,9 @@ public class BadgeService {
                 .idx(entity.getIdx())
                 .name(entity.getName())
                 .description(entity.getDescription())
-                .iconUrl(entity.getIconUrl())
+                .category(entity.getCategory())
+                .level(entity.getLevel())
+                .requirement(entity.getRequirement())
                 .build();
     }
 
@@ -29,7 +36,11 @@ public class BadgeService {
         return BadgeEntity.builder()
                 .name(dto.getName())
                 .description(dto.getDescription())
-                .iconUrl(dto.getIconUrl())
+                .category(dto.getCategory())
+                .level(dto.getLevel())
+                .requirement(dto.getRequirement())
                 .build();
     }
+
+
 }
