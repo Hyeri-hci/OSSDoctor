@@ -24,10 +24,6 @@ public class PullRequestEntity {
     @JoinColumn(name = "repository_id", nullable = false)
     private RepositoryEntity repository;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = true)
-    private UserEntity user;
-
     @Column(name = "user_name", length = 50, nullable = false)
     private String userName;
 

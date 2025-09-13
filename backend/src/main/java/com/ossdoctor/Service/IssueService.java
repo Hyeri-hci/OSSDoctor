@@ -24,7 +24,6 @@ public class IssueService {
         return IssueDTO.builder()
                 .idx(entity.getIdx())
                 .repositoryId(entity.getRepository().getIdx())
-                .userId(entity.getUser().getIdx())
                 .userName(entity.getUserName())
                 .issueNumber(entity.getIssueNumber())
                 .title(entity.getTitle())
@@ -37,7 +36,6 @@ public class IssueService {
     private IssueEntity toEntity(IssueDTO dto) {
         return IssueEntity.builder()
                 .repository(repositoryRepository.findById(dto.getRepositoryId()).get())
-                .user(userRepository.findById(dto.getUserId()).get())
                 .userName(dto.getUserName())
                 .issueNumber(dto.getIssueNumber())
                 .title(dto.getTitle())
