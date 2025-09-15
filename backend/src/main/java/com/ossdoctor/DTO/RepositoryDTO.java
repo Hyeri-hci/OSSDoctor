@@ -1,6 +1,5 @@
 package com.ossdoctor.DTO;
 
-import com.ossdoctor.Entity.SOURCE_TYPE;
 import lombok.*;
 
 import java.time.LocalDate;
@@ -18,7 +17,6 @@ public class RepositoryDTO {
     private String url;
     private String owner;
     private String language;
-    private SOURCE_TYPE sourceType;
     private String license;
     private int star;
     private int fork;

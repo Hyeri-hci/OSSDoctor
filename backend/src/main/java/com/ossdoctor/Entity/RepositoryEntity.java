@@ -38,10 +38,6 @@ public class RepositoryEntity {
     @Column(length = 50)
     private String language;
 
-    @Column(name = "source_type")
-    @Enumerated(value = EnumType.STRING)
-    private SOURCE_TYPE sourceType;
-
     @Column(length = 50)
     private String license;
 

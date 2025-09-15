@@ -617,7 +617,6 @@ public class GitHubApiService {
                 .url(repository.path("url").asText())
                 .owner(owner)
                 .language(topLanguages) // top3 언어, 예시) "C,Java,Python"
-                .sourceType(SOURCE_TYPE.ANALYZED) // 프로젝트 분석용
                 .star(repository.path("stargazerCount").asInt()) // star
                 .fork(repository.path("forkCount").asInt())
                 .watchers(repository.path("watchers").path("totalCount").asInt())
