@@ -19,4 +19,6 @@ public class BadgeDTO {
     private BADGE_CATEGORY category;
     private int level;
     private String requirement;
+
+    private boolean earned;
 }
