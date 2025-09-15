@@ -20,20 +20,20 @@ public class BadgeDataInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         List<BadgeDTO> badges = List.of(
-                BadgeDTO.builder().name("Initiator").description("첫 커밋을 시작했습니다").category(BADGE_CATEGORY.COMMIT).level(1).requirement("첫 커밋, 20/50/100/200회").build(),
-                BadgeDTO.builder().name("Routine Loader").description("꾸준한 커밋 활동을 보여줍니다").category(BADGE_CATEGORY.COMMIT).level(2).requirement("첫 커밋, 20/50/100/200회").build(),
-                BadgeDTO.builder().name("Backbone Coder").description("프로젝트의 핵심 개발자입니다").category(BADGE_CATEGORY.COMMIT).level(3).requirement("첫 커밋, 20/50/100/200회").build(),
-                BadgeDTO.builder().name("Mainline Pulse").description("프로젝트의 메인 동력원입니다").category(BADGE_CATEGORY.COMMIT).level(4).requirement("첫 커밋, 20/50/100/200회").build(),
+                BadgeDTO.builder().name("Initiator").description("첫 커밋을 시작했습니다").category(BADGE_CATEGORY.COMMIT).level(1).requirement("첫 커밋, 20/50/100회").build(),
+                BadgeDTO.builder().name("Routine Loader").description("꾸준한 커밋 활동을 보여줍니다").category(BADGE_CATEGORY.COMMIT).level(2).requirement("첫 커밋, 20/50/100회").build(),
+                BadgeDTO.builder().name("Backbone Coder").description("프로젝트의 핵심 개발자입니다").category(BADGE_CATEGORY.COMMIT).level(3).requirement("첫 커밋, 20/50/100회").build(),
+                BadgeDTO.builder().name("Mainline Pulse").description("프로젝트의 메인 동력원입니다").category(BADGE_CATEGORY.COMMIT).level(4).requirement("첫 커밋, 20/50/100회").build(),
 
                 BadgeDTO.builder().name("Daily Spark").description("매일 커밋하는 습관을 만들었습니다").category(BADGE_CATEGORY.COMMIT_STREAK).level(1).requirement("3/7/14/30일 연속 커밋").build(),
                 BadgeDTO.builder().name("Habitualist").description("일주일 연속 커밋을 달성했습니다").category(BADGE_CATEGORY.COMMIT_STREAK).level(2).requirement("3/7/14/30일 연속 커밋").build(),
                 BadgeDTO.builder().name("Consistency Engineer").description("2주 연속 커밋의 일관성을 보여줍니다").category(BADGE_CATEGORY.COMMIT_STREAK).level(3).requirement("3/7/14/30일 연속 커밋").build(),
                 BadgeDTO.builder().name("Unbroken Chain").description("한 달 연속 커밋의 끊이지 않는 체인").category(BADGE_CATEGORY.COMMIT_STREAK).level(4).requirement("3/7/14/30일 연속 커밋").build(),
 
-                BadgeDTO.builder().name("Door Opener").description("첫 번째 PR을 열었습니다").category(BADGE_CATEGORY.PR_EXTERNAL).level(1).requirement("첫 PR, 5/10/30/50회").build(),
-                BadgeDTO.builder().name("Merge Navigator").description("여러 PR을 성공적으로 병합했습니다").category(BADGE_CATEGORY.PR_EXTERNAL).level(2).requirement("첫 PR, 5/10/30/50회").build(),
-                BadgeDTO.builder().name("Collaboration Director").description("협업의 방향을 제시하는 리더입니다").category(BADGE_CATEGORY.PR_EXTERNAL).level(3).requirement("첫 PR, 5/10/30/50회").build(),
-                BadgeDTO.builder().name("Network Weaver").description("오픈소스 네트워크를 엮어가는 전문가").category(BADGE_CATEGORY.PR_EXTERNAL).level(4).requirement("첫 PR, 5/10/30/50회").build(),
+                BadgeDTO.builder().name("Door Opener").description("첫 번째 PR을 열었습니다").category(BADGE_CATEGORY.PR_EXTERNAL).level(1).requirement("첫 PR, 5/10/30회").build(),
+                BadgeDTO.builder().name("Merge Navigator").description("여러 PR을 성공적으로 병합했습니다").category(BADGE_CATEGORY.PR_EXTERNAL).level(2).requirement("첫 PR, 5/10/30회").build(),
+                BadgeDTO.builder().name("Collaboration Director").description("협업의 방향을 제시하는 리더입니다").category(BADGE_CATEGORY.PR_EXTERNAL).level(3).requirement("첫 PR, 5/10/30회").build(),
+                BadgeDTO.builder().name("Network Weaver").description("오픈소스 네트워크를 엮어가는 전문가").category(BADGE_CATEGORY.PR_EXTERNAL).level(4).requirement("첫 PR, 5/10/30회").build(),
 
                 BadgeDTO.builder().name("Integration Pioneer").description("첫 번째 PR 병합을 달성했습니다").category(BADGE_CATEGORY.PR_MERGE).level(1).requirement("첫/5/10/20회 merge").build(),
                 BadgeDTO.builder().name("Fusion Operator").description("여러 기능을 융합하는 전문가").category(BADGE_CATEGORY.PR_MERGE).level(2).requirement("첫/5/10/20회 merge").build(),
