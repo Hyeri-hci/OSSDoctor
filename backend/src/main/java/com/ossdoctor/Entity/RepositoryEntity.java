@@ -58,10 +58,6 @@ public class RepositoryEntity {
     @Builder.Default
     private Integer totalContributors = 0;
 
-    @Column(name = "view_count", nullable = false)
-    @Builder.Default
-    private Long viewCount = 0L;
-
     @Column(name = "total_commit_count", nullable = false)
     @Builder.Default
     private Integer totalCommits = 0;

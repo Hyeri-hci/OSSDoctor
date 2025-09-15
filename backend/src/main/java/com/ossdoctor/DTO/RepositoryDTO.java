@@ -23,7 +23,6 @@ public class RepositoryDTO {
     private int watchers;
     private int contributors; // 주요 기여자 수 (최대 9명)
     private int totalContributors; // 총 기여자 수
-    private Long viewCount;
     private int totalCommits;
     private int openPullRequests;
     private int closedPullRequests;
