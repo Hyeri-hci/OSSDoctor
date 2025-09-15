@@ -252,6 +252,75 @@ public class GitHubApiService {
     }
     """;
 
+    // 기여 관련 뱃지
+    private static final String CONTRIBUTION_SUMMARY_QUERY = """
+    query GetContributionSummary($login: String!, $since: DateTime!) {
+      user(login: $login) {
+        login
+        contributionsCollection(from: $since) {
+          commitContributionsByRepository(maxRepositories: 50) {
+            repository {
+              name
+            }
+            contributions(first: 100) {
+              totalCount
+            }
+          }
+          pullRequestContributionsByRepository(maxRepositories: 50) {
+            repository {
+              name
+            }
+            contributions(first: 100) {
+              nodes {
+                pullRequest {
+                  mergedAt
+                }
+              }
+            }
+          }
+          issueContributionsByRepository(maxRepositories: 50) {
+            repository {
+              name
+            }
+            contributions(first: 100) {
+              nodes {
+                issue {
+                  closedAt
+                }
+              }
+            }
+          }
+          pullRequestReviewContributionsByRepository(maxRepositories: 50) {
+            repository {
+              name
+            }
+            contributions(first: 100) {
+              totalCount
+            }
+          }
+        }
+      }
+    }
+    """;
+
+    // Social 관련 뱃지
+    private static final String SOCIAL_COUNTS_QUERY = """
+    query GetSocialCounts($login: String!) {
+      user(login: $login) {
+        login
+        starredRepositories {
+          totalCount
+        }
+        watching {
+          totalCount
+        }
+        repositories(isFork: true) {
+          totalCount
+        }
+      }
+    }
+    """;
+
     // =========== 공개 API 메서드 ===========
 
     // Repository 기본 정보 조회
@@ -352,6 +421,33 @@ public class GitHubApiService {
                 })
                 .flatMap(this::parseContributions)
                 .doOnError(error -> log.error("GraphQL 응답 파싱 실패: {}", error.getMessage()))
+                .onErrorMap(this::handleApiError);
+    }
+
+    // 뱃지 조건 확인용
+    public Mono<List<BadgeMetricDTO>> getContributionSummary(String owner, LocalDateTime since) {
+        log.info("Fetching Contribution summary for {}", owner);
+
+        Map<String, Object> variables = Map.of(
+                "login", owner,
+                "since", since.format(DateTimeFormatter.ISO_DATE_TIME)
+        );
+
+        return executeGraphQLQuery(CONTRIBUTION_SUMMARY_QUERY, variables)
+                .doOnNext(response -> log.info("GraphQL Response: {}", response.toPrettyString()))
+                .map(this::parseContributionSummaryAsMetrics)
+                .onErrorMap(this::handleApiError);
+    }
+
+    public Mono<List<BadgeMetricDTO>> getSocialCount(String owner) {
+        log.info("Fetching Social count for {}", owner);
+        Map<String, Object> variables = Map.of(
+                "login", owner
+        );
+
+        return executeGraphQLQuery(SOCIAL_COUNTS_QUERY, variables)
+                .doOnNext(response -> log.info("GraphQL Response: {}", response.toPrettyString()))
+                .map(this::parseSocialCount)
                 .onErrorMap(this::handleApiError);
     }
 
@@ -565,6 +661,77 @@ public class GitHubApiService {
                         .build())
                 .collect(Collectors.toList());
     }
+
+    private List<BadgeMetricDTO> parseContributionSummaryAsMetrics(JsonNode response) {
+        JsonNode collection = response.path("data").path("user").path("contributionsCollection");
+
+        int totalCommits = 0;
+        for (JsonNode repoNode : collection.path("commitContributionsByRepository")) {
+            totalCommits += repoNode.path("contributions").path("totalCount").asInt(0);
+        }
+
+        int totalPRs = 0;
+        int mergedPRs = 0;
+        for (JsonNode repoNode : collection.path("pullRequestContributionsByRepository")) {
+            JsonNode nodes = repoNode.path("contributions").path("nodes");
+            totalPRs += nodes.size();
+            for (JsonNode node : nodes) {
+                JsonNode prNode = node.path("pullRequest");
+                if (!prNode.path("mergedAt").isNull()) mergedPRs++;
+            }
+        }
+
+        int totalIssues = 0;
+        int closedIssues = 0;
+        for (JsonNode repoNode : collection.path("issueContributionsByRepository")) {
+            JsonNode nodes = repoNode.path("contributions").path("nodes");
+            totalIssues += nodes.size();
+            for (JsonNode node : nodes) {
+                JsonNode issueNode = node.path("issue");
+                if (!issueNode.path("closedAt").isNull()) closedIssues++;
+            }
+        }
+
+        int totalReviews = 0;
+        for (JsonNode repoNode : collection.path("pullRequestReviewContributionsByRepository")) {
+            totalReviews += repoNode.path("contributions").path("totalCount").asInt(0);
+        }
+
+        Map<BADGE_CATEGORY, Integer> counts = Map.of(
+                BADGE_CATEGORY.COMMIT, totalCommits,
+                BADGE_CATEGORY.PR_EXTERNAL, totalPRs,
+                BADGE_CATEGORY.PR_MERGE, mergedPRs,
+                BADGE_CATEGORY.ISSUE_CREATE, totalIssues,
+                BADGE_CATEGORY.ISSUE_SOLVE, closedIssues,
+                BADGE_CATEGORY.CODE_REVIEW, totalReviews
+        );
+
+        return counts.entrySet().stream()
+                .map(entry -> BadgeMetricDTO.builder()
+                        .badgeCategory(entry.getKey())
+                        .count(entry.getValue())
+                        .build())
+                .toList();
+    }
+
+    private List<BadgeMetricDTO> parseSocialCount(JsonNode response) {
+        JsonNode social = response.path("data").path("user");
+
+        // BADGE_CATEGORY 기준으로 카운트 매핑
+        Map<BADGE_CATEGORY, Integer> socialCounts = Map.of(
+                BADGE_CATEGORY.STAR, social.path("starredRepositories").path("totalCount").asInt(),
+                BADGE_CATEGORY.FORK, social.path("repositories").path("totalCount").asInt(),
+                BADGE_CATEGORY.WATCH, social.path("watching").path("totalCount").asInt()
+        );
+
+        return socialCounts.entrySet().stream()
+                .map(entry -> BadgeMetricDTO.builder()
+                        .badgeCategory(entry.getKey())
+                        .count(entry.getValue())
+                        .build())
+                .toList();
+    }
+
 
     // 최근 활동 파싱
     private ActivitiesWithRepoId parseRecentActivities(JsonNode response) {
