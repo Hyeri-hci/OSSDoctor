@@ -100,7 +100,7 @@ public class UserBadgeService {
                 .switchIfEmpty(Mono.error(new RuntimeException("User not found")))
                 .flatMap(userDTO ->
                         Mono.fromCallable(() ->
-                                userBadgeRepository.findTop12ByUser_IdxOrderByAwardedAtDesc(userDTO.getIdx()) // userId 기준 조회
+                                userBadgeRepository.findTop12ByUser_IdxOrderByAwardedAtDescIdxAsc(userDTO.getIdx()) // userId 기준 조회
                                         .stream()
                                         .map(this::toDTO)
                                         .toList()

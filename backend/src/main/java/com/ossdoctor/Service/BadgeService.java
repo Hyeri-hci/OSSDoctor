@@ -67,81 +67,10 @@ public class BadgeService {
     private static final Map<Integer, Integer> WATCH_THRESHOLDS = new LinkedHashMap<>() {{put(1, 5);put(2, 10);put(3, 15);put(4, 20);}};
     private static final Map<Integer, Integer> REVIEW_THRESHOLDS = new LinkedHashMap<>() {{put(1, 1); put(2, 5); put(3, 10); put(4, 30);}};
 
-    /*public Mono<Void> awardContributionBadges(String nickname, List<BadgeMetricDTO> metrics) {
-        return Mono.justOrEmpty(userService.findByUsername(nickname))
-                .switchIfEmpty(Mono.defer(() -> {
-                    log.warn("사용자 {}를 찾을 수 없어 dabbun으로 대체 시도", nickname);
-                    return Mono.justOrEmpty(userService.findByUsername("dabbun"))
-                            .switchIfEmpty(Mono.error(new RuntimeException("Default user 'dabbun' not found")));
-                }))
-                .flatMap(user -> {
-                    for (BadgeMetricDTO metric : metrics) {
-                        Map<Integer, Integer> thresholds = getThresholdsForCategory(metric.getBadgeCategory());
-
-                        thresholds.forEach((level, requiredCount) -> {
-                            boolean alreadyAwarded = userBadgeService.existsByUserIdAndBadgeLevelAndBadgeCategory(
-                                    user.getIdx(), level, metric.getBadgeCategory()
-                            );
-
-                            if (!alreadyAwarded && metric.getCount() >= requiredCount) {
-                                BadgeEntity badge = badgeRepository.findByCategoryAndLevel(
-                                        metric.getBadgeCategory(), level
-                                ).orElseThrow(() -> new RuntimeException("Badge not found"));
-
-                                userBadgeService.save(UserBadgeDTO.builder()
-                                        .userId(user.getIdx())
-                                        .badgeId(badge.getIdx())
-                                        .build());
-
-                                log.info("사용자 {}에게 {} 레벨 {} 뱃지 지급", nickname, metric.getBadgeCategory(), level);
-                            }
-                        });
-                    }
-
-                    return Mono.empty();
-                });
-    }
-
-    // 소셜 관련 뱃지
-    public Mono<Void> awardSocialBadges(String nickname, List<BadgeMetricDTO> metrics) {
-        return Mono.justOrEmpty(userService.findByUsername(nickname))
-                .switchIfEmpty(Mono.defer(() -> {
-                    log.warn("사용자 {}를 찾을 수 없어 dabbun으로 대체 시도", nickname);
-                    return Mono.justOrEmpty(userService.findByUsername("dabbun"))
-                            .switchIfEmpty(Mono.error(new RuntimeException("Default user 'dabbun' not found")));
-                }))
-                .flatMap(user -> {
-                    for (BadgeMetricDTO metric : metrics) {
-                        Map<Integer, Integer> thresholds = getThresholdsForCategory(metric.getBadgeCategory());
-
-                        thresholds.forEach((level, requiredCount) -> {
-                            boolean alreadyAwarded = userBadgeService.existsByUserIdAndBadgeLevelAndBadgeCategory(
-                                    user.getIdx(), level, metric.getBadgeCategory()
-                            );
-
-                            if (!alreadyAwarded && metric.getCount() >= requiredCount) {
-                                BadgeEntity badge = badgeRepository.findByCategoryAndLevel(
-                                        metric.getBadgeCategory(), level
-                                ).orElseThrow(() -> new RuntimeException("Badge not found"));
-
-                                userBadgeService.save(UserBadgeDTO.builder()
-                                        .userId(user.getIdx())
-                                        .badgeId(badge.getIdx())
-                                        .build());
-
-                                log.info("사용자 {}에게 {} 레벨 {} 뱃지 지급", nickname, metric.getBadgeCategory(), level);
-                            }
-                        });
-                    }
-
-                    return Mono.empty();
-                });
-    }*/
-
     public Mono<List<UserBadgeDTO>> processAllBadges(String nickname) {
         return Mono.justOrEmpty(userService.findByUsername(nickname))
                 // 임시 테스트용
-                .switchIfEmpty(
+                /*.switchIfEmpty(
                         Mono.defer(() -> {
                             UserDTO newUser = UserDTO.builder()
                                     .nickname(nickname)
@@ -150,7 +79,7 @@ public class BadgeService {
                                     .build();
                             return Mono.just(userService.save(newUser));
                         })
-                )
+                )*/
                 .flatMap(user -> {
                     LocalDateTime since = user.getJoinedAt().minusMonths(1);
 
@@ -189,7 +118,7 @@ public class BadgeService {
                 }))
                 .flatMap(user -> {
                     metrics.forEach(metric -> awardBadgeIfEligible(user, metric));
-                    return userBadgeService.getBadgesByNickname(user.getNickname()); // 임시로 사용자가 얻은 뱃지 리턴
+                    return userBadgeService.getRecentBadges(user.getNickname()); // 최근 획득한 뱃지 리턴
                 });
     }
 

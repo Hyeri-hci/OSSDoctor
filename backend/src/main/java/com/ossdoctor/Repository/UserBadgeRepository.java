@@ -25,5 +25,5 @@ public interface UserBadgeRepository extends JpaRepository<UserBadgeEntity, Long
                                                         @Param("level") Integer level,
                                                         @Param("category") BADGE_CATEGORY category);
 
-    List<UserBadgeEntity> findTop12ByUser_IdxOrderByAwardedAtDesc(Long userIdx);
+    List<UserBadgeEntity> findTop12ByUser_IdxOrderByAwardedAtDescIdxAsc(Long userIdx);
 }
