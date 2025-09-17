@@ -15,7 +15,7 @@ public class LevelService {
     private LevelRepository levelRepository;
 
     public boolean existsByLevelId(Long levelId){
-        return levelRepository.existsById(levelId);
+        return levelRepository.existsByLevelId(levelId);
     }
 
     public LevelDTO findTopByRequiredExpLessThanEqualOrderByLevelIdDesc(Integer requiredExp){
