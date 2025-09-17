@@ -321,6 +321,25 @@ public class GitHubApiService {
     }
     """;
 
+    // 연속 commit 관련 뱃지
+    private static final String CONTRIBUTION_CALENDAR_QUERY = """
+    query GetContributionCalendar($login: String!, $from: DateTime!, $to: DateTime!) {
+      user(login: $login) {
+        contributionsCollection(from: $from, to: $to) {
+          contributionCalendar {
+            totalContributions
+            weeks {
+              contributionDays {
+                date
+                contributionCount
+              }
+            }
+          }
+        }
+      }
+    }
+    """;
+
     // =========== 공개 API 메서드 ===========
 
     // Repository 기본 정보 조회
@@ -448,6 +467,25 @@ public class GitHubApiService {
         return executeGraphQLQuery(SOCIAL_COUNTS_QUERY, variables)
                 .doOnNext(response -> log.info("GraphQL Response: {}", response.toPrettyString()))
                 .map(this::parseSocialCount)
+                .onErrorMap(this::handleApiError);
+    }
+
+    // 연속 커밋
+    public Mono<BadgeMetricDTO> getContributionCalendar(String owner, LocalDateTime since) {
+        log.info("Fetching Contribution calendar for {}", owner);
+
+        // 현재 시각을 to 변수로 설정
+        LocalDateTime now = LocalDateTime.now();
+
+        Map<String, Object> variables = Map.of(
+                "login", owner,
+                "from", since.format(DateTimeFormatter.ISO_DATE_TIME),
+                "to", now.format(DateTimeFormatter.ISO_DATE_TIME)
+        );
+
+        return executeGraphQLQuery(CONTRIBUTION_CALENDAR_QUERY, variables)
+                .doOnNext(response -> log.info("GraphQL Response: {}", response.toPrettyString()))
+                .map(this::parseContributionCalendar)
                 .onErrorMap(this::handleApiError);
     }
 
@@ -731,6 +769,35 @@ public class GitHubApiService {
                 .toList();
     }
 
+    private BadgeMetricDTO parseContributionCalendar(JsonNode response) {
+        JsonNode weeks = response.path("data").path("user")
+                .path("contributionsCollection")
+                .path("contributionCalendar")
+                .path("weeks");
+
+        List<CommitDTO> commits = new ArrayList<>();
+
+        if (weeks.isArray()) {
+            // 주마다
+            for (JsonNode week : weeks) {
+                // 날마다
+                for (JsonNode day : week.path("contributionDays")) {
+                    commits.add(CommitDTO.builder()
+                            .date(day.path("date").asText())
+                            .commits(day.path("contributionCount").asInt())
+                            .build());
+                }
+            }
+        }
+
+        // 최장 연속 커밋 수 계산
+        int longestStreak = calculateLongestStreak(commits);
+
+        return BadgeMetricDTO.builder()
+                .badgeCategory(BADGE_CATEGORY.COMMIT_STREAK)
+                .count(longestStreak)
+                .build();
+    }
 
     // 최근 활동 파싱
     private ActivitiesWithRepoId parseRecentActivities(JsonNode response) {
@@ -1129,6 +1196,26 @@ public class GitHubApiService {
             return null;
         }
         return LocalDateTime.parse(dateStr, DateTimeFormatter.ISO_DATE_TIME);
+    }
+
+    // 최장 연속 커밋 계산
+    private int calculateLongestStreak(List<CommitDTO> commits) {
+        int longest = 0, current = 0;
+        LocalDate prev = null;
+
+        for (CommitDTO commit : commits) {
+            LocalDate cur = LocalDate.parse(commit.getDate());
+            if (commit.getCommits() > 0) {
+                if (prev != null && cur.equals(prev.plusDays(1))) {
+                    current++;
+                } else {
+                    current = 1;
+                }
+                longest = Math.max(longest, current);
+            }
+            prev = cur;
+        }
+        return longest;
     }
 
     // GitHub Api 예외 처리

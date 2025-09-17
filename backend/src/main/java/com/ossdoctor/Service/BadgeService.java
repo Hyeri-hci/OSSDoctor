@@ -57,6 +57,7 @@ public class BadgeService {
     }
 
     private static final Map<Integer, Integer> COMMIT_THRESHOLDS = new LinkedHashMap<>() {{put(1, 1);put(2, 20);put(3, 50);put(4, 100);}};
+    private static final Map<Integer, Integer> STREAK_THRESHOLDS = new LinkedHashMap<>() {{put(1, 3);put(2, 7);put(3, 14);put(4, 30);}};
     private static final Map<Integer, Integer> PR_THRESHOLDS = new LinkedHashMap<>() {{put(1, 1);put(2, 5);put(3, 10);put(4, 30);}};
     private static final Map<Integer, Integer> MERGED_PR_THRESHOLDS = new LinkedHashMap<>() {{put(1, 1);put(2, 5);put(3, 10);put(4, 20);}};
     private static final Map<Integer, Integer> ISSUE_CREATE_THRESHOLDS = new LinkedHashMap<>() {{put(1, 1);put(2, 5);put(3, 10);put(4, 30);}};
@@ -151,18 +152,31 @@ public class BadgeService {
                         })
                 )
                 .flatMap(user -> {
-                    // 초기 설정: 항상 가입일 기준 1달 전부터 조회
                     LocalDateTime since = user.getJoinedAt().minusMonths(1);
 
-                    return gitHubApiService.getContributionSummary(user.getNickname(), since) // 먼저 기여 관련 데이터 가져오기
-                            .zipWith(gitHubApiService.getSocialCount(user.getNickname())) // 소셜 관련 데이터를 가져오기
-                            .flatMap(tuple -> { // 하나로 묶기
-                                List<BadgeMetricDTO> allMetrics = new ArrayList<>();
-                                allMetrics.addAll(tuple.getT1());
-                                allMetrics.addAll(tuple.getT2());
+                    // 기여 메트릭 가져오기
+                    Mono<List<BadgeMetricDTO>> contributionSummaryMono =
+                            gitHubApiService.getContributionSummary(user.getNickname(), since);
 
-                                return awardAllBadges(user.getNickname(), allMetrics);
-                            });
+                    // 소셜 메트릭 가져오기
+                    Mono<List<BadgeMetricDTO>> socialCountMono =
+                            gitHubApiService.getSocialCount(user.getNickname());
+
+                    // 연속 커밋 최장 streak 가져오기
+                    Mono<BadgeMetricDTO> streakMono =
+                            gitHubApiService.getContributionCalendar(user.getNickname(), since);
+
+                    // 모두 합쳐서 DB에 뱃지 지급
+                    return contributionSummaryMono
+                            .zipWith(socialCountMono)
+                            .flatMap(tuple -> streakMono.map(streakMetric -> {
+                                List<BadgeMetricDTO> allMetrics = new ArrayList<>();
+                                allMetrics.addAll(tuple.getT1());      // 기여 메트릭
+                                allMetrics.addAll(tuple.getT2());      // 소셜 메트릭
+                                allMetrics.add(streakMetric);          // 연속 커밋 뱃지
+                                return allMetrics;
+                            }))
+                            .flatMap(allMetrics -> awardAllBadges(user.getNickname(), allMetrics));
                 });
     }
 
@@ -175,7 +189,7 @@ public class BadgeService {
                 }))
                 .flatMap(user -> {
                     metrics.forEach(metric -> awardBadgeIfEligible(user, metric));
-                    return userBadgeService.getBadgesByNickname(user.getNickname());
+                    return userBadgeService.getBadgesByNickname(user.getNickname()); // 임시로 사용자가 얻은 뱃지 리턴
                 });
     }
 
@@ -213,6 +227,7 @@ public class BadgeService {
             case FORK -> FORK_THRESHOLDS;
             case WATCH -> WATCH_THRESHOLDS;
             case COMMIT -> COMMIT_THRESHOLDS;
+            case COMMIT_STREAK ->  STREAK_THRESHOLDS;
             case PR_EXTERNAL -> PR_THRESHOLDS;
             case PR_MERGE -> MERGED_PR_THRESHOLDS;
             case ISSUE_CREATE -> ISSUE_CREATE_THRESHOLDS;
