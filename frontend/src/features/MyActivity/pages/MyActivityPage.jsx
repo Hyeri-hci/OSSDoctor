@@ -1,18 +1,13 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Layout } from "../../../components/layout";
 import OverviewTab from "../components/OverviewTab";
 import ContributionHistoryTab from "../components/ContributionHistoryTab";
 import BadgesTab from "../components/BadgesTab";
-import useMyActivityData from "../hooks/UseMyActivityData";
+import useMyActivityData from "../hooks/useMyActivityData";
 
 const MyActivityPage = () => {
     const [activeTab, setActiveTab] = useState('overview');
-    const { data } = useMyActivityData();
-
-    useEffect(() => {
-        // 여기에 활동 데이터를 가져오는 API 호출 로직을 추가하세요.
-        // 예시: setActivityData(fetchedData);
-    }, []);
+    const { data, loading, error } = useMyActivityData();
 
     // 탭 변경 핸들러
     const handleTabChange = (newTab) => {
@@ -20,20 +15,52 @@ const MyActivityPage = () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    // Mock Data
-    const userData = {
-        name: "User Name",
-        level: 3,
-        description: "활동에 대한 설명이 여기에 들어갑니다.",
-        githubUrl: "https://github.com/user/repo",
-        email: "user@example.com",
-        scores: {
-            overall: 85,
-            activity: 90,
-            popularity: 78,
-            contribution: 82,
-        }
+    // 로딩 상태
+    if (loading) {
+        return (
+            <Layout>
+                <div className="min-h-screen bg-gray-50">
+                    <div className="container mx-auto px-4 py-8">
+                        <div className="text-center">
+                            <div className="animate-pulse">데이터를 불러오는 중...</div>
+                        </div>
+                    </div>
+                </div>
+            </Layout>
+        );
     }
+
+    // 에러 상태
+    if (error) {
+        return (
+            <Layout>
+                <div className="min-h-screen bg-gray-50">
+                    <div className="container mx-auto px-4 py-8">
+                        <div className="text-center text-red-600">
+                            {error}
+                        </div>
+                    </div>
+                </div>
+            </Layout>
+        );
+    }
+
+    // 사용자 데이터 (실제 API에서 받은 데이터 + 기본값)
+    const userData = {
+        name: data.userLevel?.nickname || "User Name",
+        level: data.userLevel?.level || 1,
+        totalScore: data.userLevel?.totalScore || 0,
+        avatarUrl: data.userLevel?.avatarUrl || null,
+        description: "GitHub를 통해 다양한 오픈소스 프로젝트에 기여하고 있습니다.",
+        githubUrl: `https://github.com/${data.userLevel?.nickname || 'user'}`,
+        email: `${data.userLevel?.nickname || 'user'}@github.local`,
+        scores: {
+            overall: Math.min(85, data.userLevel?.totalScore || 0),
+            activity: Math.min(90, data.stats?.monthlyPR * 5 + data.stats?.monthlyIssue * 3 + data.stats?.monthlyCommit * 2 || 0),
+            popularity: 78, // 임시값 (향후 stars, forks 등으로 계산 가능)
+            contribution: Math.min(82, data.stats?.totalScore || 0),
+        }
+    };
 
     // 탭 콘텐츠 렌더링 함수
     const renderTabContent = () => {
@@ -52,15 +79,25 @@ const MyActivityPage = () => {
     return (
         <Layout>
             <div>
-                <section className="bg-[#f3f3f3] py-8">
+                <section className="bg-gray-50 py-8">
                     <div className="container mx-auto px-6 xl:px-8 2xl:px-12">
                         <div className="max-w-6xl mx-auto">
 
                             {/* 사용자 프로필 */}
                             <div className="flex items-start gap-8">
                                 <div className="flex-shrink-0">
-                                    <div className="w-24 h-24 bg-gray-300 rounded-full">
-                                        {/* 프로필 이미지가 여기에 들어갑니다. */}
+                                    <div className="w-24 h-24 bg-gray-300 rounded-full overflow-hidden">
+                                        {userData.avatarUrl ? (
+                                            <img 
+                                                src={userData.avatarUrl} 
+                                                alt={userData.name}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-gray-500 text-lg font-bold">
+                                                {userData.name?.charAt(0) || "?"}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
 

@@ -1,10 +1,4 @@
-export { 
-  searchProjects, 
-  getRepositoryActivity, 
-  getContributorStats, 
-  getRecommendedProjects 
-} from './github-api.js';
-
+// 백엔드를 통한 API 서비스들만 export
 export { 
   searchProjectsService, 
   getRecommendedProjectsService, 
@@ -14,9 +8,8 @@ export {
 
 // API 상태 확인 유틸리티
 export const checkApiStatus = () => {
-  const hasToken = !!import.meta.env.VITE_GITHUB_TOKEN;
   return {
-    hasGitHubToken: hasToken,
-    apiMode: hasToken ? 'live' : 'mock'
+    hasGitHubToken: false, // 백엔드에서 처리하므로 항상 false
+    apiMode: 'backend' // 백엔드 모드로 고정
   };
 };

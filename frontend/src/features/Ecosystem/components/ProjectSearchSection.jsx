@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { Button, Input, Select, LoadingSpinner } from '../../../components/common';
-import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { Button, Input, Select } from '../../../components/common';
+import { MagnifyingGlassIcon, QuestionMarkCircleIcon } from '@heroicons/react/24/outline';
+import { SortingGuideModal } from './index';
 
 /**
  * 프로젝트 검색 섹션 컴포넌트
@@ -14,7 +15,7 @@ import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
  * @param {boolean} props.loading - 로딩 상태
  * @param {Object} props.filterOptions - 필터 옵션들
  * @param {boolean} props.hasActiveFilters - 활성화된 필터 여부
- * @param {boolean} props.canSearch - 검색 가능 여부
+ * @param {number} props.activeFiltersCount - 활성화된 필터 개수
  * @param {boolean} props.onlyTimeFilterSelected - 시간 필터만 선택된 상태
  * @param {Function} props.onSearchChange - 검색어 변경 핸들러
  * @param {Function} props.onLanguageChange - 언어 변경 핸들러
@@ -33,7 +34,7 @@ const ProjectSearchSection = ({
     loading,
     filterOptions,
     hasActiveFilters,
-    canSearch,
+    activeFiltersCount,
     onlyTimeFilterSelected,
     onSearchChange,
     onLanguageChange,
@@ -43,6 +44,15 @@ const ProjectSearchSection = ({
     onClearFilters,
     onSearch
 }) => {
+    const [isGuideModalOpen, setIsGuideModalOpen] = useState(false);
+
+    const handleGuideModalOpen = () => {
+        setIsGuideModalOpen(true);
+    };
+
+    const handleGuideModalClose = () => {
+        setIsGuideModalOpen(false);
+    };
 
     // 로컬 검색어 변경 처리
     return (
@@ -84,9 +94,18 @@ const ProjectSearchSection = ({
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            정렬 기준
-                        </label>
+                        <div className="flex items-center gap-2 mb-2">
+                            <label className="block text-sm font-medium text-gray-700">
+                                정렬 기준
+                            </label>
+                            <button
+                                onClick={handleGuideModalOpen}
+                                className="text-gray-400 hover:text-blue-600 transition-colors"
+                                title="정렬 기준 가이드"
+                            >
+                                <QuestionMarkCircleIcon className="w-5 h-5" />
+                            </button>
+                        </div>
                         <Select
                             value={sortBy}
                             onChange={onSortChange}
@@ -112,15 +131,17 @@ const ProjectSearchSection = ({
                     </div>
                     
                     {/* 검색 안내 메시지 - 최근 업데이트만 선택되었을 때만 표시 */}
-                    {onlyTimeFilterSelected && (
-                        <div className="mt-3 text-sm text-orange-600 bg-orange-50 border border-orange-200 rounded-lg p-3">
-                            <p className="font-medium">💡 검색 도움말</p>
-                            <p className="mt-1"><strong>최근 업데이트</strong>는 다른 검색 조건과 함께 사용할 수 있는 필터입니다.</p>
-                            <p className="mt-2 text-xs text-orange-500 bg-orange-100 rounded px-2 py-1">
-                                <strong>검색하려면:</strong> 프로젝트 이름을 검색하시거나 프로그래밍 언어, 라이선스 중 하나 이상을 선택해주세요.
-                            </p>
-                        </div>
-                    )}
+                    <div className="mt-3 min-h-0 transition-all duration-200">
+                        {onlyTimeFilterSelected && (
+                            <div className="text-sm text-orange-600 bg-orange-50 border border-orange-200 rounded-lg p-3">
+                                <p className="font-medium">💡 검색 도움말</p>
+                                <p className="mt-1"><strong>최근 업데이트</strong>는 다른 검색 조건과 함께 사용할 수 있는 필터입니다.</p>
+                                <p className="mt-2 text-xs text-orange-500 bg-orange-100 rounded px-2 py-1">
+                                    <strong>검색하려면:</strong> 프로젝트 이름을 검색하시거나 프로그래밍 언어, 라이선스 중 하나 이상을 선택해주세요.
+                                </p>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* 검색 버튼과 필터 상태 */}
@@ -166,12 +187,17 @@ const ProjectSearchSection = ({
 
                     {hasActiveFilters && (
                         <div className="text-sm text-gray-600 text-center sm:text-right">
-                            {[searchQuery, selectedLanguage, selectedLicense, selectedCommitDate]
-                                .filter(Boolean).length}개 필터 적용됨
+                            {activeFiltersCount}개 필터 적용됨
                         </div>
                     )}
                 </div>
             </div>
+
+            {/* 정렬 기준 가이드 모달 */}
+            <SortingGuideModal 
+                isOpen={isGuideModalOpen}
+                onClose={handleGuideModalClose}
+            />
         </div>
     );
 };
@@ -189,7 +215,7 @@ ProjectSearchSection.propTypes = {
         sortOptions: PropTypes.array.isRequired
     }).isRequired,
     hasActiveFilters: PropTypes.bool.isRequired,
-    canSearch: PropTypes.bool.isRequired,
+    activeFiltersCount: PropTypes.number.isRequired,
     onlyTimeFilterSelected: PropTypes.bool.isRequired,
     onSearchChange: PropTypes.func.isRequired,
     onLanguageChange: PropTypes.func.isRequired,

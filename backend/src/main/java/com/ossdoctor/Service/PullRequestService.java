@@ -16,7 +16,7 @@ public class PullRequestService {
     private final UserRepository userRepository;
     private final RepositoryRepository repositoryRepository;
 
-    private PullRequestDTO save(PullRequestDTO pullRequestDTO) {
+    public PullRequestDTO save(PullRequestDTO pullRequestDTO) {
         return toDTO(pullRequestRepository.save(toEntity(pullRequestDTO)));
     }
 
@@ -24,7 +24,6 @@ public class PullRequestService {
         return PullRequestDTO.builder()
                 .idx(entity.getIdx())
                 .repositoryId(entity.getRepository().getIdx())
-                .userId(entity.getUser().getIdx())
                 .userName(entity.getUserName())
                 .prNumber(entity.getPrNumber())
                 .title(entity.getTitle())
@@ -37,7 +36,6 @@ public class PullRequestService {
     private PullRequestEntity toEntity(PullRequestDTO dto) {
         return PullRequestEntity.builder()
                 .repository(repositoryRepository.findById(dto.getRepositoryId()).get())
-                .user(userRepository.findById(dto.getUserId()).get())
                 .userName(dto.getUserName())
                 .prNumber(dto.getPrNumber())
                 .title(dto.getTitle())

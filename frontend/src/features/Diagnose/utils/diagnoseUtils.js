@@ -26,11 +26,13 @@ export const getLanguageColor = (language) => {
 export const transformLanguageData = (languages) => {
     if (!languages) return [];
 
-    return Object.entries(languages).map(([name, percentage]) => ({
-        label: name,
-        value: percentage,
-        color: getLanguageColor(name)
-    }));
+    return Object.entries(languages)
+        .sort((a, b) => b[1] - a[1]) // 비율 내림차순 정렬
+        .map(([name, percentage]) => ({
+            label: name,
+            value: percentage,
+            color: getLanguageColor(name)
+        }));
 };
 
 // 프로젝트 정보 데이터 변환 함수
@@ -50,9 +52,9 @@ export const calculateRepositoryStats = (projectData) => {
                 : 'N/A',
         activePR: projectData.pullRequests?.open || 0,
         activeIssue: projectData.issues?.open || 0,
-        stars: projectData.stargazersCount || 0,
-        forks: projectData.forksCount || 0,
-        watchers: projectData.watchersCount || 0,
+        stars: projectData.stars || 0,
+        forks: projectData.forks || 0,
+        watchers: projectData.watchers || 0,
     };
 };
 
@@ -106,21 +108,21 @@ export const getActivityColor = (type) => {
 
 
 export const getSeverityColor = (severity) => {
-  const colors = {
-    'Critical': 'bg-red-100 text-red-800',
-    'High': 'bg-orange-100 text-orange-800',
-    'Medium': 'bg-yellow-100 text-yellow-800',
-    'Low': 'bg-green-100 text-green-800'
-  };
-  return colors[severity] || 'bg-gray-100 text-gray-800';
+    const colors = {
+        'Critical': 'bg-red-100 text-red-800',
+        'High': 'bg-orange-100 text-orange-800',
+        'Medium': 'bg-yellow-100 text-yellow-800',
+        'Low': 'bg-green-100 text-green-800'
+    };
+    return colors[severity] || 'bg-gray-100 text-gray-800';
 };
 
 export const getStatusColor = (status) => {
-  const colors = {
-    'patched': 'bg-green-100 text-green-800',
-    'mitigated': 'bg-blue-100 text-blue-800',
-    'open': 'bg-red-100 text-red-800',
-    'investigating': 'bg-yellow-100 text-yellow-800'
-  };
-  return colors[status] || 'bg-gray-100 text-gray-800';
+    const colors = {
+        'patched': 'bg-green-100 text-green-800',
+        'mitigated': 'bg-blue-100 text-blue-800',
+        'open': 'bg-red-100 text-red-800',
+        'investigating': 'bg-yellow-100 text-yellow-800'
+    };
+    return colors[status] || 'bg-gray-100 text-gray-800';
 };

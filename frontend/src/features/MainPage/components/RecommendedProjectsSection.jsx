@@ -42,8 +42,8 @@ const RecommendedProjectsSection = ({ projects = [] }) => {
                 <div className="max-w-7xl mx-auto">
                     <div className="flex flex-row justify-between items-start sm:items-center gap-4 mb-8">
                         <div className="space-y-2 flex-1">
-                            <h2 className="text-xl md:text-2xl xl:text-3xl font-bold">추천 프로젝트</h2>
-                            <p className="text-sm md:text-base xl:text-lg text-gray-600">지금 활발한 오픈소스 프로젝트를 탐색해 보세요.</p>
+                            <h2 className="text-xl lg:text-2xl xl:text-3xl font-bold">추천 프로젝트</h2>
+                            <p className="text-sm lg:text-base xl:text-lg text-gray-600">지금 활발한 오픈소스 프로젝트를 탐색해 보세요.</p>
                         </div>
 
                         <Button

@@ -16,7 +16,6 @@ export default function MainPage() {
         const user = urlParams.get('user');
 
         if (authStatus === 'success' && user) {
-            console.log('OAuth 로그인 성공:', user);
             handleLogin(); // 로그인 상태 업데이트
 
             // 저장된 리다이렉션 페이지가 있는지 확인
@@ -24,7 +23,6 @@ export default function MainPage() {
             if (redirectAfterLogin) {
                 // 저장된 페이지로 리다이렉션
                 sessionStorage.removeItem('redirectAfterLogin'); // 사용 후 제거
-                console.log('로그인 완료, 리다이렉션:', redirectAfterLogin);
                 window.location.href = redirectAfterLogin;
                 return;
             }
@@ -51,21 +49,28 @@ export default function MainPage() {
     const handleAnalyze = (url) => {
         if(url && url.trim() !== "") {
             const trimmedUrl = url.trim();
+
+            // GitHub URL 패턴 (full URL)
             const githubUrlPattern = /^(https?:\/\/)?(www\.)?github\.com\/[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+$/;
+            // owner/repo 패턴
+            const ownerRepoPattern = /^[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+$/;
 
             if(githubUrlPattern.test(trimmedUrl)) {
-                // github url에서 owner/name 추출하여 진단 페이지로 이동
+                // GitHub URL에서 owner/name 추출
                 const githubUrlMatch = trimmedUrl.match(/github\.com\/([^/]+)\/([^/]+)/);
                 if(githubUrlMatch) {
                     const [, owner, name] = githubUrlMatch;
                     const cleanName = name.replace(/\.git$/, ""); // .git 제거
-                    window.location.href = `/diagnose?owner=${encodeURIComponent(owner)}&name=${encodeURIComponent(cleanName)}`;
+                    window.location.href = `/diagnose?repo=${encodeURIComponent(owner)}/${encodeURIComponent(cleanName)}`;
                 }
+            } else if(ownerRepoPattern.test(trimmedUrl)) {
+                // owner/repo 형식 직접 사용
+                window.location.href = `/diagnose?repo=${encodeURIComponent(trimmedUrl)}`;
             } else {
-                alert('유효한 GitHub URL을 입력해주세요.\n예: https://github.com/user/repo');
+                alert('올바른 GitHub 주소를 입력해 주세요.\n예: microsoft/vscode 또는 https://github.com/microsoft/vscode');
             }
         } else {
-            alert('유효한 URL을 입력해주세요.');
+            alert('GitHub 레포지토리 주소를 입력해주세요.');
         }
     };
 
@@ -78,7 +83,6 @@ export default function MainPage() {
             if (!isAuthenticated) {
                 alert('GitHub 로그인이 필요한 서비스입니다.');
                 try {
-                    console.log("GitHub 로그인 시작");
                     initiateGitHubLogin({
                         scope: "read:user,user:email,public_repo",
                         redirectAfterLogin: "/myactivity"

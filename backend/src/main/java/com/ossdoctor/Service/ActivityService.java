@@ -47,7 +47,6 @@ public class ActivityService {
         return Flux.merge(tasks).then(Mono.just(activities));
     }
 
-    //
     private Mono<Void> saveIssueAsync(ActivityDTO dto, Long repositoryId) {
         // 동기식 -> 비동기식
         return Mono.fromCallable(() -> {
@@ -55,11 +54,9 @@ public class ActivityService {
             RepositoryEntity repository = repositoryRepository.findByGithubRepoId(repositoryId)
                     // 못찾으면 예외발생 -> 로그
                     .orElseThrow(() -> new IllegalArgumentException("Repository not found: id=" + repositoryId));
-            UserEntity user = userRepository.findByNickname(dto.getAuthor()).orElse(null);
 
             IssueEntity issue = IssueEntity.builder()
                     .repository(repository)
-                    .user(user)
                     .userName(dto.getAuthor())
                     .issueNumber(dto.getNumber())
                     .title(dto.getTitle())
@@ -77,11 +74,9 @@ public class ActivityService {
         return Mono.fromCallable(() -> {
             RepositoryEntity repository = repositoryRepository.findByGithubRepoId(repositoryId)
                     .orElseThrow(() -> new IllegalArgumentException("Repository not found: id=" + repositoryId));
-            UserEntity user = userRepository.findByNickname(dto.getAuthor()).orElse(null);
 
             PullRequestEntity pr = PullRequestEntity.builder()
                     .repository(repository)
-                    .user(user)
                     .userName(dto.getAuthor())
                     .prNumber(dto.getNumber())
                     .title(dto.getTitle())

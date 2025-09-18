@@ -25,7 +25,7 @@ public class UserExperienceEntity {
     private UserEntity user;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "activity_id", nullable = false, unique = true)
+    @JoinColumn(name = "activity_id", nullable = true, unique = true)
     private ContributionEntity activity;
 
     private Integer experience = 0;

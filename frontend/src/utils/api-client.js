@@ -20,7 +20,10 @@ export const apiClient = async (endpoint, options = {}) => {
     };
 
     try {
-        console.log(`🌐 API 호출: ${options.method || 'GET'} ${url}`);
+        // 개발 환경에서만 로깅
+        if (import.meta.env.DEV) {
+            console.log(`🌐 API 호출: ${options.method || 'GET'} ${url}`);
+        }
 
         const response = await fetch(url, defaultOptions);
 
@@ -29,7 +32,11 @@ export const apiClient = async (endpoint, options = {}) => {
         }
 
         const data = await response.json();
-        console.log(`✅ API 응답:`, data);
+
+        // 개발 환경에서만 로깅
+        if (import.meta.env.DEV) {
+            console.log(`✅ API 응답:`, data);
+        }
 
         return data;
     } catch (error) {
@@ -78,4 +85,53 @@ export const checkBackendHealth = async () => {
     } catch (error) {
         return false;
     }
+};
+
+// ========== 진단 관련 API ==========
+
+/**
+ * 저장소 진단 - 전체 진단 정보 (저장소 정보 + 점수)
+ * @param {string} owner - 저장소 소유자
+ * @param {string} repo - 저장소 이름
+ * @returns {Promise<Object>} 진단 결과
+ */
+export const diagnoseRepository = async (owner, repo) => {
+    return get(`/api/diagnose/${owner}/${repo}`);
+};
+
+/**
+ * 저장소 기본 정보만 조회 (점수 계산 없이)
+ * @param {string} owner - 저장소 소유자
+ * @param {string} repo - 저장소 이름
+ * @returns {Promise<Object>} 저장소 정보
+ */
+export const getRepositoryInfo = async (owner, repo) => {
+    return get(`/api/diagnose/${owner}/${repo}/info`);
+};
+
+/**
+ * GitHub 저장소 URL에서 owner와 repo 추출
+ * @param {string} url - GitHub 저장소 URL
+ * @returns {Object} {owner, repo} 또는 null
+ */
+export const parseGitHubUrl = (url) => {
+    if (!url) return null;
+
+    // GitHub URL 패턴들 처리
+    const patterns = [
+        /github\.com\/([^\/]+)\/([^\/]+?)(?:\.git)?(?:\/.*)?$/i,
+        /^([^\/]+)\/([^\/]+)$/  // owner/repo 형태
+    ];
+
+    for (const pattern of patterns) {
+        const match = url.match(pattern);
+        if (match) {
+            return {
+                owner: match[1],
+                repo: match[2]
+            };
+        }
+    }
+
+    return null;
 };

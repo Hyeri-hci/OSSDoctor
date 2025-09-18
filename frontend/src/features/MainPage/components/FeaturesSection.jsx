@@ -34,21 +34,21 @@ const FeaturesSection = ({ onDiagnosisClick, onContributionClick, onEcosystemCli
                 <div className="max-w-7xl mx-auto">
                     <div className="text-center mb-12">
                         <div className="space-y-4">
-                            <h2 className="text-xl md:text-2xl xl:text-3xl font-bold">주요 기능</h2>
-                            <p className="text-sm md:text-base xl:text-lg text-gray-600 max-w-2xl mx-auto">
+                            <h2 className="text-xl lg:text-2xl xl:text-3xl font-bold">주요 기능</h2>
+                            <p className="text-sm lg:text-base xl:text-lg text-gray-600 max-w-2xl mx-auto">
                                 오픈소스 활동을 더 풍부하게 만들어 줄 주요 기능들을 살펴보세요.
                             </p>
                         </div>
                     </div>
 
-                    <div className="grid md:grid-cols-3 gap-8">
-                        {/* Desktop version */}
+                    <div className="grid lg:grid-cols-3 gap-8">
+                        {/* Desktop version - 1024px 이상에서 사용 */}
                         {features.map((feature, index) => (
                             <Card
                                 key={index}
                                 onClick={feature.onClick}
                                 hover={true}
-                                className="hidden md:block"
+                                className="hidden lg:block"
                                 padding="none"
                             >
                                 {/* 이미지 홀더 영역 */}
@@ -64,13 +64,13 @@ const FeaturesSection = ({ onDiagnosisClick, onContributionClick, onEcosystemCli
                             </Card>
                         ))}
 
-                        {/* Mobile version */}
+                        {/* Mobile/Tablet version - 1024px 미만에서 사용 */}
                         {features.map((feature, index) => (
                             <Card
                                 key={`mobile-${index}`}
                                 onClick={feature.onClick}
                                 hover={true}
-                                className="md:hidden"
+                                className="lg:hidden"
                             >
                                 <div className="flex items-center mb-4">
                                     {feature.icon}

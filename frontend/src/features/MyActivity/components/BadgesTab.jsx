@@ -2,11 +2,11 @@ import React, { useState } from "react";
 import PropTypes from "prop-types";
 import { Button } from "../../../components/common";
 import BadgeCard from "./BadgeCard";
-import { useBadgeFilters } from "../hooks/UseMyActivityData";
+import { useBadgeFiltersNew } from "../hooks/useMyActivityData";
 import { calculateBadgeStats, groupBadgesByCategory, getCategoryDisplayName } from '../utils';
 
 const BadgesTab = ({ badges = [] }) => {
-    const { filteredBadges, filter, setFilter, earnedCount, totalCount } = useBadgeFilters(badges);
+    const { filteredBadges, filter, setFilter, earnedCount, totalCount } = useBadgeFiltersNew(badges);
     const [showByCategory, setShowByCategory] = useState(false);
     const badgeStats = calculateBadgeStats(badges);
     const categorizedBadges = groupBadgesByCategory(filteredBadges);

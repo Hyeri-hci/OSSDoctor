@@ -1,6 +1,5 @@
 /**
  * @param {Object} options - 인증 옵션
- * @param {string} options.scope - GitHub에서 요청할 권한 범위 (예: 'read:user, repo, user:email')
  * @param {string} options.state - CSRF 공격 방지를 위한 상태 값 (보안용 랜덤 문자열)
  * @param {string} options.redirectAfterLogin - 로그인 후 이동할 페이지 경로
  */
@@ -92,7 +91,6 @@ export const checkAuthStatus = async () => {
 
         if (response.ok) {
             const data = await response.json();
-            console.log('로그인 상태 확인 성공:', data);
 
             return {
                 isLoggedIn: data.isLoggedIn || false,
@@ -136,11 +134,9 @@ export const logout = async () => {
         });
 
         if (response.ok) {
-            console.log('로그아웃 성공');
             window.location.href = '/';
             return true;
         } else {
-            console.error('로그아웃 실패:', response.status, response.statusText);
             window.location.href = '/';
             return false;
         }
@@ -150,8 +146,3 @@ export const logout = async () => {
         return false;
     }
 };
-
-
-/** * GitHub 로그인 후 사용자 정보를 가져오는 함수
- * MyActivity 페이지에서 사용 - 추후 구현
- */

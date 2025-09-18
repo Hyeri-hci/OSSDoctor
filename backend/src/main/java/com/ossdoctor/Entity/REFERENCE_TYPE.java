@@ -4,4 +4,5 @@ public enum REFERENCE_TYPE {
     PR,
     ISSUE,
     REVIEW,
+    COMMIT,
 }

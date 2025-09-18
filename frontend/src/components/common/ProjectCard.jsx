@@ -41,7 +41,7 @@ const ProjectCard = ({
     // 언어 색상 결정
     const languageColor = project.languageColor || '#586069';
 
-    // 공통 카드 콘텐츠 - 초보자 환영 배지와 Good First Issues 강조
+    // 공통 카드 콘텐츠
     const commonCardContent = (
         <>
             {/* 프로젝트 헤더 */}
@@ -50,16 +50,20 @@ const ProjectCard = ({
                     <h3 className="font-semibold text-gray-900 break-words leading-tight">
                         {project.name}
                     </h3>
-                    {/* 초보자 환영 배지 우선 표시 */}
-                    {(goodFirstIssues > 0 || project.difficulty === 'Beginner') && (
+                    {/* 초보자 난이도 배지 */}
+                    {(goodFirstIssues >= 3 || project.difficulty === 'Beginner') && (
                         <span className="inline-block mt-1 text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full font-medium">
-                            🌟 초보자 환영
+                            👋 쉬운 기여
                         </span>
                     )}
-                    {/* 기타 난이도 배지 */}
-                    {project.difficulty && project.difficulty !== 'Beginner' && goodFirstIssues === 0 && (
-                        <span className="inline-block mt-1 text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">
-                            {project.difficulty}
+                    {/* 기타 난이도 배지 - 개선된 표시 로직 */}
+                    {project.difficulty && project.difficulty !== 'Beginner' && goodFirstIssues < 3 && (
+                        <span className={`inline-block mt-1 text-xs px-2 py-1 rounded ${
+                            project.difficulty === 'Intermediate' 
+                                ? 'bg-yellow-100 text-yellow-800' 
+                                : 'bg-red-100 text-red-800'
+                        }`}>
+                            {project.difficulty === 'Intermediate' ? '🔧 중급자용' : '⚡ 고급자용'}
                         </span>
                     )}
                 </div>

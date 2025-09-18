@@ -5,7 +5,6 @@ import { Bars3Icon } from "@heroicons/react/24/outline";
 const Navigation = ({
     items = [],
     className = "",
-    mobileBreakpoint = "md"
 }) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -13,19 +12,11 @@ const Navigation = ({
         setIsMenuOpen((prev) => !prev);
     };
 
-    const breakpointClasses = {
-        sm: "sm",
-        md: "md",
-        lg: "lg",
-        xl: "xl"
-    };
-
-    const bp = breakpointClasses[mobileBreakpoint];
 
     return (
         <>
             {/* Desktop Navigation */}
-            <nav className={`hidden ${bp}:flex gap-6 border-l border-gray-200 pl-6 ${className}`}>
+            <nav className={`hidden lg:flex gap-6 border-l border-gray-200 pl-6 ${className}`}>
                 {items.map((item, idx) => (
                     <a
                         key={idx}
@@ -44,7 +35,7 @@ const Navigation = ({
             </nav>
 
             {/* Mobile Navigation */}
-            <div className={`relative ${bp}:hidden`}>
+            <div className={`relative lg:hidden`}>
                 <Bars3Icon
                     className="w-6 h-6 text-gray-600 cursor-pointer"
                     onClick={toggleMenu}
@@ -85,7 +76,6 @@ Navigation.propTypes = {
         onClick: PropTypes.func
     })),
     className: PropTypes.string,
-    mobileBreakpoint: PropTypes.oneOf(['sm', 'md', 'lg', 'xl'])
 };
 
 export default Navigation;

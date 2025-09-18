@@ -1,33 +1,17 @@
-// React 훅들을 import - useState로 모달 상태 관리
 import React, { useState } from 'react';
-
-// CVE 상세 정보를 표시하는 모달 컴포넌트 import
 import CVEDetailModal from './CVEDetailModal';
-
-// 공통 컴포넌트 import
 import { TimelineContainer } from '../../../components/common';
-
-// 공통 유틸리티와 타입 import
 import { getSeverityColor, getStatusColor } from '../utils/diagnoseUtils';
 import { ProjectDataType } from '../types/proTypes';
 import { getMockSecurityData } from '../mockData';
 
-/**
- * SecurityHistory 컴포넌트
- * 프로젝트의 보안 취약점 이력을 표시하고 관리하는 컴포넌트입니다.
- * CVE(Common Vulnerabilities and Exposures) 정보를 목록으로 보여주고
- * 클릭 시 상세 모달을 표시합니다.
- */
 const SecurityHistory = ({ projectData }) => {
     // 선택된 CVE 정보를 저장하는 상태
     const [selectedCVE, setSelectedCVE] = useState(null);
-
     // 모달 열림/닫힘 상태를 관리하는 boolean 상태
     const [isModalOpen, setIsModalOpen] = useState(false);
-
     // 실제 데이터가 없는 경우 mock 데이터 사용
     const securityIssues = projectData?.security?.vulnerabilities || getMockSecurityData();
-
     // 날짜별로 보안 이슈 그룹화
     const groupedIssues = securityIssues.reduce((groups, issue) => {
         const date = issue.date;

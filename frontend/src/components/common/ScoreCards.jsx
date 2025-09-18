@@ -9,12 +9,12 @@ import {
     StarIcon
 } from '@heroicons/react/24/solid';
 
-// 기본 카드 구성 - DiagnosePage에서 사용
+// 기본 카드 구성 - DiagnosePage 사용
 const DEFAULT_CARDS_CONFIG = [
     {
         id: 'overview',
         title: '종합 점수',
-        scoreKey: 'ovrall',
+        scoreKey: 'totalScore',
         color: 'purple',
         icon: CheckCircleIcon,
         bgColor: 'bg-purple-50',
@@ -26,7 +26,7 @@ const DEFAULT_CARDS_CONFIG = [
     {
         id: 'health',
         title: '건강 점수',
-        scoreKey: 'health',
+        scoreKey: 'healthScore',
         color: 'green',
         icon: ShieldCheckIcon,
         bgColor: 'bg-green-50',
@@ -38,7 +38,7 @@ const DEFAULT_CARDS_CONFIG = [
     {
         id: 'security',
         title: '보안 점수',
-        scoreKey: 'security',
+        scoreKey: 'securityScore',
         color: 'red',
         icon: ExclamationTriangleIcon,
         bgColor: 'bg-red-50',
@@ -126,22 +126,25 @@ const getActiveBarColor = (color) => {
 
 
 const ScoreCards = ({
-    scores,
-    activeTab,
-    onTabChange,
-    variant = 'diagnose', // 'diagnose' or 'myActivity
-    customCards = null
-}) => {
+                        scores,
+                        activeTab,
+                        onTabChange,
+                        variant = 'diagnose', // 'diagnose' or 'myActivity
+                        customCards = null
+                    }) => {
 
-    // 기본 점수 설정
+    // 백엔드 점수 구조에 맞게 점수 매핑
     const defaultScores = {
-        ovrall: scores.ovrall || 0,
-        health: scores.health || 0,
-        security: scores.security || 0,
-        prMerged: scores.prMerged || 0,
-        issuesCreated: scores.issuesCreated || 0,
-        reviewsCount: scores.reviewsCount || 0,
-        repositoriesContributed: scores.repositoriesContributed || 0
+        // 백엔드에서 totalScore, healthScore로 넘어옴
+        totalScore: scores?.totalScore || 0,
+        healthScore: scores?.healthScore || 0,
+        securityScore: 0, // 보안 점수는 아직 미구현
+
+        // MyActivity용 점수들
+        prMerged: scores?.prMerged || 0,
+        issuesCreated: scores?.issuesCreated || 0,
+        reviewsCount: scores?.reviewsCount || 0,
+        repositoriesContributed: scores?.repositoriesContributed || 0
     };
 
 
@@ -154,12 +157,12 @@ const ScoreCards = ({
     }
 
     // grid class 동적 설정
-    const gridCols = cardsConfig.length === 3 
-        ? `grid-cols-3 lg:grid-cols-${cardsConfig.length}` 
+    const gridCols = cardsConfig.length === 3
+        ? `grid-cols-3 lg:grid-cols-${cardsConfig.length}`
         : 'grid-cols-4 md:grid-cols-4 lg:grid-cols-4';
-    
+
     return (
-        <div className={`grid ${gridCols} gap-2 sm:gap-4 md:gap-6`}>
+        <div className={`grid ${gridCols} gap-2 sm:gap-3 md:gap-4`}>
             {cardsConfig.map((card) => {
                 const IconComponent = card.icon;
                 const isActive = activeTab === card.id;
@@ -170,17 +173,14 @@ const ScoreCards = ({
                         key={card.id}
                         onClick={() => onTabChange(card.id)}
                         className={`${card.bgColor} ${isActive ? card.activeBorderColor : card.borderColor} 
-              border-2 rounded-lg p-2 sm:p-4 md:p-6 text-center relative overflow-hidden cursor-pointer 
+              border-2 rounded-lg p-3 text-center relative overflow-hidden cursor-pointer 
               hover:shadow-md transition-all duration-200 ${isActive ? 'shadow-lg' : ''}`}
                     >
-                        <div className="absolute top-1 right-1 sm:top-2 sm:right-2 md:top-3 md:right-3">
-                            <IconComponent className={`w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 ${card.iconColor}`} />
+                        <div className={`text-2xl md:text-3xl font-bold ${card.textColor} mb-1 md:mb-2`}>
+                            {score}
                         </div>
-                        <h3 className={`${card.textColor} text-xs sm:text-sm font-medium mb-1 sm:mb-2`}>
+                        <div className={`text-xs md:text-sm ${card.textColor} font-medium`}>
                             {card.title}
-                        </h3>
-                        <div className={`${card.textColor} text-lg sm:text-2xl md:text-3xl font-bold`}>
-                            {score}/100
                         </div>
                         {isActive && (
                             <div className={`absolute bottom-0 left-0 right-0 h-1 ${getActiveBarColor(card.color)}`}></div>
