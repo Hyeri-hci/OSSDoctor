@@ -253,3 +253,77 @@ export const generateActivityTrendChart = (stats, historyData = []) => {
     
     return months;
 };
+
+/**
+ * 사용자 뱃지 정보 조회 (실제 백엔드 API)
+ * @param {string} nickname - GitHub 사용자명
+ * @returns {Promise<Object>} 뱃지 데이터
+ */
+export const getUserBadges = async (nickname) => {
+    try {
+        const timestamp = Date.now();
+        const response = await apiClient(`/api/badge/all-badges/${nickname}?t=${timestamp}`);
+        return response;
+    } catch (error) {
+        console.error('사용자 뱃지 조회 실패:', error);
+        throw error;
+    }
+};
+
+/**
+ * 백엔드 뱃지 데이터를 프론트엔드 포맷으로 변환
+ * @param {Object} backendBadges - 백엔드에서 받은 뱃지 데이터
+ * @returns {Array} 프론트엔드 형식의 뱃지 데이터
+ */
+export const transformBadgesData = (backendBadges) => {
+    if (!backendBadges || !backendBadges.success || !backendBadges.data) {
+        return [];
+    }
+
+    // Controller에서 data 필드에 List<BadgeDTO>가 직접 들어있음
+    const badgesList = backendBadges.data;
+    
+    if (!Array.isArray(badgesList)) {
+        console.warn('Expected badges data to be an array, received:', typeof badgesList);
+        return [];
+    }
+
+    // 각 BadgeDTO를 프론트엔드 형식으로 변환
+    return badgesList.map(badge => {
+        return {
+            id: badge.idx,
+            name: badge.name,
+            description: badge.description,
+            category: badge.category?.toLowerCase().replace('_', '_'), // COMMIT_STREAK -> commit_streak
+            level: badge.level,
+            earned: badge.earned, // 백엔드에서 earned 필드를 직접 제공
+            icon: getBadgeIcon(badge.category, badge.level),
+            requirement: badge.requirement
+        };
+    });
+};
+
+/**
+ * 뱃지 카테고리와 레벨에 따른 아이콘 반환
+ * @param {string} category - 뱃지 카테고리
+ * @param {number} level - 뱃지 레벨
+ * @returns {string} 이모지 아이콘
+ */
+const getBadgeIcon = (category, level) => {
+    const iconMap = {
+        COMMIT: ['🎯', '⚡', '🔥', '💎'],
+        COMMIT_STREAK: ['🌟', '⭐', '⚙️', '⛓️'],
+        PR_EXTERNAL: ['🚪', '🧭', '🎬', '🕸️'],
+        PR_MERGE: ['🔧', '⚛️', '🚀', '🎵'],
+        ISSUE_CREATE: ['📡', '📊', '🗺️', '🔮'],
+        ISSUE_SOLVE: ['🔧', '🕵️', '⚕️', '🧘'],
+        CODE_REVIEW: ['🚪', '🔍', '👂', '🔮'],
+        STAR: ['⭐', '📈', '🧲', '🗼'],
+        FORK: ['🌿', '🗂️', '🌱', '🏗️'],
+        WATCH: ['👁️', '👀', '💓', '🛡️'],
+        UPCYCLE: ['♻️', '🌱', '🏗️', '🔄']
+    };
+
+    const icons = iconMap[category] || ['🏆', '🥉', '🥈', '🥇'];
+    return icons[level - 1] || '🏆';
+};
