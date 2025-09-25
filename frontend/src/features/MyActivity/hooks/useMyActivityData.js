@@ -4,13 +4,15 @@ import {
     getUserStats, 
     getUserHistory, 
     getUserLevel,
+    getUserBadges,
     transformStatsData,
     transformHistoryData,
+    transformBadgesData,
     generateContributionTypeChart,
     generateActivityTrendChart
 } from "../api/myActivityApi";
 import {
-    badgesData // 뱃지는 아직 백엔드에서 구현되지 않아 목업 데이터 사용
+    badgesData // 뱃지 백엔드 API 실패시 fallback으로 사용
 } from "../data/mockData";
 
 const useMyActivityData = () => {
@@ -51,8 +53,8 @@ const useMyActivityData = () => {
 
                 const currentUser = user.nickname || user.login; // GitHub 사용자명 사용
 
-                // 병렬로 API 호출
-                const [statsResponse, historyResponse, levelResponse] = await Promise.all([
+                // 병렬로 API 호출 (뱃지 API 추가)
+                const [statsResponse, historyResponse, levelResponse, badgesResponse] = await Promise.all([
                     getUserStats(currentUser).catch(err => {
                         console.warn('통계 데이터 로딩 실패, 기본값 사용:', err);
                         return { success: false, data: { monthlyPR: 0, monthlyIssue: 0, monthlyCommit: 0, totalScore: 0 } };
@@ -64,6 +66,10 @@ const useMyActivityData = () => {
                     getUserLevel(currentUser).catch(err => {
                         console.warn('레벨 정보 로딩 실패, 기본값 사용:', err);
                         return { success: false, data: { level: 1, totalScore: 0 } };
+                    }),
+                    getUserBadges(currentUser).catch(err => {
+                        console.warn('뱃지 데이터 로딩 실패, 목업 데이터 사용:', err);
+                        return { success: false, data: null };
                     })
                 ]);
 
@@ -76,6 +82,11 @@ const useMyActivityData = () => {
                     transformHistoryData(historyResponse.data) : 
                     [];
 
+                // 뱃지 데이터 변환 (백엔드 API 우선, 실패시 목업 데이터 사용)
+                const badges = badgesResponse.success ? 
+                    transformBadgesData(badgesResponse) : 
+                    badgesData;
+
                 // 차트 데이터 생성 (history 데이터도 함께 전달)
                 const contributionTypes = generateContributionTypeChart(stats);
                 const activities = generateActivityTrendChart(stats, history);
@@ -84,7 +95,7 @@ const useMyActivityData = () => {
                     stats: stats,
                     contributionTypes: contributionTypes,
                     activities: activities,
-                    badges: badgesData, // 목업 데이터 계속 사용
+                    badges: badges, // 실제 백엔드 데이터 또는 목업 데이터
                     history: history,
                     userLevel: levelResponse.success ? levelResponse.data : { level: 1, totalScore: 0 }
                 });
