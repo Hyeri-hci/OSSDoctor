@@ -4,7 +4,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ossdoctor.DTO.CpeDTO;
 import com.ossdoctor.DTO.VulnerabilityDTO;
+import com.ossdoctor.Entity.RepositoryEntity;
 import com.ossdoctor.Entity.SEVERITY;
+import com.ossdoctor.Repository.VulnerabilityRepository;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -34,6 +37,55 @@ public class NvdApiService {
 
     private final OkHttpClient httpClient;
     private final ObjectMapper objectMapper;
+
+
+    public List<VulnerabilityDTO> convertToVulnerabilityDTOList(List<JsonNode> vulnerabilities, Long repositoryId) {
+        List<VulnerabilityDTO> DTOList = new ArrayList<>();
+
+        for (JsonNode vulNode : vulnerabilities) {
+            try {
+                 DTOList.addAll(JsonToVulnerabilityDTO(vulNode, repositoryId));
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+            }
+        }
+
+        return DTOList;
+    }
+
+    private List<VulnerabilityDTO> JsonToVulnerabilityDTO(JsonNode vulnerability, Long repositoryId) {
+
+
+
+
+        JsonNode vulnerabilities = vulnerability.get("vulnerabilities");
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+        List<VulnerabilityDTO> vulnerabilityDTOList = new ArrayList<>();
+
+        for (JsonNode vul : vulnerabilities){
+            log.info("✅의존성 DTO 만들기 위한 응답 파싱한 내용");
+            String id = vul.path("cve").path("id").asText();
+            log.info("CVE ID");
+            log.info(id);
+            SEVERITY severity = SEVERITY.valueOf(vul.path("cve").path("metrics").path("cvssMetricV31").path(0).path("cvssData").path("baseSeverity").asText());
+            log.info("CVE SEVERITY");
+            log.info(severity.toString());
+            String description = vul.path("cve").path("descriptions").path(0).path("value").asText();
+            log.info("CVE DESCRIPTION");
+            log.info(description);
+            VulnerabilityDTO vulner = VulnerabilityDTO.builder()
+                    .cveId(id)
+                    .repositoryId(repositoryId)
+                    .severity(severity)
+                    .description(description)
+                    .detectedAt(LocalDateTime.now())
+                    .fixed(Boolean.FALSE)
+                    .build();
+            vulnerabilityDTOList.add(vulner);
+        }
+        return vulnerabilityDTOList;
+    }
 
     /**
      * HTTP 클라이언트 및 JSON 매퍼 초기화
@@ -212,7 +264,7 @@ public class NvdApiService {
      * NVD API 응답 구조:
      * - CVE API Schema: 전체 응답 구조
      * - CVSSv4.0, v3.1, v3.0, v2.0 Schema: 각 버전별 CVSS 메트릭
-     */
+
     private List<VulnerabilityDTO> convertToVulnerabilityDTOs(List<JsonNode> vulnerabilities, Long repositoryId) {
         List<VulnerabilityDTO> result = new ArrayList<>();
 
@@ -237,7 +289,7 @@ public class NvdApiService {
                         .severity(severity)
                         .description(description)
                         .detectedAt(detectedAt != null ? detectedAt : LocalDateTime.now())
-                        .fixedAt(null) // 초기에는 미수정 상태
+                        .fixed(Boolean.FALSE) // 초기에는 미수정 상태
                         .build();
 
                 result.add(dto);
@@ -252,6 +304,7 @@ public class NvdApiService {
 
         return result;
     }
+     */
 
     /**
      * 다국어 설명에서 영어 설명 우선 추출
