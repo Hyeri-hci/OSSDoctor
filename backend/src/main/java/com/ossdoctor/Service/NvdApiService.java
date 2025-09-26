@@ -4,8 +4,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ossdoctor.DTO.CpeDTO;
 import com.ossdoctor.DTO.VulnerabilityDTO;
+import com.ossdoctor.Entity.RepositoryEntity;
 import com.ossdoctor.Entity.SEVERITY;
-import lombok.RequiredArgsConstructor;
+import com.ossdoctor.Repository.VulnerabilityRepository;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -24,7 +26,6 @@ import java.util.concurrent.TimeUnit;
  * NVD API를 활용한 취약점 조회 서비스
  */
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class NvdApiService {
     private static final String NVD_CVE_BASE_URL = "https://services.nvd.nist.gov/rest/json/cves/2.0";
@@ -36,6 +37,55 @@ public class NvdApiService {
 
     private final OkHttpClient httpClient;
     private final ObjectMapper objectMapper;
+
+
+    public List<VulnerabilityDTO> convertToVulnerabilityDTOList(List<JsonNode> vulnerabilities, Long repositoryId) {
+        List<VulnerabilityDTO> DTOList = new ArrayList<>();
+
+        for (JsonNode vulNode : vulnerabilities) {
+            try {
+                 DTOList.addAll(JsonToVulnerabilityDTO(vulNode, repositoryId));
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+            }
+        }
+
+        return DTOList;
+    }
+
+    private List<VulnerabilityDTO> JsonToVulnerabilityDTO(JsonNode vulnerability, Long repositoryId) {
+
+
+
+
+        JsonNode vulnerabilities = vulnerability.get("vulnerabilities");
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+        List<VulnerabilityDTO> vulnerabilityDTOList = new ArrayList<>();
+
+        for (JsonNode vul : vulnerabilities){
+            log.info("✅의존성 DTO 만들기 위한 응답 파싱한 내용");
+            String id = vul.path("cve").path("id").asText();
+            log.info("CVE ID");
+            log.info(id);
+            SEVERITY severity = SEVERITY.valueOf(vul.path("cve").path("metrics").path("cvssMetricV31").path(0).path("cvssData").path("baseSeverity").asText());
+            log.info("CVE SEVERITY");
+            log.info(severity.toString());
+            String description = vul.path("cve").path("descriptions").path(0).path("value").asText();
+            log.info("CVE DESCRIPTION");
+            log.info(description);
+            VulnerabilityDTO vulner = VulnerabilityDTO.builder()
+                    .cveId(id)
+                    .repositoryId(repositoryId)
+                    .severity(severity)
+                    .description(description)
+                    .detectedAt(LocalDateTime.now())
+                    .fixed(Boolean.FALSE)
+                    .build();
+            vulnerabilityDTOList.add(vulner);
+        }
+        return vulnerabilityDTOList;
+    }
 
     /**
      * HTTP 클라이언트 및 JSON 매퍼 초기화
@@ -50,27 +100,22 @@ public class NvdApiService {
     }
 
     /**
-     * CPE URI 목록을 받아 NVD API를 통해 취약점을 조회
+     * CPE URI 목록을 받아 NVD API를 통해 취약점을 조회하여 JSON 응답 리스트를 반환
      *
      * @param cpeUriList CPE URI 문자열 목록 (예: ["cpe:2.3:a:apache:tomcat:9.0.1:*:*:*:*:*:*:*"])
-     * @param repositoryId 대상 리포지토리 ID
-     * @return 조회된 취약점 DTO 목록
+     * @return NVD API에서 받은 JSON 응답들의 리스트
      */
-    public List<VulnerabilityDTO> scanVulnerabilities(List<String> cpeUriList, Long repositoryId) {
+    public List<JsonNode> scanVulnerabilities(List<String> cpeUriList) {
         // === 입력값 검증 ===
         if (cpeUriList == null || cpeUriList.isEmpty()) {
             log.info("📋 조회할 CPE URI 목록이 비어있습니다");
             return new ArrayList<>();
         }
 
-        if (repositoryId == null) {
-            throw new IllegalArgumentException("Repository ID는 필수입니다");
-        }
+        log.info("🔍 NVD 취약점 스캔 시작: {}개 CPE URI", cpeUriList.size());
 
-        log.info("🔍 NVD 취약점 스캔 시작: {}개 CPE URI, Repository ID: {}", cpeUriList.size(), repositoryId);
-
-        // 전체 취약점을 저장할 리스트
-        List<VulnerabilityDTO> allVulnerabilities = new ArrayList<>();
+        // 전체 JSON 응답을 저장할 리스트
+        List<JsonNode> allJsonResponses = new ArrayList<>();
         int processedCount = 0;
 
         // 각 CPE URI별로 순차 처리
@@ -79,18 +124,18 @@ public class NvdApiService {
                 processedCount++;
                 log.info("📦 CPE URI 처리 중 ({}/{}): {}", processedCount, cpeUriList.size(), cpeUri);
 
-                // 1. NVD API 호출하여 전체 JSON 응답 받기
-                JsonNode fullResponse = queryNvdApi(cpeUri);
+                // NVD API 호출하여 JSON 응답 받기
+                JsonNode jsonResponse = queryNvdApi(cpeUri);
 
-                // 2. JSON 응답에서 vulnerabilities 배열 추출
-                List<JsonNode> vulnerabilities = extractVulnerabilities(fullResponse);
-                log.info("🛡️ {}개 취약점 발견", vulnerabilities.size());
+                // JSON 응답을 리스트에 추가
+                allJsonResponses.add(jsonResponse);
 
-                // 3. JSON을 VulnerabilityDTO로 변환
-                List<VulnerabilityDTO> convertedVulns = convertToVulnerabilityDTOs(vulnerabilities, repositoryId);
-                allVulnerabilities.addAll(convertedVulns);
+                // 취약점 개수 로깅
+                JsonNode vulnArray = jsonResponse.path("vulnerabilities");
+                int vulnCount = vulnArray.isArray() ? vulnArray.size() : 0;
+                log.info("🛡️ {}개 취약점 발견", vulnCount);
 
-                // 4. API 율제한 준수를 위한 대기 (마지막 요청 제외)
+                // API 율제한 준수를 위한 대기 (마지막 요청 제외)
                 if (processedCount < cpeUriList.size()) {
                     log.debug("⏳ API 율제한 대기: {}초", REQUEST_DELAY_SECONDS);
                     TimeUnit.SECONDS.sleep(REQUEST_DELAY_SECONDS);
@@ -99,13 +144,14 @@ public class NvdApiService {
             } catch (Exception e) {
                 log.error("⚠️ CPE URI {} 취약점 조회 실패: {}", cpeUri, e.getMessage());
                 // 개별 CPE 실패가 전체 프로세스를 중단하지 않도록 계속 진행
+                // 실패한 경우에도 빈 JSON 객체를 추가할지는 요구사항에 따라 결정
             }
         }
 
-        log.info("🎯 NVD 취약점 스캔 완료: {}개 CPE URI 처리, {}개 취약점 조회됨",
-                processedCount, allVulnerabilities.size());
+        log.info("🎯 NVD 취약점 스캔 완료: {}개 CPE URI 처리, {}개 JSON 응답 수집됨",
+                processedCount, allJsonResponses.size());
 
-        return allVulnerabilities;
+        return allJsonResponses;
     }
 
     /**
@@ -139,7 +185,7 @@ public class NvdApiService {
     private JsonNode queryNvdApi(String cpeName) throws IOException {
         // HTTP 요청 URL 구성
         HttpUrl.Builder urlBuilder = Objects.requireNonNull(HttpUrl.parse(NVD_CVE_BASE_URL)).newBuilder()
-                .addQueryParameter("cpeName", cpeName)
+                .addQueryParameter("virtualMatchString", cpeName)
                 .addQueryParameter("resultsPerPage", String.valueOf(MAX_RESULTS_PER_CPE))
                 .addQueryParameter("startIndex", "0");
 
@@ -193,7 +239,7 @@ public class NvdApiService {
         sb.append(sanitizeForCpe(cpe.getVendor(), "*")).append(":");
         sb.append(sanitizeForCpe(cpe.getProduct(), "*")).append(":");
         sb.append(sanitizeForCpe(cpe.getVersion(), "*"));
-        sb.append(":*:*:*:*:*:*:*");
+        sb.append(":*:*:*:*:*:*");
 
         return sb.toString();
     }
@@ -218,7 +264,7 @@ public class NvdApiService {
      * NVD API 응답 구조:
      * - CVE API Schema: 전체 응답 구조
      * - CVSSv4.0, v3.1, v3.0, v2.0 Schema: 각 버전별 CVSS 메트릭
-     */
+
     private List<VulnerabilityDTO> convertToVulnerabilityDTOs(List<JsonNode> vulnerabilities, Long repositoryId) {
         List<VulnerabilityDTO> result = new ArrayList<>();
 
@@ -243,7 +289,7 @@ public class NvdApiService {
                         .severity(severity)
                         .description(description)
                         .detectedAt(detectedAt != null ? detectedAt : LocalDateTime.now())
-                        .fixedAt(null) // 초기에는 미수정 상태
+                        .fixed(Boolean.FALSE) // 초기에는 미수정 상태
                         .build();
 
                 result.add(dto);
@@ -258,6 +304,7 @@ public class NvdApiService {
 
         return result;
     }
+     */
 
     /**
      * 다국어 설명에서 영어 설명 우선 추출
