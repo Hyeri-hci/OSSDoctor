@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ossdoctor.DTO.CpeDTO;
 import com.ossdoctor.DTO.VulnerabilityDTO;
+import com.ossdoctor.Entity.RepositoryEntity;
+import com.ossdoctor.Repository.RepositoryRepository;
 import com.ossdoctor.Service.CpeService;
 import com.ossdoctor.Service.DependencyExtractionService;
 import com.ossdoctor.Service.NvdApiService;
@@ -13,7 +15,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/security")
@@ -21,6 +25,7 @@ import java.util.List;
 @Slf4j
 public class SecurityController {
 
+    private final RepositoryRepository repositoryRepository;
     private final DependencyExtractionService dependencyExtractionService;
     private final CpeService cpeService;
     private final NvdApiService nvdApiService;
@@ -34,8 +39,10 @@ public class SecurityController {
             try {
                 log.info("🔗 요청받은 GitHub URL: {}", repo);
 
+
                 // github에서 모든 파일 순회해서 의존성 가져오기
-                List<CpeDTO> dependencies = dependencyExtractionService.extractDependencies(repo);
+                List<CpeDTO> dependencies = new ArrayList<>();
+                //List<CpeDTO> dependencies = dependencyExtractionService.extractDependencies(repo);
                 // 테스트용 dto추가
                 CpeDTO cpeDTO = CpeDTO.builder()
                         .part("a")
@@ -45,7 +52,9 @@ public class SecurityController {
                         .build();
                 dependencies.add(cpeDTO);
 
-                Long repoId = 123456L;
+                Optional<RepositoryEntity> repositoryEntityOptional = repositoryRepository.findByOwnerAndName("facebook","react");
+                RepositoryEntity testRepoEntity = repositoryEntityOptional.get();
+                log.info("testRepoEntity: {}", testRepoEntity);
 
                 if (dependencies.isEmpty()) {
                     log.info("❌ 의존성을 찾을 수 없음: {}", repo);
@@ -70,11 +79,11 @@ public class SecurityController {
                 log.info(String.valueOf(vulnerabilityJsonList));
 
                 // 응답 결과 List를 받아서 DTO 리스트로 반환
-                List<VulnerabilityDTO> vulnerabilityDTOList = nvdApiService.convertToVulnerabilityDTOList(vulnerabilityJsonList, repoId);
+                List<VulnerabilityDTO> vulnerabilityDTOList = nvdApiService.convertToVulnerabilityDTOList(vulnerabilityJsonList, testRepoEntity);
                 log.info("vulnerabilityDTOList");
                 log.info(String.valueOf(vulnerabilityDTOList));
 
-                vulnerabilityService.checkAllDtoListAndSave(vulnerabilityDTOList, repoId);
+                vulnerabilityService.checkAllDtoListAndSave(vulnerabilityDTOList, testRepoEntity);
 
                 return ResponseEntity.ok(vulnerabilityDTOList);
 
