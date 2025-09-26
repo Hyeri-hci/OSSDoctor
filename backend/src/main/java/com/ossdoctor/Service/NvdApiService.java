@@ -39,12 +39,12 @@ public class NvdApiService {
     private final ObjectMapper objectMapper;
 
 
-    public List<VulnerabilityDTO> convertToVulnerabilityDTOList(List<JsonNode> vulnerabilities, Long repositoryId) {
+    public List<VulnerabilityDTO> convertToVulnerabilityDTOList(List<JsonNode> vulnerabilities, RepositoryEntity repositoryEntity) {
         List<VulnerabilityDTO> DTOList = new ArrayList<>();
 
         for (JsonNode vulNode : vulnerabilities) {
             try {
-                 DTOList.addAll(JsonToVulnerabilityDTO(vulNode, repositoryId));
+                 DTOList.addAll(JsonToVulnerabilityDTO(vulNode, repositoryEntity.getIdx()));
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
             }
