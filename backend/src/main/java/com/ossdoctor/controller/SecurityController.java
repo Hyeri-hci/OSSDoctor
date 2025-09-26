@@ -24,12 +24,11 @@ public class SecurityController {
     private final DependencyExtractionService dependencyExtractionService;
     private final CpeService cpeService;
     private final NvdApiService nvdApiService;
+    private final VulnerabilityService vulnerabilityService;
 
-        /**
+    /**
          * GitHub 리포지토리 URL 쿼리 파라미터로 받아 의존성 파싱 후 VulnerabilityDTO 리스트만 반환
          */
-
-
         @GetMapping
         public ResponseEntity<List<VulnerabilityDTO>> parseDependencies(@RequestParam("repo") String repo) {
             try {
@@ -45,6 +44,8 @@ public class SecurityController {
                         .version("1.1.0")
                         .build();
                 dependencies.add(cpeDTO);
+
+                Long repoId = 123456L;
 
                 if (dependencies.isEmpty()) {
                     log.info("❌ 의존성을 찾을 수 없음: {}", repo);
@@ -69,9 +70,11 @@ public class SecurityController {
                 log.info(String.valueOf(vulnerabilityJsonList));
 
                 // 응답 결과 List를 받아서 DTO 리스트로 반환
-                List<VulnerabilityDTO> vulnerabilityDTOList = nvdApiService.convertToVulnerabilityDTOList(vulnerabilityJsonList, 123412343L);
+                List<VulnerabilityDTO> vulnerabilityDTOList = nvdApiService.convertToVulnerabilityDTOList(vulnerabilityJsonList, repoId);
                 log.info("vulnerabilityDTOList");
                 log.info(String.valueOf(vulnerabilityDTOList));
+
+                vulnerabilityService.checkAllDtoListAndSave(vulnerabilityDTOList, repoId);
 
                 return ResponseEntity.ok(vulnerabilityDTOList);
 
