@@ -32,12 +32,8 @@ public class DependencyExtractionService {
         this.parsers = parsers;
     }
 
-    public List<CpeDTO> extractDependencies(String repositoryUrl) {
+    public List<CpeDTO> extractDependencies(String owner, String repo) {
         try {
-            // 1. URL 파싱
-            String[] parts = parseRepositoryUrl(repositoryUrl);
-            String owner = parts[0];
-            String repo = parts[1];
 
             // 2. 리포지토리 전체 파일 리스트 조회
             List<GithubTreeNodeDTO> treeNodes = gitHubTreeApiService.getRepositoryTree(owner, repo);
@@ -78,7 +74,7 @@ public class DependencyExtractionService {
             return removeDuplicates(allDependencies);
 
         } catch (IllegalArgumentException e) {
-            log.error("잘못된 리포지토리 URL: {}", repositoryUrl);
+            log.error("잘못된 리포지토리 URL: {}", owner+'/'+repo);
             throw e;
         } catch (Exception e) {
             log.error("의존성 추출 중 오류 발생: {}", e.getMessage());
