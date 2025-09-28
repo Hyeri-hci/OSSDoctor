@@ -3,6 +3,7 @@ package com.ossdoctor.Service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ossdoctor.DTO.CpeDTO;
+import com.ossdoctor.DTO.RepositoryDTO;
 import com.ossdoctor.DTO.VulnerabilityDTO;
 import com.ossdoctor.Entity.RepositoryEntity;
 import com.ossdoctor.Entity.SEVERITY;
@@ -39,12 +40,12 @@ public class NvdApiService {
     private final ObjectMapper objectMapper;
 
 
-    public List<VulnerabilityDTO> convertToVulnerabilityDTOList(List<JsonNode> vulnerabilities, RepositoryEntity repositoryEntity) {
+    public List<VulnerabilityDTO> convertToVulnerabilityDTOList(List<JsonNode> vulnerabilities, RepositoryDTO repositoryDTO) {
         List<VulnerabilityDTO> DTOList = new ArrayList<>();
 
         for (JsonNode vulNode : vulnerabilities) {
             try {
-                 DTOList.addAll(JsonToVulnerabilityDTO(vulNode, repositoryEntity.getIdx()));
+                 DTOList.addAll(JsonToVulnerabilityDTO(vulNode, repositoryDTO.getIdx()));
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
             }
