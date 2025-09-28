@@ -3,6 +3,8 @@ package com.ossdoctor.Service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.ossdoctor.DTO.*;
 import com.ossdoctor.Entity.*;
+import com.ossdoctor.Repository.RepositoryRepository;
+import com.ossdoctor.Repository.VulnerabilityRepository;
 import com.ossdoctor.config.GithubApiProperties;
 import com.ossdoctor.exception.GitHubApiException;
 import lombok.AllArgsConstructor;
@@ -43,6 +45,7 @@ public class GitHubApiService {
     private final RepositoryService repositoryService;
     private final ActivityService activityService;
     private final ScoreService scoreService;
+    private final VulnerabilityRepository vulnerabilityRepository;
 
 
     // ========== REST API 사용 메서드 ==========
@@ -339,6 +342,8 @@ public class GitHubApiService {
       }
     }
     """;
+    private final RepositoryRepository repositoryRepository;
+    private final VulnerabilityService vulnerabilityService;
 
     // =========== 공개 API 메서드 ===========
 
@@ -367,7 +372,7 @@ public class GitHubApiService {
                                 .then(Mono.fromCallable(() -> {
                                     RepositoryDTO savedDto = repositoryService.findByGithubId(dto.getGithubRepoId())
                                             .orElseGet(() -> repositoryService.save(dto));
-                                    calculateTotalScore(savedDto);
+                                    //calculateTotalScore(savedDto);
                                     return savedDto;
                                 }).subscribeOn(Schedulers.boundedElastic())))
                 .onErrorMap(this::handleApiError); // 에러 핸들링
@@ -1066,11 +1071,13 @@ public class GitHubApiService {
 
         ScoreDTO healthScore = calculateHealthScore(repo_dto);
         ScoreDTO socialScore = calculateSocialScore(repo_dto);
+        ScoreDTO securityScore = getSecurityScoreDTO(repo_dto);
         ScoreDTO totalScore = calculateTotalScore(repo_dto);
 
         Map<String, Object> scores = new HashMap<>();
         scores.put("healthScore", healthScore.getScore());
         scores.put("socialScore", socialScore.getScore());
+        scores.put("securityScore", securityScore.getScore());
         scores.put("totalScore", totalScore.getScore());
 
         // 점수별 세부 정보
@@ -1102,7 +1109,7 @@ public class GitHubApiService {
 
     // 건강 점수 계산 최종
     private ScoreDTO calculateHealthScore(RepositoryDTO repo) {
-
+        log.info("calculateHealthScore");
         int commitScore = scoreCalculator.calculateCommitScore(repo.getTotalCommits());
         int updateScore = scoreCalculator.calculateUpdateScore(repo.getLastUpdatedAt());
         int prScore = scoreCalculator.calculatePRScore(repo.getMergedPullRequests());
@@ -1119,9 +1126,54 @@ public class GitHubApiService {
                 .build());
     }
 
+    // Security ScoreDTO를 반환하는 메서드
+    private ScoreDTO getSecurityScoreDTO(RepositoryDTO repositoryDTO){
+        log.info("getSecurityScoreDTO 들어옴");
+        String owner = repositoryDTO.getOwner();
+        String repo = repositoryDTO.getName();
+        Optional<RepositoryEntity> repositoryEntityOptional = repositoryRepository.findByOwnerAndName(owner,repo);
+        RepositoryEntity repositoryEntity = repositoryEntityOptional.get();
+        List<VulnerabilityEntity> vulnerabilityEntityList = vulnerabilityRepository.findByRepositoryIdAndFixedFalse(repositoryEntity);
+        ScoreDTO scoreDTO = calculateSecurityScore(vulnerabilityEntityList, repositoryEntity);
+        log.info("getSecurityScoreDTO 나감");
+        return scoreDTO;
+    }
+
+    private ScoreDTO calculateSecurityScore(List<VulnerabilityEntity> vulnerabilityEntityList, RepositoryEntity repositoryEntity) {
+        log.info("calculateSecurityScore");
+        int score = 100;
+        for (VulnerabilityEntity entity : vulnerabilityEntityList) {
+            if(score <= 0){
+                score = 0;
+                /*ScoreDTO scoreDTO = ScoreDTO.builder()
+                        .repositoryId(repositoryEntity.getIdx())
+                        .scoreType(SCORE_TYPE.SECURITY)
+                        .score(score)
+                        .build();
+                return scoreDTO;*/
+                break;
+            }
+            else{
+                switch (entity.getSeverity()) {
+                    case UNKNOWN ->  score -= 1;
+                    case LOW ->   score -= 2;
+                    case MEDIUM ->   score -= 3;
+                    case HIGH ->   score -= 4;
+                    case CRITICAL ->   score -= 5;
+                }
+            }
+        }
+        ScoreDTO scoreDTO = ScoreDTO.builder()
+                .repositoryId(repositoryEntity.getIdx())
+                .scoreType(SCORE_TYPE.SECURITY)
+                .score(score)
+                .build();
+        return scoreService.save(scoreDTO);
+    }
+
     // 소셜 점수 계산 최종
     private ScoreDTO calculateSocialScore(RepositoryDTO repo) {
-
+        log.info("calculateSocialScore");
         int star = repo.getStar();
         int fork = repo.getFork();
         int watchers = repo.getWatchers();
@@ -1148,11 +1200,12 @@ public class GitHubApiService {
 
         int healthScore = calculateHealthScore(repo).getScore() * 5;
         int socialScore = calculateSocialScore(repo).getScore() * 2;
+        int securityScore = getSecurityScoreDTO(repo).getScore() * 3;
 
         log.info("repo: " + repo.getName());
 
         // 최종 점수는 반올림
-        int totalScore = (healthScore + socialScore) / 10;
+        int totalScore = (healthScore + socialScore + securityScore) / 10;
 
         return scoreService.save(ScoreDTO.builder()
                 .repositoryId(repo.getIdx())
