@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
@@ -318,8 +318,8 @@ public class EcosystemService {
 
     // Helper methods
     private String getDateFilter(String timeFilter) {
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime since;
+        ZonedDateTime now = ZonedDateTime.now();
+        ZonedDateTime since;
         
         switch (timeFilter) {
             case "day":

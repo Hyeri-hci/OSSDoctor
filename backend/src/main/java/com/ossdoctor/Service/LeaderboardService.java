@@ -13,7 +13,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
@@ -42,8 +42,8 @@ public class LeaderboardService {
         log.info("데이터베이스 전체 기여 데이터 수: {}", totalContributions);
         
         // 기간에 따른 날짜 계산
-        LocalDateTime fromDate = calculateFromDate(period);
-        LocalDateTime toDate = LocalDateTime.now();
+        ZonedDateTime fromDate = calculateFromDate(period);
+        ZonedDateTime toDate = ZonedDateTime.now();
         
         log.debug("조회 기간: {} ~ {}", fromDate, toDate);
         
@@ -82,8 +82,8 @@ public class LeaderboardService {
         int userRank = higherScoreCount + 1;
         
         // 기간에 따른 날짜 계산
-        LocalDateTime fromDate = calculateFromDate(period);
-        LocalDateTime toDate = LocalDateTime.now();
+        ZonedDateTime fromDate = calculateFromDate(period);
+        ZonedDateTime toDate = ZonedDateTime.now();
         
         log.info("사용자 {} 의 순위: {}", nickname, userRank);
         
@@ -105,8 +105,8 @@ public class LeaderboardService {
     /**
      * 기간에 따른 시작 날짜 계산
      */
-    private LocalDateTime calculateFromDate(String period) {
-        LocalDateTime now = LocalDateTime.now();
+    private ZonedDateTime calculateFromDate(String period) {
+        ZonedDateTime now = ZonedDateTime.now();
         
         return switch (period.toLowerCase()) {
             case "today" -> now.truncatedTo(ChronoUnit.DAYS); // 오늘 00:00:00
@@ -119,7 +119,7 @@ public class LeaderboardService {
     /**
      * UserEntity를 LeaderboardUserDTO로 변환 (실제 기여 데이터 포함)
      */
-    private LeaderboardUserDTO convertToLeaderboardDTOWithRealData(UserEntity user, int rank, LocalDateTime fromDate, LocalDateTime toDate) {
+    private LeaderboardUserDTO convertToLeaderboardDTOWithRealData(UserEntity user, int rank, ZonedDateTime fromDate, ZonedDateTime toDate) {
         log.info("사용자 {} (ID: {}) 데이터 변환 시작", user.getNickname(), user.getIdx());
         
         return LeaderboardUserDTO.builder()
@@ -142,7 +142,7 @@ public class LeaderboardService {
     /**
      * 실제 PR 수 계산
      */
-    private Integer calculateRealPRCount(Long userId, LocalDateTime fromDate, LocalDateTime toDate) {
+    private Integer calculateRealPRCount(Long userId, ZonedDateTime fromDate, ZonedDateTime toDate) {
         try {
             int count = contributionRepository.countPRsByUserAndDateRange(userId, fromDate, toDate);
             log.info("사용자 {} PR 수: {} (기간: {} ~ {})", userId, count, fromDate, toDate);
@@ -156,7 +156,7 @@ public class LeaderboardService {
     /**
      * 실제 이슈 수 계산
      */
-    private Integer calculateRealIssueCount(Long userId, LocalDateTime fromDate, LocalDateTime toDate) {
+    private Integer calculateRealIssueCount(Long userId, ZonedDateTime fromDate, ZonedDateTime toDate) {
         try {
             int count = contributionRepository.countIssuesByUserAndDateRange(userId, fromDate, toDate);
             log.info("사용자 {} 이슈 수: {} (기간: {} ~ {})", userId, count, fromDate, toDate);
@@ -170,7 +170,7 @@ public class LeaderboardService {
     /**
      * 실제 커밋 수 계산
      */
-    private Integer calculateRealCommitsCount(Long userId, LocalDateTime fromDate, LocalDateTime toDate) {
+    private Integer calculateRealCommitsCount(Long userId, ZonedDateTime fromDate, ZonedDateTime toDate) {
         try {
             int count = contributionRepository.countCommitsByUserAndDateRange(userId, fromDate, toDate);
             log.info("사용자 {} 커밋 수: {} (기간: {} ~ {})", userId, count, fromDate, toDate);

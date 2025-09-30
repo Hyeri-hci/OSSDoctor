@@ -6,7 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 
 @Data
 @Builder
@@ -29,10 +29,10 @@ public class UserBadgeEntity {
     private BadgeEntity badge;
 
     @Column(name = "awarded_at", nullable = false)
-    private LocalDateTime awardedAt;
+    private ZonedDateTime awardedAt;
 
     @PrePersist
     public void prePersist() {
-        awardedAt = LocalDateTime.now();
+        awardedAt = ZonedDateTime.now();
     }
 }

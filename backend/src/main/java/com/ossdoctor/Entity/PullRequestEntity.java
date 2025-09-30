@@ -6,7 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 
 @Data
 @Builder
@@ -37,8 +37,8 @@ public class PullRequestEntity {
     private PR_STATE state;
 
     @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
+    private ZonedDateTime createdAt;
 
     @Column(name = "merged_at", nullable = true)
-    private LocalDateTime mergedAt;
+    private ZonedDateTime mergedAt;
 }

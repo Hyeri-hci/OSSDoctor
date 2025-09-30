@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,8 +16,7 @@ import java.util.Optional;
 public interface ContributionRepository extends JpaRepository<ContributionEntity, Long> {
 
     // userId로 가장 최근 기여 가져오기
-    @Query("SELECT c FROM ContributionEntity c WHERE c.user.idx = :userId ORDER BY c.contributedAt DESC LIMIT 1")
-    Optional<ContributionEntity> findTopByUserIdxOrderByContributedAtDesc(@Param("userId") Long userId);
+    Optional<ContributionEntity> findTopByUserIdxOrderByContributedAtDesc(Long userId);
 
     List<ContributionEntity> findByUserOrderByContributedAtDesc(Optional<UserEntity> user);
     
@@ -45,24 +44,24 @@ public interface ContributionRepository extends JpaRepository<ContributionEntity
     @Query("SELECT COUNT(c) FROM ContributionEntity c WHERE c.user.idx = :userId AND c.referenceType = 'COMMIT' AND c.contributedAt >= :fromDate AND c.contributedAt <= :toDate")
     int countCommitsByUserAndDateRange(
         @Param("userId") Long userId, 
-        @Param("fromDate") LocalDateTime fromDate, 
-        @Param("toDate") LocalDateTime toDate
+        @Param("fromDate") ZonedDateTime fromDate,
+        @Param("toDate") ZonedDateTime toDate
     );
 
     // 특정 사용자의 기간별 PR 수 조회
     @Query("SELECT COUNT(c) FROM ContributionEntity c WHERE c.user.idx = :userId AND c.referenceType = 'PR' AND c.contributedAt >= :fromDate AND c.contributedAt <= :toDate")
     int countPRsByUserAndDateRange(
         @Param("userId") Long userId, 
-        @Param("fromDate") LocalDateTime fromDate, 
-        @Param("toDate") LocalDateTime toDate
+        @Param("fromDate") ZonedDateTime fromDate,
+        @Param("toDate") ZonedDateTime toDate
     );
 
     // 특정 사용자의 기간별 이슈 수 조회
     @Query("SELECT COUNT(c) FROM ContributionEntity c WHERE c.user.idx = :userId AND c.referenceType = 'ISSUE' AND c.contributedAt >= :fromDate AND c.contributedAt <= :toDate")
     int countIssuesByUserAndDateRange(
         @Param("userId") Long userId, 
-        @Param("fromDate") LocalDateTime fromDate, 
-        @Param("toDate") LocalDateTime toDate
+        @Param("fromDate") ZonedDateTime fromDate,
+        @Param("toDate") ZonedDateTime toDate
     );
 
     // 특정 사용자의 연속 기여 일수 계산용 - 기여 엔티티들 조회해서 날짜 변환은 서비스에서 처리

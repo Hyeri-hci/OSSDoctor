@@ -5,7 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 
 @Data
 @Builder
@@ -21,6 +21,6 @@ public class LeaderboardUserDTO {
     private Integer issueCount;
     private Integer commitsCount;
     private Integer contributionStreak;
-    private LocalDateTime joinDate;
+    private ZonedDateTime joinDate;
     private Integer rank; // 순위 (계산된 값)
 }
