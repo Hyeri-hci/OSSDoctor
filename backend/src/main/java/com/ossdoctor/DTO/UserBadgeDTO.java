@@ -5,7 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 
 @Data
 @Builder
@@ -15,5 +15,5 @@ public class UserBadgeDTO {
     private Long idx;
     private Long userId;
     private Long badgeId;
-    private LocalDateTime awardedAt;
+    private ZonedDateTime awardedAt;
 }

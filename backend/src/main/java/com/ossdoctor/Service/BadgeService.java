@@ -11,7 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -81,7 +81,7 @@ public class BadgeService {
                         })
                 )*/
                 .flatMap(user -> {
-                    LocalDateTime since = user.getJoinedAt().minusMonths(1);
+                    ZonedDateTime since = user.getJoinedAt().minusMonths(1);
 
                     // 기여 메트릭 가져오기
                     Mono<List<BadgeMetricDTO>> contributionSummaryMono =

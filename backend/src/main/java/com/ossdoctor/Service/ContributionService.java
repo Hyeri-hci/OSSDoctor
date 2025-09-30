@@ -13,7 +13,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.*;
 
 
@@ -92,7 +92,7 @@ public class ContributionService {
                             .switchIfEmpty(Mono.error(new RuntimeException("Default user 'dabbun' not found")));
                 }))
                 .flatMap(user -> {
-                    LocalDateTime since = findLatestContribution(user)
+                    ZonedDateTime since = findLatestContribution(user)
                             .map(latest -> latest.getContributedAt().plusSeconds(1))
                             .orElse(user.getJoinedAt().minusDays(30));
 

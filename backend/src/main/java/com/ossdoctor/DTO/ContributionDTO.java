@@ -7,7 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 
 @Data
 @Builder
@@ -21,6 +21,6 @@ public class ContributionDTO {
     private CONTRIBUTION_TYPE state;
     private Integer number;
     private String title;
-    private LocalDateTime contributedAt;
-    private LocalDateTime endAt;
+    private ZonedDateTime contributedAt;
+    private ZonedDateTime endAt;
 }

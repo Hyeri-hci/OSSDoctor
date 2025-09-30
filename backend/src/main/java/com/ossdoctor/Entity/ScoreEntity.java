@@ -2,7 +2,7 @@ package com.ossdoctor.Entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 
 @Data
 @Builder
@@ -28,10 +28,10 @@ public class ScoreEntity {
     private Integer score;
 
     @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
+    private ZonedDateTime createdAt;
 
     @PrePersist
     public void prePersist() {
-        this.createdAt = LocalDateTime.now();
+        this.createdAt = ZonedDateTime.now();
     }
 }
