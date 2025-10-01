@@ -24,8 +24,13 @@ repositories {
 }
 
 dependencies {
-    // MySQL Connector
-    implementation 'com.mysql:mysql-connector-j:9.2.0'
+
+    // mysql
+    runtimeOnly 'com.mysql:mysql-connector-j'
+
+    // flyway
+    implementation 'org.flywaydb:flyway-core'
+    implementation 'org.flywaydb:flyway-mysql'
 
     // H2 Database (임시 테스트용)
     runtimeOnly 'com.h2database:h2'
