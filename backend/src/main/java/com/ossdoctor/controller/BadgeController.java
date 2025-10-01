@@ -23,7 +23,6 @@ import java.util.Optional;
 public class BadgeController {
 
     private final UserService userService;
-    private final BadgeService badgeService;
     private final UserBadgeService userBadgeService;
 
     @GetMapping("/all-badges/{nickname}")
