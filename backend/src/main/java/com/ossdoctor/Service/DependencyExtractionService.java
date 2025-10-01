@@ -50,7 +50,7 @@ public class DependencyExtractionService {
                             .onErrorResume(e -> {
                                 log.warn("파일 {} 파싱 실패 : {}", node.getPath(), e);
                                 return Flux.empty();
-                            })
+                            });
                 })
                 .distinct();
     }
