@@ -20,7 +20,7 @@ import { startAuthMonitoring, stopAuthMonitoring } from '../utils/auth-monitor';
 export const useAuth = () => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [user, setUser] = useState(null);
-    const [isLoading, setIsLoading] = useState(false); // 초기에는 로딩 상태가 아님
+    const [isLoading, setIsLoading] = useState(true); // 초기에 로딩 상태로 시작
     const [error, setError] = useState(null);
 
 
