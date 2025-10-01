@@ -77,6 +77,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
+
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
@@ -93,11 +96,47 @@ public class GithubTreeApiService {
 
     // API를 보내기 위해서 RestTemplate 객체를 선언한다.
     private final RestTemplate restTemplate;
+    @Autowired
+    private WebClient webClient;
+
     // 생성자
     public GithubTreeApiService() {
         this.restTemplate = new RestTemplate();
     }
 
+    public Mono<List<GithubTreeNodeDTO>> getRepositoryTree(String owner, String repo) {
+        String url = String.format("https://api.github.com/repos/%s/%s/git/trees/HEAD?recursive=true",
+                owner, repo);
+        return webClient.get()
+                .uri(url)
+                .headers(headers -> {
+                    headers.setBearerAuth(githubToken);
+                    headers.set("Accept", "application/vnd.github+json");
+                    headers.set("User-Agent", "OSSDoctor/1.0");
+                })
+                //본문(body) 추출
+                .retrieve()
+                .bodyToMono(GithubTreeResponseDTO.class)
+                .map(GithubTreeResponseDTO::getTree)
+                .doOnNext(treeNodes -> {
+                    long dependencyFileCount = treeNodes.stream()
+                            .filter(node -> "blob".equals(node.getType()))
+                            .filter(node ->
+                                    node.getPath().endsWith("package.json") ||
+                                            node.getPath().endsWith("pom.xml") ||
+                                            node.getPath().endsWith("build.gradle") ||
+                                            node.getPath().endsWith("requirements.txt") ||
+                                            node.getPath().endsWith("composer.json") ||
+                                            node.getPath().endsWith("go.mod") ||
+                                            node.getPath().equals("Gemfile") ||
+                                            node.getPath().endsWith("/Gemfile")
+                            )
+                            .count();
+                        log.info("의존성 {}개 발견", dependencyFileCount);
+
+                }).doOnError(error -> log.error("github Tree API 호출 실패/n",error));
+    }
+    /*
     // 리포지토리의 구조를 가져와 GithubTreeNodeDTO의 리스트로 반한한다.
     public List<GithubTreeNodeDTO> getRepositoryTree(String owner, String repo) {
         String url = String.format("https://api.github.com/repos/%s/%s/git/trees/HEAD?recursive=true",
