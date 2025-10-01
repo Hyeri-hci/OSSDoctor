@@ -425,14 +425,11 @@ public class GitHubApiService {
 
     // 기여한 내역 불러오기
     public Mono<List<ContributionDTO>> getContributionSince(String owner, ZonedDateTime since) {
-        log.info("1. Fetching contribution since {} ago", since);
 
         Map<String, Object> variables = Map.of(
                 "login", owner,
                 "since", since.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
         );
-
-        log.info("2. Fetching contribution since {} ago", since);
         
         return executeGraphQLQuery(FULL_CONTRIBUTIONS_QUERY, variables)
                 .doOnError(error -> {

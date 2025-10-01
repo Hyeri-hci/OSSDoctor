@@ -27,6 +27,7 @@ public class UserBadgeService {
     private final UserRepository userRepository;
     private final BadgeRepository badgeRepository;
     private final UserService userService;
+    private final BadgeService badgeService;
 
     public boolean existsByUserIdAndBadgeLevelAndBadgeCategory(Long userId, Integer badgeLevel, BADGE_CATEGORY category) {
         return userBadgeRepository.existsByUserIdAndBadgeLevelAndBadgeCategory(userId, badgeLevel, category);
@@ -95,7 +96,7 @@ public class UserBadgeService {
     }
 
     // 최근 획득 뱃지(12개)
-    public Mono<List<UserBadgeDTO>> getRecentBadges(String nickname) {
+    /*public Mono<List<UserBadgeDTO>> getRecentBadges(String nickname) {
         return Mono.justOrEmpty(userService.findByUsername(nickname)) // Optional<UserDTO> → Mono<UserDTO>
                 .switchIfEmpty(Mono.error(new RuntimeException("User not found")))
                 .flatMap(userDTO ->
@@ -103,6 +104,20 @@ public class UserBadgeService {
                                 userBadgeRepository.findTop12ByUser_IdxOrderByAwardedAtDescIdxAsc(userDTO.getIdx()) // userId 기준 조회
                                         .stream()
                                         .map(this::toDTO)
+                                        .toList()
+                        ).subscribeOn(Schedulers.boundedElastic())
+                );
+    }*/
+
+    public Mono<List<BadgeDTO>> getRecentBadges(String nickname) {
+        return Mono.justOrEmpty(userService.findByUsername(nickname)) // Optional<UserDTO> → Mono<UserDTO>
+                .switchIfEmpty(Mono.error(new RuntimeException("User not found")))
+                .flatMap(userDTO ->
+                        Mono.fromCallable(() ->
+                                userBadgeRepository.findTop12ByUser_IdxOrderByAwardedAtDescIdxAsc(userDTO.getIdx()) // userId 기준 조회
+                                        .stream()
+                                        .map(this::toDTO)
+                                        .map(userBadgeDTO -> badgeService.findById(userBadgeDTO.getBadgeId()))
                                         .toList()
                         ).subscribeOn(Schedulers.boundedElastic())
                 );

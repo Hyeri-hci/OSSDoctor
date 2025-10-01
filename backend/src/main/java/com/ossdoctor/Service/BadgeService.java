@@ -12,10 +12,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -67,7 +64,7 @@ public class BadgeService {
     private static final Map<Integer, Integer> WATCH_THRESHOLDS = new LinkedHashMap<>() {{put(1, 5);put(2, 10);put(3, 15);put(4, 20);}};
     private static final Map<Integer, Integer> REVIEW_THRESHOLDS = new LinkedHashMap<>() {{put(1, 1); put(2, 5); put(3, 10); put(4, 30);}};
 
-    public Mono<List<UserBadgeDTO>> processAllBadges(String nickname) {
+    public Mono<List<BadgeDTO>> processAllBadges(String nickname) {
         return Mono.justOrEmpty(userService.findByUsername(nickname))
                 // 임시 테스트용
                 /*.switchIfEmpty(
@@ -109,7 +106,7 @@ public class BadgeService {
                 });
     }
 
-    public Mono<List<UserBadgeDTO>> awardAllBadges(String nickname, List<BadgeMetricDTO> metrics) {
+    public Mono<List<BadgeDTO>> awardAllBadges(String nickname, List<BadgeMetricDTO> metrics) {
         return Mono.justOrEmpty(userService.findByUsername(nickname))
                 .switchIfEmpty(Mono.defer(() -> {
                     log.warn("사용자 {}를 찾을 수 없어 dabbun으로 대체 시도", nickname);
@@ -164,6 +161,10 @@ public class BadgeService {
             case CODE_REVIEW -> REVIEW_THRESHOLDS;
             default -> Map.of(); // 나머지는 빈 Map
         };
+    }
+
+    public BadgeDTO findById(Long idx){
+        return toDto(Objects.requireNonNull(badgeRepository.findById(idx).orElse(null)));
     }
 
 }
