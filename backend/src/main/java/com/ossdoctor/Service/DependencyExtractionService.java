@@ -5,6 +5,9 @@ import com.ossdoctor.DTO.GithubTreeNodeDTO;
 import com.ossdoctor.DTO.CpeDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
 import java.util.*;
 import java.nio.file.Paths;
 
@@ -32,54 +35,24 @@ public class DependencyExtractionService {
         this.parsers = parsers;
     }
 
-    public List<CpeDTO> extractDependencies(String owner, String repo) {
-        try {
-
-            // 2. 리포지토리 전체 파일 리스트 조회
-            List<GithubTreeNodeDTO> treeNodes = gitHubTreeApiService.getRepositoryTree(owner, repo);
-            List<CpeDTO> allDependencies = new ArrayList<>();
-
-            // 3. 각 파일 탐색 및 필터링
-            for (GithubTreeNodeDTO node : treeNodes) {
-                if (!"blob".equals(node.getType())) {
-                    continue;
-                }
-
-                String path = node.getPath();
-                String fileName = Paths.get(path).getFileName().toString();
-
-                if (isExcludedPath(path)) {
-                    continue;
-                }
-
-                if (excludeFiles.contains(fileName)) {
-                    continue;
-                }
-
-                // 4. 파서 찾기 및 의존성 추출
-                DependencyParser parser = findParser(fileName);
-                if (parser != null) {
-                    try {
-                        String fileContent = gitHubTreeApiService.getFileContent(owner, repo, path);
-                        List<CpeDTO> dependencies = parser.parseDependencies(fileContent);
-                        allDependencies.addAll(dependencies);
-                        log.info("{}에서 {}개의 의존성 발견", path, dependencies.size());
-                    } catch (Exception e) {
-                        log.warn("파일 {} 파싱 실패: {}", path, e.getMessage());
-                    }
-                }
-            }
-
-            // 5. 중복 제거 후 반환
-            return removeDuplicates(allDependencies);
-
-        } catch (IllegalArgumentException e) {
-            log.error("잘못된 리포지토리 URL: {}", owner+'/'+repo);
-            throw e;
-        } catch (Exception e) {
-            log.error("의존성 추출 중 오류 발생: {}", e.getMessage());
-            throw new RuntimeException("의존성 추출 실패", e);
-        }
+    public Flux<CpeDTO> extractDependencies(String owner, String repo) {
+        return gitHubTreeApiService.getRepositoryTree(owner, repo)
+                .flatMapMany(Flux::fromIterable)
+                .filter(node -> "blob".equals(node.getType()))
+                .filter(node -> !isExcludedPath(node.getPath()))
+                .filter(node -> !excludeFiles.contains(Paths.get(node.getPath()).getFileName().toString()))
+                .flatMap(node -> {
+                    DependencyParser parser = findParser(Paths.get(node.getPath()).getFileName().toString());
+                    if (parser == null) return Flux.empty();
+                    return gitHubTreeApiService.getFileContent(owner, repo, node.getPath())
+                            .map(parser::parseDependencies)
+                            .flatMapMany(Flux::fromIterable)
+                            .onErrorResume(e -> {
+                                log.warn("파일 {} 파싱 실패 : {}", node.getPath(), e);
+                                return Flux.empty();
+                            })
+                })
+                .distinct()
     }
 
     private boolean isExcludedPath(String path) {
