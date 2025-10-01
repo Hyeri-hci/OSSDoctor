@@ -52,12 +52,15 @@ public class SecurityService {
                     .subscribe();
 
             // CPE 조회하기
-            List<CpeDTO> matchedCpeList = cpeService.findCpeList(dependencies);
-            if (matchedCpeList.isEmpty()) {
-                log.info("CPE DB에서 매칭되는 의존성 없음");
-            } else {
-                log.info("CPE DB에서 {}개의 CPE 매칭", matchedCpeList.size());
-            }
+            Flux<CpeDTO> matchedCpeFlux = cpeService.findCpeList(dependencies);
+            matchedCpeFlux.hasElements()
+                    .flatMap(has -> {
+                        if(!has) log.info("CPE DB에서 매칭되는 의존성 없음");
+                        else log.info("CPE DB에서 CPE 매칭 성공");
+                        return Mono.empty();
+                    })
+                    .subscribe();
+
 
             // NVD에 조회할 API URI 생성하기
             List<String> cpeUriList = nvdApiService.convertCpeListToUriList(matchedCpeList);
