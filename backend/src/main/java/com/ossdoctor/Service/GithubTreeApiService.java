@@ -74,41 +74,28 @@ public class GithubTreeApiService {
 
 
     // Api를 보내서 repo의 파일 내용을 받아오는 메서드
-    public String getFileContent(String owner, String repo, String path) {
+    public Mono<String> getFileContent(String owner, String repo, String path) {
         // 파일의 정보를 확인해 api를 보낼 주소를 생성한다.
         String url = String.format("https://api.github.com/repos/%s/%s/contents/%s",
                 owner, repo, path);
-
-        // api 요청을 위한 헤더 생성
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", "Bearer " + githubToken); // Bearer 방식으로 변경
-        headers.set("Accept", "application/vnd.github+json");
-        headers.set("User-Agent", "OSSDoctor/1.0");
-
-        HttpEntity<String> entity = new HttpEntity<>(headers);
-
-        try {
-            log.debug("📄 파일 내용 조회: {}", path);
-            // api 보낸 후 응답(파일의 내용)
-            ResponseEntity<GithubTreeFileResponseDTO> response = restTemplate.exchange(
-                    url, HttpMethod.GET, entity, GithubTreeFileResponseDTO.class);
-
-            String content = response.getBody().getContent();
-            if (content == null) {
-                log.warn("⚠️ 파일 내용이 null: {}", path);
-                return "";
-            }
-
-            // ✅ 공백 제거 후 Base64 디코딩
-            String decoded = new String(Base64.getDecoder().decode(content.replaceAll("\\s", "")));
-            log.debug("✅ 파일 내용 조회 완료: {} ({}바이트)", path, decoded.length());
-
-            return decoded;
-
-        } catch (Exception e) {
-            log.error("💥 파일 내용 조회 실패: {} - {}", path, e.getMessage());
-            return ""; // 실패 시 빈 문자열 반환 (서비스에서 처리)
-        }
+        return webClient.get()
+                .uri(url)
+                .headers(httpHeaders -> {
+                    httpHeaders.setBearerAuth(githubToken);
+                    httpHeaders.set("Accept", "application/vnd.github+json");
+                    httpHeaders.set("User-Agent", "OSSDoctor/1.0");
+                })
+                .retrieve()
+                .bodyToMono(GithubTreeFileResponseDTO.class)
+                .map(githubTreeFileResponseDTO -> {
+                    String content = githubTreeFileResponseDTO.getContent();
+                    if (content == null) {
+                        log.warn("파일 내용이 null : {}", path);
+                        return "";
+                    }
+                    return new String(Base64.getDecoder().decode(content.replaceAll("\\s", "")));
+                })
+                .doOnError(e -> log.error("파일 내용 조회 실패 : {}\n{}",path, e));
     }
 
     /**
