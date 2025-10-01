@@ -15,6 +15,16 @@ const DiagnoseSearchSection = forwardRef(({ onSearch }, ref) => {
         }
     }));
 
+    // URL 파라미터에서 repo 값을 읽어서 input 창에 설정
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const repoParam = urlParams.get('repo');
+        
+        if (repoParam) {
+            setSearchInput(repoParam);
+        }
+    }, []);
+
     useEffect(() => {
         const handleResize = () => {
             setShowButton(window.innerWidth >= 1024);
@@ -92,6 +102,7 @@ const DiagnoseSearchSection = forwardRef(({ onSearch }, ref) => {
     );
 });
 
+DiagnoseSearchSection.displayName = 'DiagnoseSearchSection';
 
 DiagnoseSearchSection.propTypes = {
     onSearch: PropTypes.func.isRequired

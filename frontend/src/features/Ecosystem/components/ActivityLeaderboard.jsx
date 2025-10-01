@@ -8,7 +8,7 @@ import { initiateGitHubLogin } from '../../../utils/github-auth';
 
 const ActivityLeaderboard = ({ onBack }) => {
     const [timePeriod, setTimePeriod] = useState('today'); // 'realtime' -> 'today'로 변경
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, isLoading: authLoading } = useAuth();
 
     const {
         leaderboardData,
@@ -27,12 +27,12 @@ const ActivityLeaderboard = ({ onBack }) => {
         });
     };
 
-    // 로딩 상태 처리 - 로딩 중일 때 스피너 표시
-    if (loading && !leaderboardData.length) {
+    // 로딩 상태 처리 - 인증 로딩 중이거나 리더보드 로딩 중일 때 스피너 표시
+    if ((authLoading || loading) && !leaderboardData.length) {
         return (
             <div className='py-8'>
                 <LoadingSpinner
-                    message='리더보드 데이터를 불러오고 있습니다...'
+                    message={authLoading ? '인증 상태를 확인하고 있습니다...' : '리더보드 데이터를 불러오고 있습니다...'}
                     size='large'
                     color='blue'
                 />
@@ -196,7 +196,17 @@ const ActivityLeaderboard = ({ onBack }) => {
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
                     <h3 className="text-lg font-semibold mb-4 text-blue-800">나의 랭킹은?</h3>
                     
-                    {isAuthenticated && currentUser ? (
+                    {authLoading ? (
+                        /* 인증 상태 확인 중 */
+                        <div className="text-center py-8">
+                            <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                            </div>
+                            <p className="text-gray-500 text-sm">
+                                인증 상태를 확인하고 있습니다...
+                            </p>
+                        </div>
+                    ) : isAuthenticated && currentUser ? (
                         /* 로그인된 상태 - 사용자 랭킹 정보 표시 */
                         <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-4">
