@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Button, ProjectCard } from '../../../components/common';
 
-const RecommendedProjectsSection = ({ projects = [] }) => {
+const RecommendedProjectsSection = ({ projects = [], loading = false, error = null }) => {
 
     const defaultProjects = [
         {
@@ -34,7 +34,56 @@ const RecommendedProjectsSection = ({ projects = [] }) => {
         }
     ];
 
-    const dispalyProjects = projects.length > 0 ? projects : defaultProjects;
+    // 로딩 중일 때
+    if (loading) {
+        return (
+            <section className="py-16">
+                <div className="container mx-auto px-6 xl:px-8 2xl:px-12">
+                    <div className="max-w-7xl mx-auto">
+                        <div className="flex flex-row justify-between items-start sm:items-center gap-4 mb-8">
+                            <div className="space-y-2 flex-1">
+                                <h2 className="text-xl lg:text-2xl xl:text-3xl font-bold">추천 프로젝트</h2>
+                                <p className="text-sm lg:text-base xl:text-lg text-gray-600">지금 활발한 오픈소스 프로젝트를 탐색해 보세요.</p>
+                            </div>
+
+                            <Button
+                                className="flex-shrink-0 mt-1"
+                                size="default"
+                                onClick={() => window.location.href = '/ecosystem'}
+                            >
+                                더 보기
+                            </Button>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-6">
+                            {[1, 2, 3].map((index) => (
+                                <div key={index} className="animate-pulse">
+                                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                                        <div className="flex items-start space-x-4">
+                                            <div className="w-16 h-16 bg-gray-200 rounded-lg"></div>
+                                            <div className="flex-1 space-y-3">
+                                                <div className="h-6 bg-gray-200 rounded w-1/3"></div>
+                                                <div className="h-4 bg-gray-200 rounded w-full"></div>
+                                                <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+                                                <div className="flex space-x-4">
+                                                    <div className="h-4 bg-gray-200 rounded w-16"></div>
+                                                    <div className="h-4 bg-gray-200 rounded w-16"></div>
+                                                    <div className="h-4 bg-gray-200 rounded w-16"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </section>
+        );
+    }
+
+    // 에러가 있거나 데이터가 없으면 기본 프로젝트 표시
+    const displayProjects = (error || projects.length === 0) ? defaultProjects : projects;
 
     return (
         <section className="py-16">
@@ -56,7 +105,7 @@ const RecommendedProjectsSection = ({ projects = [] }) => {
                     </div>
 
                     <div className="grid grid-cols-1 gap-6">
-                        {dispalyProjects.map((project, index) => (
+                        {displayProjects.map((project, index) => (
                             <ProjectCard 
                                 key={index} 
                                 project={project} 
@@ -80,10 +129,12 @@ RecommendedProjectsSection.propTypes = {
             description: PropTypes.string.isRequired,
             lastCommit: PropTypes.string.isRequired,
             language: PropTypes.string.isRequired,
-            stars: PropTypes.number.isRequired,
-            forks: PropTypes.number.isRequired
+            stars: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
+            forks: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired
         })),
         // projects 자체는 필수로 두지 않음 - 기본값([])을 제공하기 때문
+    loading: PropTypes.bool,
+    error: PropTypes.string
 };
 
 export default RecommendedProjectsSection;

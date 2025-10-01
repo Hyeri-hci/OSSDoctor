@@ -1,0 +1,1 @@
+export { getMainRecommendedProjects } from './mainApi.js';

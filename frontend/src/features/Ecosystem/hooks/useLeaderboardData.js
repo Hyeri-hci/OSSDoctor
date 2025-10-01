@@ -9,7 +9,7 @@ import { MOCK_LEADERBOARD_DATA, MOCK_CURRENT_USER } from '../mockData';
  * @return {Object} 리더보드 데이터와 관련된 함수들
  */
 const useLeaderboardData = (timePeriod = 'today') => {
-    const { user, isAuthenticated } = useAuth();
+    const { user, isAuthenticated, isLoading: authLoading } = useAuth();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [leaderboardData, setLeaderboardData] = useState([]);
@@ -99,10 +99,13 @@ const useLeaderboardData = (timePeriod = 'today') => {
         await loadLeaderboardData();
     };
 
-    // timePeriod 변경시 데이터 새로 로드
+    // timePeriod 변경시 또는 인증 상태 확인 완료 후 데이터 새로 로드
     useEffect(() => {
-        loadLeaderboardData();
-    }, [timePeriod, isAuthenticated, user?.nickname]);
+        // 인증 상태 로딩이 완료된 후에만 리더보드 데이터 로드
+        if (!authLoading) {
+            loadLeaderboardData();
+        }
+    }, [timePeriod, isAuthenticated, user?.nickname, authLoading]);
 
     return {
         leaderboardData,
