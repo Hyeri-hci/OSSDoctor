@@ -19,6 +19,8 @@ public interface ContributionRepository extends JpaRepository<ContributionEntity
     Optional<ContributionEntity> findTopByUserIdxOrderByContributedAtDesc(Long userId);
 
     List<ContributionEntity> findByUserOrderByContributedAtDesc(Optional<UserEntity> user);
+
+    List<ContributionEntity> findByUserIdxAndEndAtIsNull(Long user_idx);
     
     // 중복 체크: 같은 사용자의 같은 레포지토리, 같은 번호의 기여가 있는지 확인
     @Query("SELECT COUNT(c) > 0 FROM ContributionEntity c WHERE c.user.idx = :userId AND c.repositoryName = :repositoryName AND c.number = :number AND c.referenceType = :referenceType")

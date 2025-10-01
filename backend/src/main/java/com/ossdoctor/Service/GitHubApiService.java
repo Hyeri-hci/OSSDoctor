@@ -337,6 +337,32 @@ public class GitHubApiService {
     }
     """;
 
+    // PR 상태 추적
+    private static final String PULL_REQUEST_QUERY = """
+    query GetPullRequest($owner: String!, $repo: String!, $number: Int!) {
+      repository(owner: $owner, name: $repo) {
+        pullRequest(number: $number) {
+          state
+          mergedAt
+          closedAt
+        }
+      }
+    }
+    """;
+
+    // Issue 상태 추적
+    private static final String ISSUE_QUERY = """
+    query GetIssue($owner: String!, $repo: String!, $number: Int!) {
+      repository(owner: $owner, name: $repo) {
+        issue(number: $number) {
+          state
+          closedAt
+        }
+      }
+    }
+    """;
+
+
     // =========== 공개 API 메서드 ===========
 
     // Repository 기본 정보 조회
@@ -484,6 +510,38 @@ public class GitHubApiService {
         return executeGraphQLQuery(CONTRIBUTION_CALENDAR_QUERY, variables)
                 .doOnNext(response -> log.info("GraphQL Response: {}", response.toPrettyString()))
                 .map(this::parseContributionCalendar)
+                .onErrorMap(this::handleApiError);
+    }
+
+    // PR 추적
+    public Mono<ContributionDTO> getPullRequest(String owner, String repo, int number) {
+        log.info("Fetching Pull Request #{} from {}/{}", number, owner, repo);
+
+        Map<String, Object> variables = Map.of(
+                "owner", owner,
+                "repo", repo,
+                "number", number
+        );
+
+        return executeGraphQLQuery(PULL_REQUEST_QUERY, variables)
+                .doOnNext(response -> log.info("GraphQL Response: {}", response.toPrettyString()))
+                .map(this::parsePullRequest)
+                .onErrorMap(this::handleApiError);
+    }
+
+    // Issue 추적
+    public Mono<ContributionDTO> getIssue(String owner, String repo, int number) {
+        log.info("Fetching Issue #{} from {}/{}", number, owner, repo);
+
+        Map<String, Object> variables = Map.of(
+                "owner", owner,
+                "repo", repo,
+                "number", number
+        );
+
+        return executeGraphQLQuery(ISSUE_QUERY, variables)
+                .doOnNext(response -> log.info("GraphQL Response: {}", response.toPrettyString()))
+                .map(this::parseIssue)
                 .onErrorMap(this::handleApiError);
     }
 
@@ -794,6 +852,51 @@ public class GitHubApiService {
         return BadgeMetricDTO.builder()
                 .badgeCategory(BADGE_CATEGORY.COMMIT_STREAK)
                 .count(longestStreak)
+                .build();
+    }
+
+    private ContributionDTO parsePullRequest(JsonNode response) {
+        JsonNode pr = response.path("data").path("repository").path("pullRequest");
+
+        // 상태 계산
+        CONTRIBUTION_TYPE state = pr.hasNonNull("mergedAt")
+                ? CONTRIBUTION_TYPE.MERGED
+                : "OPEN".equals(pr.path("state").asText())
+                ? CONTRIBUTION_TYPE.OPEN
+                : CONTRIBUTION_TYPE.CLOSED;
+
+        // 종료 시점 계산
+        ZonedDateTime endAt = null;
+        if (pr.hasNonNull("mergedAt")) {
+            endAt = parseDate(pr.path("mergedAt").asText());
+        } else if ("CLOSED".equals(pr.path("state").asText()) && pr.hasNonNull("closedAt")) {
+            endAt = parseDate(pr.path("closedAt").asText());
+        }
+
+        return ContributionDTO.builder()
+                .state(state)
+                .endAt(endAt)
+                .referenceType(REFERENCE_TYPE.PR)
+                .build();
+    }
+
+    private ContributionDTO parseIssue(JsonNode response) {
+        JsonNode issue = response.path("data").path("repository").path("issue");
+
+        // 상태 계산
+        CONTRIBUTION_TYPE state = "OPEN".equals(issue.path("state").asText())
+                ? CONTRIBUTION_TYPE.OPEN
+                : CONTRIBUTION_TYPE.CLOSED;
+
+        // 종료 시점 계산
+        ZonedDateTime endAt = issue.hasNonNull("closedAt")
+                ? parseDate(issue.path("closedAt").asText())
+                : null;
+
+        return ContributionDTO.builder()
+                .state(state)
+                .endAt(endAt)
+                .referenceType(REFERENCE_TYPE.ISSUE)
                 .build();
     }
 
