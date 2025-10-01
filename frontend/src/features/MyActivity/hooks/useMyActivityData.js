@@ -4,10 +4,10 @@ import {
     getUserStats, 
     getUserHistory, 
     getUserLevel,
-    getUserBadges,
+    getUserRecentBadges,
     transformStatsData,
     transformHistoryData,
-    transformBadgesData,
+    transformRecentBadgesData,
     generateContributionTypeChart,
     generateActivityTrendChart
 } from "../api/myActivityApi";
@@ -29,7 +29,7 @@ const useMyActivityData = () => {
         stats: null,                // 기여 통계 요약
         contributionTypes: [],      // 기여 유형별 데이터
         activities: [],             // 기여 활동 추이 데이터
-        badges: [],                 // 뱃지 데이터
+        recentBadges: [],           // 최근 뱃지 데이터 (개요 탭용)
         history: []                 // 기여 이력 데이터
     });
 
@@ -53,22 +53,33 @@ const useMyActivityData = () => {
 
                 const currentUser = user.nickname || user.login; // GitHub 사용자명 사용
 
-                // 병렬로 API 호출 (뱃지 API 추가)
-                const [statsResponse, historyResponse, levelResponse, badgesResponse] = await Promise.all([
+                // 1단계: 기여 이력 먼저 불러오기
+                console.log('🔄 1단계: 기여 이력 로딩 시작');
+                const historyResponse = await getUserHistory(currentUser).catch(err => {
+                    console.warn('기여 이력 로딩 실패, 기본값 사용:', err);
+                    return { success: false, data: {} };
+                });
+
+                const history = historyResponse.success ? 
+                    transformHistoryData(historyResponse.data) : 
+                    [];
+
+                // 2단계: 레벨 정보 불러오기
+                console.log('🔄 2단계: 레벨 정보 로딩 시작');
+                const levelResponse = await getUserLevel(currentUser).catch(err => {
+                    console.warn('레벨 정보 로딩 실패, 기본값 사용:', err);
+                    return { success: false, data: { level: 1, totalScore: 0 } };
+                });
+
+                // 3단계: 통계와 최근 뱃지 병렬로 불러오기
+                console.log('🔄 3단계: 통계 및 최근 뱃지 로딩 시작');
+                const [statsResponse, recentBadgesResponse] = await Promise.all([
                     getUserStats(currentUser).catch(err => {
                         console.warn('통계 데이터 로딩 실패, 기본값 사용:', err);
                         return { success: false, data: { monthlyPR: 0, monthlyIssue: 0, monthlyCommit: 0, totalScore: 0 } };
                     }),
-                    getUserHistory(currentUser).catch(err => {
-                        console.warn('기여 이력 로딩 실패, 기본값 사용:', err);
-                        return { success: false, data: {} };
-                    }),
-                    getUserLevel(currentUser).catch(err => {
-                        console.warn('레벨 정보 로딩 실패, 기본값 사용:', err);
-                        return { success: false, data: { level: 1, totalScore: 0 } };
-                    }),
-                    getUserBadges(currentUser).catch(err => {
-                        console.warn('뱃지 데이터 로딩 실패, 목업 데이터 사용:', err);
+                    getUserRecentBadges(currentUser).catch(err => {
+                        console.warn('최근 뱃지 데이터 로딩 실패, 목업 데이터 사용:', err);
                         return { success: false, data: null };
                     })
                 ]);
@@ -78,14 +89,10 @@ const useMyActivityData = () => {
                     transformStatsData(statsResponse.data) : 
                     { monthlyPR: 0, monthlyIssue: 0, monthlyCommit: 0, totalScore: 0 };
 
-                const history = historyResponse.success ? 
-                    transformHistoryData(historyResponse.data) : 
-                    [];
-
-                // 뱃지 데이터 변환 (백엔드 API 우선, 실패시 목업 데이터 사용)
-                const badges = badgesResponse.success ? 
-                    transformBadgesData(badgesResponse) : 
-                    badgesData;
+                // 최근 뱃지 데이터 변환 (개요 탭용)
+                const recentBadges = recentBadgesResponse.success ? 
+                    transformRecentBadgesData(recentBadgesResponse) : 
+                    badgesData.filter(badge => badge.earned).slice(0, 12);
 
                 // 차트 데이터 생성 (history 데이터도 함께 전달)
                 const contributionTypes = generateContributionTypeChart(stats);
@@ -95,7 +102,7 @@ const useMyActivityData = () => {
                     stats: stats,
                     contributionTypes: contributionTypes,
                     activities: activities,
-                    badges: badges, // 실제 백엔드 데이터 또는 목업 데이터
+                    recentBadges: recentBadges, // 개요 탭용 최근 뱃지
                     history: history,
                     userLevel: levelResponse.success ? levelResponse.data : { level: 1, totalScore: 0 }
                 });
@@ -109,7 +116,7 @@ const useMyActivityData = () => {
                     stats: { monthlyPR: 0, monthlyIssue: 0, monthlyCommit: 0, totalScore: 0 },
                     contributionTypes: [{ label: 'No Data', value: 100, color: '#E5E7EB' }],
                     activities: [],
-                    badges: badgesData,
+                    recentBadges: badgesData.filter(badge => badge.earned).slice(0, 12),
                     history: []
                 });
             } finally {
