@@ -11,6 +11,7 @@ import com.ossdoctor.Repository.RepositoryRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
@@ -41,12 +42,14 @@ public class SecurityService {
             }
 
             // 의존성 파싱하기
-            List<CpeDTO> dependencies = dependencyExtractionService.extractDependencies(owner, repo);
-            if (dependencies.isEmpty()) {
-                log.info("{}에서 의존성을 찾을 수 없음", repo);
-            } else {
-                log.info("{}의 의존성 파싱 완료", repo);
-            }
+            Flux<CpeDTO> dependencies = dependencyExtractionService.extractDependencies(owner, repo);
+            dependencies.hasElements()
+                    .flatMap(has -> {
+                        if(!has) log.info("{}에서 의존성 찾을 수 없음", repo);
+                        else log.info("{}의 의존성 파싱 완료", repo);
+                        return Mono.empty();
+                    })
+                    .subscribe();
 
             // CPE 조회하기
             List<CpeDTO> matchedCpeList = cpeService.findCpeList(dependencies);
