@@ -70,7 +70,7 @@ const MyActivityPage = () => {
             case 'contribution':
                 return <ContributionHistoryTab />;
             case 'badges':
-                return <BadgesTab badges={data?.badges || []} />;
+                return <BadgesTab />;
             default:
                 return <OverviewTab onTabChange={handleTabChange} />;
         }
