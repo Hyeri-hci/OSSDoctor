@@ -193,64 +193,76 @@ export const generateContributionTypeChart = (stats) => {
 };
 
 /**
- * 활동 추이 차트 데이터 생성 (월별 실제 기여 개수 기반)
- * @param {Object} stats - 통계 데이터
- * @param {Array} historyData - 기여 이력 데이터
+ * 활동 추이 차트 데이터 생성 (DB의 실제 contributed_at 기반 월별 집계)
+ * @param {Object} stats - 통계 데이터  
+ * @param {Array} historyData - 기여 이력 데이터 (transformHistoryData로 변환된 데이터)
  * @returns {Array} 차트 데이터
  */
 export const generateActivityTrendChart = (stats, historyData = []) => {
     const months = [];
     const currentDate = new Date();
     
-    // 월별 실제 기여 개수 집계
+    console.log('📊 활동 추이 차트 데이터 생성 시작');
+    console.log('📊 전달받은 historyData:', historyData);
+    console.log('📊 historyData 길이:', historyData.length);
+    
+    // DB에서 가져온 실제 기여 데이터를 월별로 집계
     const monthlyContributionCounts = {};
     
-    // historyData에서 실제 기여 이력을 월별로 집계
+    // historyData는 transformHistoryData로 변환된 형태:
+    // [{ date: "2024년 9월 15일", activities: [...] }, ...]
     if (historyData && historyData.length > 0) {
         historyData.forEach(dayData => {
             if (dayData.activities && dayData.activities.length > 0) {
-                dayData.activities.forEach(() => {
-                    // 활동 날짜를 파싱 (dayData.date 사용)
-                    const date = new Date(dayData.date);
-                    const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
-                    
-                    if (!monthlyContributionCounts[monthKey]) {
-                        monthlyContributionCounts[monthKey] = 0;
+                // dayData.date는 "2024년 9월 15일" 형태로 formatDateForDisplay에 의해 변환됨
+                // 이를 다시 Date 객체로 파싱해야 함
+                const dateStr = dayData.date;
+                let date;
+                
+                try {
+                    // "2024년 9월 15일" 형태를 파싱
+                    const matches = dateStr.match(/(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/);
+                    if (matches) {
+                        const [, year, month, day] = matches;
+                        date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+                    } else {
+                        // 파싱에 실패하면 현재 날짜 사용
+                        date = new Date();
                     }
-                    
-                    // 각 기여는 1개로 카운트 (개수 기반)
-                    monthlyContributionCounts[monthKey] += 1;
-                });
+                } catch (error) {
+                    console.warn('📊 날짜 파싱 실패:', dateStr, error);
+                    date = new Date();
+                }
+                
+                const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
+                
+                if (!monthlyContributionCounts[monthKey]) {
+                    monthlyContributionCounts[monthKey] = 0;
+                }
+                
+                // 해당 날짜의 기여 개수를 월별 카운트에 추가
+                monthlyContributionCounts[monthKey] += dayData.activities.length;
+                
+                console.log(`📊 ${dateStr} (${monthKey}): ${dayData.activities.length}개 기여`);
             }
         });
     }
     
-    // 현재 월의 총 기여 개수 (stats에서 가져온 월별 데이터)
-    const currentMonthTotal = (stats?.monthlyPR || 0) + 
-                             (stats?.monthlyIssue || 0) + 
-                             (stats?.monthlyCommit || 0);
+    console.log('📊 월별 집계 결과:', monthlyContributionCounts);
     
-    // 최근 7개월 데이터 생성 (실제 데이터만 사용)
+    // 최근 7개월 데이터 생성 (실제 DB 데이터만 사용)
     for (let i = 6; i >= 0; i--) {
         const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
         const monthName = date.toLocaleDateString('ko-KR', { month: 'short' });
         const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
         
-        let value;
-        if (i === 0) {
-            // 현재 월: stats 데이터 사용 (가장 신뢰할 수 있는 데이터)
-            value = currentMonthTotal;
-        } else {
-            // 이전 월들: 실제 이력 데이터에서 집계된 값 사용, 없으면 0
-            value = monthlyContributionCounts[monthKey] || 0;
-        }
-        
+        // DB에서 집계된 실제 기여 개수 사용 (없으면 0)
+        const value = monthlyContributionCounts[monthKey] || 0;
         months.push({
             label: monthName,
             value: value
         });
     }
-    
     return months;
 };
 

@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -80,7 +80,7 @@ public class NvdApiService {
                     .repositoryId(repositoryId)
                     .severity(severity)
                     .description(description)
-                    .detectedAt(LocalDateTime.now())
+                    .detectedAt(ZonedDateTime.now())
                     .fixed(Boolean.FALSE)
                     .build();
             vulnerabilityDTOList.add(vulner);
@@ -283,13 +283,13 @@ public class NvdApiService {
                 SEVERITY severity = extractSeverity(cve.path("metrics"));
 
                 // 4. 공개 날짜 추출 (ISO 8601 형식)
-                LocalDateTime detectedAt = parseDateTime(cve.path("published").asText());
+                ZonedDateTime detectedAt = parseDateTime(cve.path("published").asText());
 
                 VulnerabilityDTO dto = VulnerabilityDTO.builder()
                         .repositoryId(repositoryId)
                         .severity(severity)
                         .description(description)
-                        .detectedAt(detectedAt != null ? detectedAt : LocalDateTime.now())
+                        .detectedAt(detectedAt != null ? detectedAt : ZonedDateTime.now())
                         .fixed(Boolean.FALSE) // 초기에는 미수정 상태
                         .build();
 
@@ -444,10 +444,10 @@ public class NvdApiService {
     }
 
     /**
-     * ISO 8601 날짜 문자열을 LocalDateTime으로 파싱
+     * ISO 8601 날짜 문자열을 ZonedDateTime으로 파싱
      * CVE API Schema의 published 필드 처리
      */
-    private LocalDateTime parseDateTime(String dateStr) {
+    private ZonedDateTime parseDateTime(String dateStr) {
         if (dateStr == null || dateStr.trim().isEmpty()) {
             return null;
         }
@@ -457,14 +457,14 @@ public class NvdApiService {
             if (dateStr.contains("T")) {
                 // 밀리초 및 타임존 정보 제거 후 파싱
                 String cleanDateStr = dateStr.replaceAll("\\.\\d{3}.*", "");
-                return LocalDateTime.parse(cleanDateStr, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+                return ZonedDateTime.parse(cleanDateStr, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
             } else {
                 // 날짜만 있는 경우 (예: "2023-01-15")
-                return LocalDateTime.parse(dateStr + "T00:00:00", DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+                return ZonedDateTime.parse(dateStr + "T00:00:00", DateTimeFormatter.ISO_LOCAL_DATE_TIME);
             }
         } catch (Exception e) {
             log.warn("⚠️ 날짜 파싱 실패: {} - {}", dateStr, e.getMessage());
-            return LocalDateTime.now(); // 파싱 실패 시 현재 시각 사용
+            return ZonedDateTime.now(); // 파싱 실패 시 현재 시각 사용
         }
     }
 }

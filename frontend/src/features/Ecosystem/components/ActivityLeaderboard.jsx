@@ -3,9 +3,12 @@ import PropTypes from 'prop-types';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { Button, EmptyState, LoadingSpinner } from '../../../components/common';
 import useLeaderboardData from '../hooks/useLeaderboardData';
+import { useAuth } from '../../../hooks/useAuth';
+import { initiateGitHubLogin } from '../../../utils/github-auth';
 
 const ActivityLeaderboard = ({ onBack }) => {
-    const [timePeriod, setTimePeriod] = useState('realtime');
+    const [timePeriod, setTimePeriod] = useState('today'); // 'realtime' -> 'today'로 변경
+    const { isAuthenticated } = useAuth();
 
     const {
         leaderboardData,
@@ -17,6 +20,12 @@ const ActivityLeaderboard = ({ onBack }) => {
     const handleTimePeriodChange = (period) => {
         setTimePeriod(period);
     }
+
+    const handleLoginClick = () => {
+        initiateGitHubLogin({
+            redirectAfterLogin: '/ecosystem' // 로그인 후 생태계 페이지로 리디렉션
+        });
+    };
 
     // 로딩 상태 처리 - 로딩 중일 때 스피너 표시
     if (loading && !leaderboardData.length) {
@@ -74,13 +83,13 @@ const ActivityLeaderboard = ({ onBack }) => {
                             <span className="text-sm text-gray-600 whitespace-nowrap">기간 설정:</span>
                             <div className="flex bg-gray-100 rounded-lg p-1">
                                 <button
-                                    onClick={() => handleTimePeriodChange('realtime')}
-                                    className={`px-3 py-1 text-sm rounded-md transition-colors ${timePeriod === 'realtime'
+                                    onClick={() => handleTimePeriodChange('today')}
+                                    className={`px-3 py-1 text-sm rounded-md transition-colors ${timePeriod === 'today'
                                         ? 'bg-white text-gray-900 shadow-sm'
                                         : 'text-gray-600 hover:text-gray-900'
                                         }`}
                                 >
-                                    실시간
+                                    오늘
                                 </button>
                                 <button
                                     onClick={() => handleTimePeriodChange('week')}
@@ -186,28 +195,67 @@ const ActivityLeaderboard = ({ onBack }) => {
                 {/* 나의 랭킹 */}
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
                     <h3 className="text-lg font-semibold mb-4 text-blue-800">나의 랭킹은?</h3>
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4">
-                            {/* 아바타 */}
-                            <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center overflow-hidden">
-                                <span className="text-2xl">😊</span>
+                    
+                    {isAuthenticated && currentUser ? (
+                        /* 로그인된 상태 - 사용자 랭킹 정보 표시 */
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-4">
+                                {/* 아바타 */}
+                                <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center overflow-hidden">
+                                    {currentUser.avatarUrl ? (
+                                        <img 
+                                            src={currentUser.avatarUrl} 
+                                            alt={currentUser.username}
+                                            className="w-full h-full object-cover"
+                                        />
+                                    ) : (
+                                        <span className="text-2xl">😊</span>
+                                    )}
+                                </div>
+
+                                {/* 사용자 정보 */}
+                                <div>
+                                    <div className="font-semibold text-lg">{currentUser.username}</div>
+                                    <div className="text-gray-500 text-sm">GitHub Username</div>
+                                    {currentUser.rank && (
+                                        <div className="text-blue-600 text-sm font-medium">
+                                            전체 순위: {currentUser.rank}위
+                                        </div>
+                                    )}
+                                </div>
                             </div>
 
-                            {/* 사용자 정보 */}
-                            <div>
-                                <div className="font-semibold text-lg">{currentUser.username}</div>
-                                <div className="text-gray-500 text-sm">GitHub Username</div>
+                            {/* 랭킹과 점수 */}
+                            <div className="text-right">
+                                <div className="font-bold text-lg mb-1">Score: {currentUser.totalScore?.toLocaleString() || 0}</div>
+                                <div className="text-sm text-gray-600">
+                                    Commits: {currentUser.commitsCount || 0} | PRs: {currentUser.prCount || 0} | Issues: {currentUser.issueCount || 0}
+                                </div>
                             </div>
                         </div>
-
-                        {/* 랭킹과 점수 */}
-                        <div className="text-right">
-                            <div className="font-bold text-lg mb-1">Score: {currentUser.totalScore.toLocaleString()}</div>
-                            <div className="text-sm text-gray-600">
-                                Commits: {currentUser.commitsCount} | PRs: {currentUser.prCount} | Issues: {currentUser.issueCount}
+                    ) : (
+                        /* 로그인하지 않은 상태 - 로그인 유도 */
+                        <div className="text-center py-8">
+                            <div className="mb-4">
+                                <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-3">
+                                    <span className="text-2xl">🔒</span>
+                                </div>
+                                <h4 className="text-lg font-semibold text-gray-700 mb-2">
+                                    나의 순위를 확인하고 싶나요?
+                                </h4>
+                                <p className="text-gray-500 text-sm mb-6">
+                                    로그인하면 나의 활동 점수와 순위를 확인할 수 있습니다.
+                                </p>
                             </div>
+                            <Button 
+                                onClick={handleLoginClick}
+                                variant="primary"
+                                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2"
+                            >
+                                GitHub으로 로그인하기
+                            </Button>
                         </div>
-                    </div>
+                    )}
                 </div>
             </div>
         </div>

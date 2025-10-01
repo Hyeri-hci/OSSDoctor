@@ -68,12 +68,12 @@ public class BadgeDataInitializer implements CommandLineRunner {
                 BadgeDTO.builder().name("Watchtower").description("5개 프로젝트를 관찰하고 있습니다").category(BADGE_CATEGORY.WATCH).level(1).requirement("5/10/20/50개 watch").build(),
                 BadgeDTO.builder().name("Watchful Neighbor").description("이웃 프로젝트를 살피는 관찰자").category(BADGE_CATEGORY.WATCH).level(2).requirement("5/10/20/50개 watch").build(),
                 BadgeDTO.builder().name("Pulse Guardian").description("프로젝트 맥박을 지키는 수호자").category(BADGE_CATEGORY.WATCH).level(3).requirement("5/10/20/50개 watch").build(),
-                BadgeDTO.builder().name("Sentinel of Trends").description("트렌드의 파수꾼").category(BADGE_CATEGORY.WATCH).level(4).requirement("5/10/20/50개 watch").build(),
+                BadgeDTO.builder().name("Sentinel of Trends").description("트렌드의 파수꾼").category(BADGE_CATEGORY.WATCH).level(4).requirement("5/10/20/50개 watch").build()
 
-                BadgeDTO.builder().name("Upcycle Explorer").description("업사이클링 프로젝트에 첫 참여").category(BADGE_CATEGORY.UPCYCLE).level(1).requirement("업사이클링 리포지토리 기여활동 (PR, Issue 생성/답변 등) 1/5/15/30").build(),
+                /*BadgeDTO.builder().name("Upcycle Explorer").description("업사이클링 프로젝트에 첫 참여").category(BADGE_CATEGORY.UPCYCLE).level(1).requirement("업사이클링 리포지토리 기여활동 (PR, Issue 생성/답변 등) 1/5/15/30").build(),
                 BadgeDTO.builder().name("Revival Contributor").description("프로젝트 부활에 기여하는 공헌자").category(BADGE_CATEGORY.UPCYCLE).level(2).requirement("업사이클링 리포지토리 기여활동 (PR, Issue 생성/답변 등) 1/5/15/30").build(),
                 BadgeDTO.builder().name("Sustainability Builder").description("지속가능성을 구축하는 빌더").category(BADGE_CATEGORY.UPCYCLE).level(3).requirement("업사이클링 리포지토리 기여활동 (PR, Issue 생성/답변 등) 1/5/15/30").build(),
-                BadgeDTO.builder().name("Legacy Reviver").description("레거시를 되살리는 부활의 마스터").category(BADGE_CATEGORY.UPCYCLE).level(4).requirement("업사이클링 리포지토리 기여활동 (PR, Issue 생성/답변 등) 1/5/15/30").build()
+                BadgeDTO.builder().name("Legacy Reviver").description("레거시를 되살리는 부활의 마스터").category(BADGE_CATEGORY.UPCYCLE).level(4).requirement("업사이클링 리포지토리 기여활동 (PR, Issue 생성/답변 등) 1/5/15/30").build()*/
         );
 
         badges.forEach(badge -> {

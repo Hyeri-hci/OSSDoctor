@@ -6,7 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 
 @Data
 @Builder
@@ -42,8 +42,8 @@ public class ContributionEntity {
     private String title;
 
     @Column(name = "contributed_at", nullable = false)
-    private LocalDateTime contributedAt;
+    private ZonedDateTime contributedAt;
 
     @Column(name = "end_at")
-    private LocalDateTime endAt;
+    private ZonedDateTime endAt;
 }

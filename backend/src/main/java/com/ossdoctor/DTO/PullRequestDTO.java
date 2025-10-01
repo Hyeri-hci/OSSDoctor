@@ -6,7 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 
 @Data
 @Builder
@@ -20,6 +20,6 @@ public class PullRequestDTO {
     private int prNumber;
     private String title;
     private PR_STATE state;
-    private LocalDateTime createdAt;
-    private LocalDateTime mergedAt;
+    private ZonedDateTime createdAt;
+    private ZonedDateTime mergedAt;
 }

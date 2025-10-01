@@ -13,7 +13,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
@@ -99,13 +99,13 @@ public class ActivityService {
         };
     }
 
-    private LocalDateTime parseDate(String isoDateTime) {
+    private ZonedDateTime parseDate(String isoDateTime) {
         if (isoDateTime == null || isoDateTime.equalsIgnoreCase("null") || isoDateTime.isBlank()) {
             return null;
         }
 
         try {
-            return LocalDateTime.parse(isoDateTime, DateTimeFormatter.ISO_DATE_TIME);
+            return ZonedDateTime.parse(isoDateTime, DateTimeFormatter.ISO_DATE_TIME);
         } catch (DateTimeParseException e) {
             log.info("날짜 파싱 실패: {}", isoDateTime);
             return null;

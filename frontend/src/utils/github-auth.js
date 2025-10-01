@@ -63,6 +63,31 @@ const generateRandomState = () => {
     return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
 };
 
+/** * 강제로 인증 쿠키 삭제하는 함수
+ * 서버 연결 실패시 클라이언트에서 직접 쿠키를 삭제
+ */
+const forceDeleteAuthCookie = () => {
+    // 여러 방법으로 쿠키 삭제 시도
+    const cookieNames = ['auth_token'];
+    const domains = [window.location.hostname, `.${window.location.hostname}`, 'localhost', '.localhost'];
+    const paths = ['/', '/auth', '/oauth'];
+    
+    cookieNames.forEach(cookieName => {
+        // 기본 삭제
+        document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+        
+        // 다양한 도메인과 경로 조합으로 삭제 시도
+        domains.forEach(domain => {
+            paths.forEach(path => {
+                document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=${path}; domain=${domain}`;
+                document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=${path}`;
+            });
+        });
+    });
+    
+    console.log('인증 쿠키 강제 삭제 완료');
+};
+
 /** * GitHub 로그인 후 상태 검증
  *
  * @returns {Promise<Object>} 로그인 상태와 사용자 정보
@@ -99,17 +124,26 @@ export const checkAuthStatus = async () => {
             };
         } else {
             console.error('로그인 상태 확인 실패:', response.status, response.statusText);
+            
+            // HTTP 오류인 경우에도 쿠키 삭제
+            forceDeleteAuthCookie();
+            
             return {
                 isLoggedIn: false,
                 user: null,
             };
         }
     } catch (error) {
-        console.error('로그인 상태 확인 중 오류 발생:', error);
+        console.error('로그인 상태 확인 중 오류 발생 (서버 연결 실패 가능성):', error);
+        
+        // 서버 연결 실패시 강제로 쿠키 삭제
+        forceDeleteAuthCookie();
+        
         return {
             isLoggedIn: false,
             user: null,
-            error: error.message || '알 수 없는 오류 발생',
+            error: '서버에 연결할 수 없습니다',
+            serverError: true, // 서버 연결 실패 플래그
         };
     }
 };

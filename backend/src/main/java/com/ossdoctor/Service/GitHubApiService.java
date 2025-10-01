@@ -23,10 +23,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 import reactor.util.retry.Retry;
 
-import java.time.Duration;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
@@ -383,12 +380,12 @@ public class GitHubApiService {
     @Cacheable(value = "commitActivity", key = "#owner + '_' + #repo")
     public Mono<List<CommitDTO>> getCommitActivity(String owner, String repo) {
         // 최근 30일간의 커밋만 요청하기 위한 조건
-        LocalDateTime since = LocalDateTime.now().minusDays(30);
+        ZonedDateTime since = ZonedDateTime.now().minusDays(30);
 
         Map<String, Object> variables = Map.of(
                 "owner", owner,
                 "name", repo,
-                "since", since.format(DateTimeFormatter.ISO_DATE_TIME));
+                "since", since.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
 
         return executeGraphQLQuery(COMMIT_ACTIVITY_QUERY, variables)
                 .map(this::parseCommitActivity)
@@ -398,7 +395,6 @@ public class GitHubApiService {
     // 최근 활동 이력 조회 - 최근 7일간 Pull Request, Issue 등 활동 가져와 프로젝트 최근 동향 파악
     @Cacheable(value = "recentActivities", key = "#owner + '_' +#repo")
     public Mono<List<ActivityDTO>> getRecentActivities(String owner, String repo) {
-        // LocalDateTime since = LocalDateTime.now().minusDays(7);
 
         Map<String, Object> variables = Map.of(
                 "owner", owner,
@@ -433,28 +429,33 @@ public class GitHubApiService {
     }
 
     // 기여한 내역 불러오기
-    public Mono<List<ContributionDTO>> getContributionSince(String owner, LocalDateTime since) {
+    public Mono<List<ContributionDTO>> getContributionSince(String owner, ZonedDateTime since) {
+        log.info("1. Fetching contribution since {} ago", since);
+
         Map<String, Object> variables = Map.of(
                 "login", owner,
-                "since", since.format(DateTimeFormatter.ISO_DATE_TIME)
+                "since", since.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
         );
+
+        log.info("2. Fetching contribution since {} ago", since);
         
         return executeGraphQLQuery(FULL_CONTRIBUTIONS_QUERY, variables)
                 .doOnError(error -> {
                     log.error("GitHub GraphQL API 호출 실패: {}", error.getMessage());
                 })
+                .doOnNext(response -> log.info("GraphQL Response: {}", response.toPrettyString()))
                 .flatMap(this::parseContributions)
                 .doOnError(error -> log.error("GraphQL 응답 파싱 실패: {}", error.getMessage()))
                 .onErrorMap(this::handleApiError);
     }
 
     // 뱃지 조건 확인용
-    public Mono<List<BadgeMetricDTO>> getContributionSummary(String owner, LocalDateTime since) {
+    public Mono<List<BadgeMetricDTO>> getContributionSummary(String owner, ZonedDateTime since) {
         log.info("Fetching Contribution summary for {}", owner);
 
         Map<String, Object> variables = Map.of(
                 "login", owner,
-                "since", since.format(DateTimeFormatter.ISO_DATE_TIME)
+                "since", since.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
         );
 
         return executeGraphQLQuery(CONTRIBUTION_SUMMARY_QUERY, variables)
@@ -476,16 +477,16 @@ public class GitHubApiService {
     }
 
     // 연속 커밋
-    public Mono<BadgeMetricDTO> getContributionCalendar(String owner, LocalDateTime since) {
+    public Mono<BadgeMetricDTO> getContributionCalendar(String owner, ZonedDateTime since) {
         log.info("Fetching Contribution calendar for {}", owner);
 
         // 현재 시각을 to 변수로 설정
-        LocalDateTime now = LocalDateTime.now();
+        ZonedDateTime now = ZonedDateTime.now();
 
         Map<String, Object> variables = Map.of(
                 "login", owner,
-                "from", since.format(DateTimeFormatter.ISO_DATE_TIME),
-                "to", now.format(DateTimeFormatter.ISO_DATE_TIME)
+                "from", since.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
+                "to", now.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
         );
 
         return executeGraphQLQuery(CONTRIBUTION_CALENDAR_QUERY, variables)
@@ -888,8 +889,8 @@ public class GitHubApiService {
             JsonNode repoNode,
             REFERENCE_TYPE refType,
             Function<JsonNode, CONTRIBUTION_TYPE> stateMapper,
-            Function<JsonNode, LocalDateTime> createdAtMapper,
-            Function<JsonNode, LocalDateTime> endAtMapper,
+            Function<JsonNode, ZonedDateTime> createdAtMapper,
+            Function<JsonNode, ZonedDateTime> endAtMapper,
             Function<JsonNode, Integer> numberMapper,
             Function<JsonNode, String> titleMapper
     ) {
@@ -902,8 +903,8 @@ public class GitHubApiService {
                 .flatMap(node -> {
                     try {
                         CONTRIBUTION_TYPE state = stateMapper.apply(node);
-                        LocalDateTime createdAt = createdAtMapper.apply(node);
-                        LocalDateTime endAt = endAtMapper.apply(node);
+                        ZonedDateTime createdAt = createdAtMapper.apply(node);
+                        ZonedDateTime endAt = endAtMapper.apply(node);
                         Integer number = numberMapper.apply(node);
                         String title = titleMapper.apply(node);
 
@@ -1243,12 +1244,12 @@ public class GitHubApiService {
         }
     }
 
-    // 문자열 -> LocalDateTime
-    private LocalDateTime parseDate(String dateStr) {
+    // 문자열 -> ZonedDateTime
+    private ZonedDateTime parseDate(String dateStr) {
         if (dateStr == null || dateStr.isBlank() || "null".equalsIgnoreCase(dateStr)) {
             return null;
         }
-        return LocalDateTime.parse(dateStr, DateTimeFormatter.ISO_DATE_TIME);
+        return ZonedDateTime.parse(dateStr, DateTimeFormatter.ISO_OFFSET_DATE_TIME);
     }
 
     // 최장 연속 커밋 계산

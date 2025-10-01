@@ -7,7 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 
 @Slf4j
 @Data
@@ -40,10 +40,10 @@ public class UserEntity {
     private Integer totalScore = 0;
 
     @Column(name = "joined_at",  nullable = false, updatable = false)
-    private LocalDateTime joinedAt;
+    private ZonedDateTime joinedAt;
 
     @PrePersist
     public void prePersist() {
-        this.joinedAt = LocalDateTime.now();
+        this.joinedAt = ZonedDateTime.now();
     }
 }

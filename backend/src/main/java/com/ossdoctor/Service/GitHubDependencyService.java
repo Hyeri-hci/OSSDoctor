@@ -162,7 +162,7 @@ public class GitHubDependencyService {
             "requirements.txt", "pyproject.toml"
     };
 
-    public GitHubDependencyService(@Value("${GITHUB_TOKEN}") String githubToken) {
+    public GitHubDependencyService(@Value("${github.token}") String githubToken) {
         this.githubToken = githubToken;
     }
 
