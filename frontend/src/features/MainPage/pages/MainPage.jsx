@@ -5,9 +5,11 @@ import { initiateGitHubLogin } from "../../../utils/github-auth";
 import HeroSection from "../components/HeroSection";
 import FeaturesSection from "../components/FeaturesSection";
 import RecommendedProjectsSection from "../components/RecommendedProjectsSection";
+import useMainRecommendedProjects from "../hooks/useMainRecommendedProjects";
 
 export default function MainPage() {
     const { isAuthenticated, checkAuthStatus, handleLogin } = useAuth();
+    const { projects: recommendedProjects, loading: projectsLoading, error: projectsError } = useMainRecommendedProjects();
 
     // OAuth 콜백 처리 - 백엔드에서 리다이렉트된 결과 처리
     useEffect(() => {
@@ -138,7 +140,11 @@ export default function MainPage() {
                     onContributionClick={handleContributionClick}
                     onEcosystemClick={handleEcosystemClick}
                 />
-                <RecommendedProjectsSection />
+                <RecommendedProjectsSection 
+                    projects={recommendedProjects}
+                    loading={projectsLoading}
+                    error={projectsError}
+                />
             </div>
         </Layout>
     );
