@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from "react";
 import PropTypes from "prop-types";
 import { Button, SearchBar } from "../../../components/common";
+import ScoreGuideModal from "./ScoreGuideModal";
 
 const DiagnoseSearchSection = forwardRef(({ onSearch }, ref) => {
     const [searchInput, setSearchInput] = useState("");
     const [showButton, setShowButton] = useState(false);
+    const [showScoreGuide, setShowScoreGuide] = useState(false);
     const searchInputRef = useRef(null);
 
     useImperativeHandle(ref, () => ({
@@ -59,6 +61,18 @@ const DiagnoseSearchSection = forwardRef(({ onSearch }, ref) => {
                             <p className="text-sm md:text-xs lg:text-sm text-gray-600">
                                 GitHub Repository URL을 입력하여 분석 결과를 확인하세요.
                             </p>
+                            
+                            {/* 점수 체계 가이드 버튼 */}
+                            <div className="mt-3">
+                                <Button
+                                    onClick={() => setShowScoreGuide(true)}
+                                    variant="outline"
+                                    size="small"
+                                    className="text-xs"
+                                >
+                                    📊 점수 체계 가이드
+                                </Button>
+                            </div>
                         </div>
 
                         {/* 검색 영역 */}
@@ -98,6 +112,12 @@ const DiagnoseSearchSection = forwardRef(({ onSearch }, ref) => {
                     </div>
                 </div>
             </div>
+
+            {/* 점수 체계 가이드 모달 */}
+            <ScoreGuideModal
+                isOpen={showScoreGuide}
+                onClose={() => setShowScoreGuide(false)}
+            />
         </section>
     );
 });
