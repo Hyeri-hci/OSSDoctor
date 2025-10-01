@@ -3,9 +3,7 @@ package com.ossdoctor.Service;
 import com.ossdoctor.DTO.*;
 import com.ossdoctor.Entity.BADGE_CATEGORY;
 import com.ossdoctor.Entity.BadgeEntity;
-import com.ossdoctor.Entity.UserBadgeEntity;
 import com.ossdoctor.Repository.BadgeRepository;
-import com.ossdoctor.Repository.UserBadgeRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -115,7 +113,10 @@ public class BadgeService {
                 }))
                 .flatMap(user -> {
                     metrics.forEach(metric -> awardBadgeIfEligible(user, metric));
-                    return userBadgeService.getRecentBadges(user.getNickname()); // 최근 획득한 뱃지 리턴
+                    return userBadgeService.getRecentBadges(user.getNickname()) // 최근 획득한 뱃지 리턴
+                            .map(list -> list.stream()
+                                    .map(this::toBadgeDTO)
+                                    .toList());
                 });
     }
 
@@ -165,6 +166,12 @@ public class BadgeService {
 
     public BadgeDTO findById(Long idx){
         return toDto(Objects.requireNonNull(badgeRepository.findById(idx).orElse(null)));
+    }
+
+    private BadgeDTO toBadgeDTO(UserBadgeDTO userBadgeDTO) {
+        return Optional.of(findById(userBadgeDTO.getBadgeId()))
+                .map(b -> { b.setEarned(true); return b; })
+                .orElseThrow();
     }
 
 }
