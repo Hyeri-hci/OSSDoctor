@@ -49,7 +49,7 @@ const OverviewTab = ({ onTabChange }) => {
 
             {/* 최근 획득 뱃지 */}
             <BadgesSection 
-                badges={data.badges} 
+                badges={data.recentBadges} 
                 onShowAllBadges={() => onTabChange('badges')}
             />
         </div>

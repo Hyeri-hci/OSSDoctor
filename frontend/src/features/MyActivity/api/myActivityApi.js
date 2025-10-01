@@ -267,9 +267,9 @@ export const generateActivityTrendChart = (stats, historyData = []) => {
 };
 
 /**
- * 사용자 뱃지 정보 조회 (실제 백엔드 API)
+ * 사용자 전체 뱃지 정보 조회 (Badge 탭용)
  * @param {string} nickname - GitHub 사용자명
- * @returns {Promise<Object>} 뱃지 데이터
+ * @returns {Promise<Object>} 전체 뱃지 데이터
  */
 export const getUserBadges = async (nickname) => {
     try {
@@ -277,7 +277,23 @@ export const getUserBadges = async (nickname) => {
         const response = await apiClient(`/api/badge/all-badges/${nickname}?t=${timestamp}`);
         return response;
     } catch (error) {
-        console.error('사용자 뱃지 조회 실패:', error);
+        console.error('사용자 전체 뱃지 조회 실패:', error);
+        throw error;
+    }
+};
+
+/**
+ * 사용자 최근 뱃지 정보 조회 (Overview 탭용)
+ * @param {string} nickname - GitHub 사용자명
+ * @returns {Promise<Object>} 최근 뱃지 데이터
+ */
+export const getUserRecentBadges = async (nickname) => {
+    try {
+        const timestamp = Date.now();
+        const response = await apiClient(`/api/my-activity/recent-badges/${nickname}?t=${timestamp}`);
+        return response;
+    } catch (error) {
+        console.error('사용자 최근 뱃지 조회 실패:', error);
         throw error;
     }
 };
@@ -309,6 +325,38 @@ export const transformBadgesData = (backendBadges) => {
             category: badge.category?.toLowerCase().replace('_', '_'), // COMMIT_STREAK -> commit_streak
             level: badge.level,
             earned: badge.earned, // 백엔드에서 earned 필드를 직접 제공
+            icon: getBadgeIcon(badge.category, badge.level),
+            requirement: badge.requirement
+        };
+    });
+};
+
+/**
+ * 백엔드 최근 뱃지 데이터를 프론트엔드 포맷으로 변환 (획득 순서대로 정렬)
+ * @param {Object} backendBadges - 백엔드에서 받은 최근 뱃지 데이터
+ * @returns {Array} 프론트엔드 형식의 최근 뱃지 데이터
+ */
+export const transformRecentBadgesData = (backendBadges) => {
+    if (!backendBadges || !backendBadges.success || !backendBadges.data) {
+        return [];
+    }
+
+    const badgesList = backendBadges.data;
+    
+    if (!Array.isArray(badgesList)) {
+        console.warn('Expected recent badges data to be an array, received:', typeof badgesList);
+        return [];
+    }
+
+    // 최근 뱃지는 이미 획득 순서대로 정렬되어 있으므로 그대로 변환
+    return badgesList.map(badge => {
+        return {
+            id: badge.idx,
+            name: badge.name,
+            description: badge.description,
+            category: badge.category?.toLowerCase().replace('_', '_'),
+            level: badge.level,
+            earned: true, // 최근 뱃지는 모두 획득한 뱃지
             icon: getBadgeIcon(badge.category, badge.level),
             requirement: badge.requirement
         };

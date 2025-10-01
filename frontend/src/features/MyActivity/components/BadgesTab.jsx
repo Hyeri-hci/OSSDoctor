@@ -1,15 +1,40 @@
 import React, { useState } from "react";
-import PropTypes from "prop-types";
-import { Button } from "../../../components/common";
+import { Button, LoadingSpinner } from "../../../components/common";
 import BadgeCard from "./BadgeCard";
-import { useBadgeFiltersNew } from "../hooks/useMyActivityData";
+import useBadgeData, { useBadgeFiltersNew } from "../hooks/useBadgeData";
 import { calculateBadgeStats, groupBadgesByCategory, getCategoryDisplayName } from '../utils';
 
-const BadgesTab = ({ badges = [] }) => {
+const BadgesTab = () => {
+    const { badges, loading, error } = useBadgeData();
     const { filteredBadges, filter, setFilter, earnedCount, totalCount } = useBadgeFiltersNew(badges);
     const [showByCategory, setShowByCategory] = useState(false);
     const badgeStats = calculateBadgeStats(badges);
     const categorizedBadges = groupBadgesByCategory(filteredBadges);
+
+    if (loading) {
+        return (
+            <LoadingSpinner
+                message="뱃지 데이터를 불러오는 중입니다..."
+                size="md"
+                color="blue"
+            />
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="text-center text-red-500 p-8">
+                <p>{error}</p>
+                <Button
+                    onClick={() => window.location.reload()}
+                    className="mt-4"
+                    variant="primary"
+                >
+                    다시 시도
+                </Button>
+            </div>
+        );
+    }
 
     const renderCategorizedBadges = () => {
         return Object.entries(categorizedBadges).map(([category, categoryBadges]) => {
@@ -129,19 +154,6 @@ const BadgesTab = ({ badges = [] }) => {
             </div>
         </div>
     );
-};
-
-BadgesTab.propTypes = {
-    badges: PropTypes.arrayOf(PropTypes.shape({
-        id: PropTypes.number.isRequired,
-        name: PropTypes.string.isRequired,
-        description: PropTypes.string.isRequired,
-        earned: PropTypes.bool.isRequired,
-        icon: PropTypes.string.isRequired,
-        category: PropTypes.string,
-        level: PropTypes.number,
-        requirement: PropTypes.string
-    })).isRequired
 };
 
 export default BadgesTab;

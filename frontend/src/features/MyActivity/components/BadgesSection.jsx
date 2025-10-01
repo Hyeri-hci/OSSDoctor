@@ -7,10 +7,8 @@ import { calculateBadgeStats } from '../utils';
 const BadgesSection = ({ badges = [], onShowAllBadges }) => {
     const badgeStats = calculateBadgeStats(badges);
     
-    // 최근에 획득한 뱃지만 필터링 (earned가 true인 뱃지 중 화면 크기에 따라 표시)
-    const recentEarnedBadges = badges
-        .filter(badge => badge.earned)
-        .slice(0, 12); // 최대 12개까지 표시
+    // 최근에 획득한 뱃지만 필터링 (이미 획득한 순서대로 정렬되어 있음)
+    const recentEarnedBadges = badges.slice(0, 12); // 최대 12개까지 표시
 
     return (
         <div className="border-t border-gray-200 pt-8">
