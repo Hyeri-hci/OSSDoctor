@@ -52,7 +52,7 @@ public class DependencyExtractionService {
                                 return Flux.empty();
                             })
                 })
-                .distinct()
+                .distinct();
     }
 
     private boolean isExcludedPath(String path) {
