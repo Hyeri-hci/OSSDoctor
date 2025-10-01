@@ -158,12 +158,8 @@ public class NvdApiService {
     /**
      * CPE DTO 목록을 CPE URI 문자열 목록으로 변환하는 헬퍼 메서드
      */
-    public List<String> convertCpeListToUriList(List<CpeDTO> cpeList) {
-        List<String> cpeUris = new ArrayList<>();
-        for (CpeDTO cpe : cpeList) {
-            cpeUris.add(convertCpeToUri(cpe));
-        }
-        return cpeUris;
+    public Flux<String> convertCpeListToUriList(Flux<CpeDTO> cpeDTOFlux) {
+        return cpeDTOFlux.map(this::convertCpeToUri);
     }
 
     /**
