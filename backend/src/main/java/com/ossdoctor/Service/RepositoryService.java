@@ -72,7 +72,7 @@ public class RepositoryService {
                 .build();
     }
 
-    private RepositoryEntity toEntity(RepositoryDTO dto) {
+    public RepositoryEntity toEntity(RepositoryDTO dto) {
 
         RepositoryEntity entity = RepositoryEntity.builder()
                 .githubRepoId(dto.getGithubRepoId())
