@@ -8,8 +8,6 @@ import com.ossdoctor.Repository.ContributionRepository;
 import com.ossdoctor.Repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -43,20 +41,26 @@ public class LeaderboardService {
         
         // 기간에 따른 날짜 계산
         ZonedDateTime fromDate = calculateFromDate(period);
-        ZonedDateTime toDate = ZonedDateTime.now();
+        ZonedDateTime toDate = calculateToDate(period);
         
         log.debug("조회 기간: {} ~ {}", fromDate, toDate);
         
-        // totalScore 기준으로 상위 사용자 조회
-        PageRequest pageRequest = PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "totalScore"));
-        List<UserEntity> users = userRepository.findTopUsersByScore(pageRequest);
+        // 모든 사용자 조회 후 기간별 점수로 정렬
+        List<UserEntity> users = userRepository.findAll();
         
-        log.info("조회된 사용자 수: {}", users.size());
+        log.info("조회된 전체 사용자 수: {}", users.size());
         
-        // LeaderboardUserDTO로 변환하고 순위 추가 (실제 기여 데이터 포함)
+        // 기간별 점수 계산 및 정렬
         AtomicInteger rank = new AtomicInteger(1);
         return users.stream()
-                .map(user -> convertToLeaderboardDTOWithRealData(user, rank.getAndIncrement(), fromDate, toDate))
+                .map(user -> convertToLeaderboardDTOWithRealData(user, 0, fromDate, toDate, period)) // rank는 나중에 설정
+                .filter(dto -> dto.getPeriodScore() > 0) // 기간 내 기여가 있는 사용자만
+                .sorted((a, b) -> b.getPeriodScore().compareTo(a.getPeriodScore())) // 기간별 점수 내림차순
+                .limit(limit)
+                .map(dto -> {
+                    dto.setRank(rank.getAndIncrement());
+                    return dto;
+                })
                 .toList();
     }
 
@@ -77,15 +81,18 @@ public class LeaderboardService {
         
         UserDTO user = userOpt.get();
         
-        // 해당 사용자보다 점수가 높은 사용자 수를 계산해서 순위 도출
-        int higherScoreCount = userRepository.countUsersWithHigherScore(user.getTotalScore());
-        int userRank = higherScoreCount + 1;
-        
         // 기간에 따른 날짜 계산
         ZonedDateTime fromDate = calculateFromDate(period);
-        ZonedDateTime toDate = ZonedDateTime.now();
+        ZonedDateTime toDate = calculateToDate(period);
         
-        log.info("사용자 {} 의 순위: {}", nickname, userRank);
+        // 기간별 점수 계산
+        int periodScore = calculatePeriodScore(user.getIdx(), fromDate, toDate);
+        
+        // 해당 사용자보다 기간별 점수가 높은 사용자 수를 계산해서 순위 도출
+        int higherScoreCount = countUsersWithHigherPeriodScore(periodScore, fromDate, toDate);
+        int userRank = higherScoreCount + 1;
+        
+        log.info("사용자 {} 의 순위: {} (기간별 점수: {})", nickname, userRank, periodScore);
         
         return LeaderboardUserDTO.builder()
                 .userId(user.getIdx())
@@ -93,9 +100,11 @@ public class LeaderboardService {
                 .nickname(user.getNickname())
                 .avatar(user.getAvatarUrl())
                 .totalScore(user.getTotalScore())
-                .prCount(calculateRealPRCount(user.getIdx(), fromDate, toDate))
+                .periodScore(periodScore)
+                .prCount(calculateRealMergedPRCount(user.getIdx(), fromDate, toDate)) // MERGED PR만 카운트
                 .issueCount(calculateRealIssueCount(user.getIdx(), fromDate, toDate))
                 .commitsCount(calculateRealCommitsCount(user.getIdx(), fromDate, toDate))
+                .reviewCount(calculateRealReviewCount(user.getIdx(), fromDate, toDate)) // 리뷰 수 추가
                 .contributionStreak(calculateRealContributionStreak(user.getIdx()))
                 .joinDate(user.getJoinedAt())
                 .rank(userRank)
@@ -109,18 +118,35 @@ public class LeaderboardService {
         ZonedDateTime now = ZonedDateTime.now();
         
         return switch (period.toLowerCase()) {
-            case "today" -> now.truncatedTo(ChronoUnit.DAYS); // 오늘 00:00:00
+            case "today" -> now.toLocalDate().atStartOfDay(now.getZone()); // 오늘 00:00:00 (타임존 유지)
             case "week" -> now.minusDays(now.getDayOfWeek().getValue() - 1).truncatedTo(ChronoUnit.DAYS); // 이번 주 월요일 00:00:00
             case "month" -> now.withDayOfMonth(1).truncatedTo(ChronoUnit.DAYS); // 이번 달 1일 00:00:00
-            default -> now.minusDays(1).truncatedTo(ChronoUnit.DAYS); // 기본값은 오늘
+            default -> now.toLocalDate().atStartOfDay(now.getZone()); // 기본값은 오늘
+        };
+    }
+
+    /**
+     * 기간에 따른 종료 날짜 계산
+     */
+    private ZonedDateTime calculateToDate(String period) {
+        ZonedDateTime now = ZonedDateTime.now();
+        
+        return switch (period.toLowerCase()) {
+            case "today" -> now.toLocalDate().plusDays(1).atStartOfDay(now.getZone()); // 내일 00:00:00 (오늘 끝)
+            case "week" -> now.minusDays(now.getDayOfWeek().getValue() - 1).plusWeeks(1).truncatedTo(ChronoUnit.DAYS); // 다음 주 월요일 00:00:00
+            case "month" -> now.withDayOfMonth(1).plusMonths(1).truncatedTo(ChronoUnit.DAYS); // 다음 달 1일 00:00:00
+            default -> now.toLocalDate().plusDays(1).atStartOfDay(now.getZone()); // 기본값은 내일 00:00:00
         };
     }
 
     /**
      * UserEntity를 LeaderboardUserDTO로 변환 (실제 기여 데이터 포함)
      */
-    private LeaderboardUserDTO convertToLeaderboardDTOWithRealData(UserEntity user, int rank, ZonedDateTime fromDate, ZonedDateTime toDate) {
+    private LeaderboardUserDTO convertToLeaderboardDTOWithRealData(UserEntity user, int rank, ZonedDateTime fromDate, ZonedDateTime toDate, String period) {
         log.info("사용자 {} (ID: {}) 데이터 변환 시작", user.getNickname(), user.getIdx());
+        
+        // 기간별 점수 계산
+        int periodScore = calculatePeriodScore(user.getIdx(), fromDate, toDate);
         
         return LeaderboardUserDTO.builder()
                 .userId(user.getIdx())
@@ -128,9 +154,11 @@ public class LeaderboardService {
                 .nickname(user.getNickname())
                 .avatar(user.getAvatarUrl())
                 .totalScore(user.getTotalScore())
-                .prCount(calculateRealPRCount(user.getIdx(), fromDate, toDate))
+                .periodScore(periodScore)
+                .prCount(calculateRealMergedPRCount(user.getIdx(), fromDate, toDate)) // MERGED PR만 카운트
                 .issueCount(calculateRealIssueCount(user.getIdx(), fromDate, toDate))
                 .commitsCount(calculateRealCommitsCount(user.getIdx(), fromDate, toDate))
+                .reviewCount(calculateRealReviewCount(user.getIdx(), fromDate, toDate)) // 리뷰 수 추가
                 .contributionStreak(calculateRealContributionStreak(user.getIdx()))
                 .joinDate(user.getJoinedAt())
                 .rank(rank)
@@ -144,11 +172,12 @@ public class LeaderboardService {
      */
     private Integer calculateRealPRCount(Long userId, ZonedDateTime fromDate, ZonedDateTime toDate) {
         try {
+            log.debug("PR 수 계산 시작 - 사용자: {}, 기간: {} ~ {}", userId, fromDate, toDate);
             int count = contributionRepository.countPRsByUserAndDateRange(userId, fromDate, toDate);
-            log.info("사용자 {} PR 수: {} (기간: {} ~ {})", userId, count, fromDate, toDate);
+            log.debug("사용자 {} PR 수: {} (기간: {} ~ {})", userId, count, fromDate, toDate);
             return count;
         } catch (Exception e) {
-            log.warn("PR 수 계산 실패 for user {}: {}", userId, e.getMessage());
+            log.error("PR 수 계산 실패 for user {}: {}", userId, e.getMessage(), e);
             return 0;
         }
     }
@@ -158,11 +187,12 @@ public class LeaderboardService {
      */
     private Integer calculateRealIssueCount(Long userId, ZonedDateTime fromDate, ZonedDateTime toDate) {
         try {
+            log.debug("이슈 수 계산 시작 - 사용자: {}, 기간: {} ~ {}", userId, fromDate, toDate);
             int count = contributionRepository.countIssuesByUserAndDateRange(userId, fromDate, toDate);
-            log.info("사용자 {} 이슈 수: {} (기간: {} ~ {})", userId, count, fromDate, toDate);
+            log.debug("사용자 {} 이슈 수: {} (기간: {} ~ {})", userId, count, fromDate, toDate);
             return count;
         } catch (Exception e) {
-            log.warn("이슈 수 계산 실패 for user {}: {}", userId, e.getMessage());
+            log.error("이슈 수 계산 실패 for user {}: {}", userId, e.getMessage(), e);
             return 0;
         }
     }
@@ -172,11 +202,42 @@ public class LeaderboardService {
      */
     private Integer calculateRealCommitsCount(Long userId, ZonedDateTime fromDate, ZonedDateTime toDate) {
         try {
+            log.debug("커밋 수 계산 시작 - 사용자: {}, 기간: {} ~ {}", userId, fromDate, toDate);
             int count = contributionRepository.countCommitsByUserAndDateRange(userId, fromDate, toDate);
-            log.info("사용자 {} 커밋 수: {} (기간: {} ~ {})", userId, count, fromDate, toDate);
+            log.debug("사용자 {} 커밋 수: {} (기간: {} ~ {})", userId, count, fromDate, toDate);
             return count;
         } catch (Exception e) {
-            log.warn("커밋 수 계산 실패 for user {}: {}", userId, e.getMessage());
+            log.error("커밋 수 계산 실패 for user {}: {}", userId, e.getMessage(), e);
+            return 0;
+        }
+    }
+
+    /**
+     * 실제 MERGED 상태인 PR 수 계산 (경험치 시스템과 동일)
+     */
+    private Integer calculateRealMergedPRCount(Long userId, ZonedDateTime fromDate, ZonedDateTime toDate) {
+        try {
+            log.debug("MERGED PR 수 계산 시작 - 사용자: {}, 기간: {} ~ {}", userId, fromDate, toDate);
+            int count = contributionRepository.countMergedPRsByUserAndDateRange(userId, fromDate, toDate);
+            log.debug("사용자 {} MERGED PR 수: {} (기간: {} ~ {})", userId, count, fromDate, toDate);
+            return count;
+        } catch (Exception e) {
+            log.error("MERGED PR 수 계산 실패 for user {}: {}", userId, e.getMessage(), e);
+            return 0;
+        }
+    }
+
+    /**
+     * 실제 리뷰 수 계산
+     */
+    private Integer calculateRealReviewCount(Long userId, ZonedDateTime fromDate, ZonedDateTime toDate) {
+        try {
+            log.debug("리뷰 수 계산 시작 - 사용자: {}, 기간: {} ~ {}", userId, fromDate, toDate);
+            int count = contributionRepository.countReviewsByUserAndDateRange(userId, fromDate, toDate);
+            log.debug("사용자 {} 리뷰 수: {} (기간: {} ~ {})", userId, count, fromDate, toDate);
+            return count;
+        } catch (Exception e) {
+            log.error("리뷰 수 계산 실패 for user {}: {}", userId, e.getMessage(), e);
             return 0;
         }
     }
@@ -219,6 +280,50 @@ public class LeaderboardService {
             return streak;
         } catch (Exception e) {
             log.warn("연속 기여 일수 계산 실패 for user {}: {}", userId, e.getMessage());
+            return 0;
+        }
+    }
+
+    /**
+     * 기간별 점수 계산
+     * PR MERGED: 20점, ISSUE: 10점, REVIEW: 5점, COMMIT: 0점 (경험치 시스템과 동일)
+     */
+    private Integer calculatePeriodScore(Long userId, ZonedDateTime fromDate, ZonedDateTime toDate) {
+        try {
+            log.debug("사용자 {} 기간별 점수 계산 시작 - 기간: {} ~ {}", userId, fromDate, toDate);
+            
+            int mergedPrCount = calculateRealMergedPRCount(userId, fromDate, toDate);
+            int issueCount = calculateRealIssueCount(userId, fromDate, toDate);
+            int reviewCount = calculateRealReviewCount(userId, fromDate, toDate);
+            
+            // 점수 계산 (PR MERGED: 20점, ISSUE: 10점, REVIEW: 5점, COMMIT: 0점)
+            int periodScore = (mergedPrCount * 20) + (issueCount * 10) + (reviewCount * 5);
+            
+            log.info("사용자 {} 기간별 점수: {} (PR MERGED: {}x20 + ISSUE: {}x10 + REVIEW: {}x5)", 
+                    userId, periodScore, mergedPrCount, issueCount, reviewCount);
+            
+            return periodScore;
+        } catch (Exception e) {
+            log.error("기간별 점수 계산 실패 for user {}: {}", userId, e.getMessage(), e);
+            return 0;
+        }
+    }
+
+    /**
+     * 특정 기간별 점수보다 높은 점수를 가진 사용자 수 계산
+     */
+    private Integer countUsersWithHigherPeriodScore(int targetScore, ZonedDateTime fromDate, ZonedDateTime toDate) {
+        try {
+            List<UserEntity> allUsers = userRepository.findAll();
+            
+            long higherScoreCount = allUsers.stream()
+                    .mapToInt(user -> calculatePeriodScore(user.getIdx(), fromDate, toDate))
+                    .filter(score -> score > targetScore)
+                    .count();
+            
+            return (int) higherScoreCount;
+        } catch (Exception e) {
+            log.warn("높은 기간별 점수 사용자 수 계산 실패: {}", e.getMessage());
             return 0;
         }
     }

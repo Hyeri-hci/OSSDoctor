@@ -43,7 +43,7 @@ public interface ContributionRepository extends JpaRepository<ContributionEntity
     // 리더보드용 쿼리들 추가
     
     // 특정 사용자의 기간별 커밋 수 조회
-    @Query("SELECT COUNT(c) FROM ContributionEntity c WHERE c.user.idx = :userId AND c.referenceType = 'COMMIT' AND c.contributedAt >= :fromDate AND c.contributedAt <= :toDate")
+    @Query("SELECT COUNT(c) FROM ContributionEntity c WHERE c.user.idx = :userId AND c.referenceType = 'COMMIT' AND c.contributedAt >= :fromDate AND c.contributedAt < :toDate")
     int countCommitsByUserAndDateRange(
         @Param("userId") Long userId, 
         @Param("fromDate") ZonedDateTime fromDate,
@@ -51,7 +51,7 @@ public interface ContributionRepository extends JpaRepository<ContributionEntity
     );
 
     // 특정 사용자의 기간별 PR 수 조회
-    @Query("SELECT COUNT(c) FROM ContributionEntity c WHERE c.user.idx = :userId AND c.referenceType = 'PR' AND c.contributedAt >= :fromDate AND c.contributedAt <= :toDate")
+    @Query("SELECT COUNT(c) FROM ContributionEntity c WHERE c.user.idx = :userId AND c.referenceType = 'PR' AND c.contributedAt >= :fromDate AND c.contributedAt < :toDate")
     int countPRsByUserAndDateRange(
         @Param("userId") Long userId, 
         @Param("fromDate") ZonedDateTime fromDate,
@@ -59,8 +59,24 @@ public interface ContributionRepository extends JpaRepository<ContributionEntity
     );
 
     // 특정 사용자의 기간별 이슈 수 조회
-    @Query("SELECT COUNT(c) FROM ContributionEntity c WHERE c.user.idx = :userId AND c.referenceType = 'ISSUE' AND c.contributedAt >= :fromDate AND c.contributedAt <= :toDate")
+    @Query("SELECT COUNT(c) FROM ContributionEntity c WHERE c.user.idx = :userId AND c.referenceType = 'ISSUE' AND c.contributedAt >= :fromDate AND c.contributedAt < :toDate")
     int countIssuesByUserAndDateRange(
+        @Param("userId") Long userId, 
+        @Param("fromDate") ZonedDateTime fromDate,
+        @Param("toDate") ZonedDateTime toDate
+    );
+
+    // 특정 사용자의 기간별 리뷰 수 조회
+    @Query("SELECT COUNT(c) FROM ContributionEntity c WHERE c.user.idx = :userId AND c.referenceType = 'REVIEW' AND c.contributedAt >= :fromDate AND c.contributedAt < :toDate")
+    int countReviewsByUserAndDateRange(
+        @Param("userId") Long userId, 
+        @Param("fromDate") ZonedDateTime fromDate,
+        @Param("toDate") ZonedDateTime toDate
+    );
+
+    // 특정 사용자의 기간별 MERGED 상태인 PR 수 조회 (경험치 계산용)
+    @Query("SELECT COUNT(c) FROM ContributionEntity c WHERE c.user.idx = :userId AND c.referenceType = 'PR' AND c.state = 'MERGED' AND c.contributedAt >= :fromDate AND c.contributedAt < :toDate")
+    int countMergedPRsByUserAndDateRange(
         @Param("userId") Long userId, 
         @Param("fromDate") ZonedDateTime fromDate,
         @Param("toDate") ZonedDateTime toDate
