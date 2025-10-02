@@ -380,21 +380,28 @@ public class GitHubApiService {
         // GraphQL Query 호출
         return executeGraphQLQuery(REPOSITORY_QUERY, variables)
                 .map(this::parseRepositoryInfo) // JSON -> DTO
-                .flatMap(dto ->
-                        // contributor 수를 가져와 DTO에 설정
-                        getContributorCount(owner, repo)
-                                .doOnNext(totalContributorCount -> {
-                                    dto.setTotalContributors(totalContributorCount);
-                                    dto.setContributors(Math.min(totalContributorCount, 9));
-                                })
-                                .then(Mono.fromCallable(() -> {
-                                    RepositoryDTO savedDto = repositoryService.findByGithubId(dto.getGithubRepoId())
-                                            .orElseGet(() -> repositoryService.save(dto));
-                                    calculateTotalScore(savedDto);
-                                    return savedDto;
-                                }).subscribeOn(Schedulers.boundedElastic())))
+                .flatMap(dto -> {
+                    boolean noCode = dto.isNull() || dto.getTotalCommits() == 0;
+                    if (noCode) {
+                        log.info("📭 Repository has no code. Skipping contributor fetch.");
+                        return Mono.just(dto); // contributor 조회 및 DB 저장 스킵
+                    }
+                    // contributor 수를 가져와 DTO에 설정
+                    return getContributorCount(owner, repo)
+                            .doOnNext(totalContributorCount -> {
+                                dto.setTotalContributors(totalContributorCount);
+                                dto.setContributors(Math.min(totalContributorCount, 9));
+                            })
+                            .then(Mono.fromCallable(() -> {
+                                RepositoryDTO savedDto = repositoryService.findByGithubId(dto.getGithubRepoId())
+                                        .orElseGet(() -> repositoryService.save(dto));
+                                calculateTotalScore(savedDto);
+                                return savedDto;
+                            }).subscribeOn(Schedulers.boundedElastic()));
+                })
                 .onErrorMap(this::handleApiError); // 에러 핸들링
     }
+
 
     // 커밋 활동 통계 조회 - 최근 30일간 커밋 활동 분석하여 일별 통계 반환
     // 프론트엔드의 차트에서 활용 (통계 일자는 변경 가능)
@@ -696,13 +703,32 @@ public class GitHubApiService {
         String pushedAtStr = repository.path("updatedAt").asText();
         LocalDate pushedAt = OffsetDateTime.parse(pushedAtStr).toLocalDate();
 
-        String commitedAtStr = repository.path("defaultBranchRef")
-                .path("target")
-                .path("history")
-                .path("nodes")
-                .get(0)
-                .path("committedDate").asText();
-        LocalDate commitedAt = OffsetDateTime.parse(commitedAtStr).toLocalDate();
+        JsonNode defaultBranchRef = repository.path("defaultBranchRef");
+        LocalDate commitedAt = null;
+        int totalCommits = 0;
+        boolean isNull = false;
+
+        if (defaultBranchRef.isMissingNode() || defaultBranchRef.isNull()) {
+            isNull = true; // 브랜치가 없으면 코드가 없음
+            return RepositoryDTO.builder()
+                    .isNull(isNull)
+                    .build();
+        } else {
+            JsonNode nodes = defaultBranchRef.path("target").path("history").path("nodes");
+            if (nodes.isArray() && nodes.size() > 0) {
+                String commitedAtStr = nodes.get(0).path("committedDate").asText(null);
+                if (commitedAtStr != null) {
+                    commitedAt = OffsetDateTime.parse(commitedAtStr).toLocalDate();
+                }
+            } else {
+                isNull = true; // 브랜치는 있지만 커밋이 없으면 코드 없음
+                return RepositoryDTO.builder()
+                        .isNull(isNull)
+                        .totalCommits(0)
+                        .build();
+            }
+            totalCommits = defaultBranchRef.path("target").path("history").path("totalCount").asInt(0);
+        }
 
         return RepositoryDTO.builder()
                 .githubRepoId(repository.get("databaseId").asLong())
@@ -717,7 +743,7 @@ public class GitHubApiService {
                 .license(repository.path("licenseInfo").path("spdxId").asText(null))
                 .topics(topics)
                 .lastCommitedAt(commitedAt) // 모니터링 점수
-                .totalCommits(repository.path("defaultBranchRef").path("target").path("history").path("totalCommit").asInt(0))
+                .totalCommits(totalCommits)
                 .openPullRequests(repository.path("openPullRequests").path("totalCount").asInt())
                 .closedPullRequests(repository.path("closedPullRequests").path("totalCount").asInt(0))
                 .mergedPullRequests(repository.path("mergedPullRequests").path("totalCount").asInt(0))
@@ -727,6 +753,7 @@ public class GitHubApiService {
                 .totalIssues(repository.path("totalIssues").path("totalCount").asInt(0))
                 .lastUpdatedAt(pushedAt) // 모니터링 점수
                 .totalContributors(0) // 초기값으로 설정, 이후 getContributorCount()에서 업데이트됨
+                .isNull(isNull)
                 .build();
     }
 
