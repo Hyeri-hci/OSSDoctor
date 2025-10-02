@@ -214,7 +214,7 @@ export const MOCK_PROJECTS = [
 
 // 리더보드 목업 데이터
 export const MOCK_LEADERBOARD_DATA = {
-    realtime: [
+    today: [
         {
             rank: 1,
             username: "opensourcedev",

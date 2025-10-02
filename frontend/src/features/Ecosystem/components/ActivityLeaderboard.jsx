@@ -1,25 +1,60 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { ArrowLeftIcon } from '@heroicons/react/24/outline';
+import { ArrowLeftIcon, ArrowPathIcon, ClockIcon } from '@heroicons/react/24/outline';
 import { Button, EmptyState, LoadingSpinner } from '../../../components/common';
 import useLeaderboardData from '../hooks/useLeaderboardData';
 import { useAuth } from '../../../hooks/useAuth';
 import { initiateGitHubLogin } from '../../../utils/github-auth';
+import { updateIncompleteContributions } from '../api/leaderboardApi';
 
 const ActivityLeaderboard = ({ onBack }) => {
     const [timePeriod, setTimePeriod] = useState('today'); // 'realtime' -> 'today'로 변경
-    const { isAuthenticated, isLoading: authLoading } = useAuth();
+    const [isUpdating, setIsUpdating] = useState(false);
+    const [lastUpdateTime, setLastUpdateTime] = useState(null);
+    const { isAuthenticated, isLoading: authLoading, user } = useAuth();
 
     const {
         leaderboardData,
         currentUser,
         loading,
-        error
+        error,
+        refreshData
     } = useLeaderboardData(timePeriod);
+
+    // 자동 새로고침 (5분마다)
+    useEffect(() => {
+        const interval = setInterval(() => {
+            refreshData();
+            setLastUpdateTime(new Date());
+        }, 5 * 60 * 1000); // 5분
+
+        return () => clearInterval(interval);
+    }, [refreshData]);
 
     const handleTimePeriodChange = (period) => {
         setTimePeriod(period);
-    }
+    };
+
+    const handleManualUpdate = async () => {
+        if (!isAuthenticated || !user?.username) {
+            return;
+        }
+
+        setIsUpdating(true);
+        try {
+            // 사용자의 기여 상태 업데이트
+            await updateIncompleteContributions(user.username);
+            
+            // 리더보드 데이터 새로고침
+            await refreshData(true); // forceRefresh = true
+            
+            setLastUpdateTime(new Date());
+        } catch (error) {
+            console.error('수동 업데이트 실패:', error);
+        } finally {
+            setIsUpdating(false);
+        }
+    };
 
     const handleLoginClick = () => {
         initiateGitHubLogin({
@@ -76,8 +111,33 @@ const ActivityLeaderboard = ({ onBack }) => {
                     <p className="text-gray-600">프로젝트에 활발히 기여하고 있는 사용자들을 확인해 보세요.</p>
                 </div>
 
-                {/* 기간 설정 */}
-                <div className="flex flex-col sm:flex-row gap-4 justify-end items-start sm:items-center mb-6">
+                {/* 기간 설정 및 업데이트 버튼 */}
+                <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center mb-6">
+                    {/* 실시간 업데이트 정보 */}
+                    <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2 text-sm text-gray-500">
+                            <ClockIcon className="h-4 w-4" />
+                            <span>
+                                {lastUpdateTime 
+                                    ? `마지막 업데이트: ${lastUpdateTime.toLocaleTimeString()}`
+                                    : '자동 업데이트 중...'}
+                            </span>
+                        </div>
+                        {isAuthenticated && (
+                            <Button
+                                onClick={handleManualUpdate}
+                                disabled={isUpdating}
+                                variant="ghost"
+                                size="sm"
+                                className="text-blue-600 hover:text-blue-700 p-1"
+                            >
+                                <ArrowPathIcon className={`h-4 w-4 ${isUpdating ? 'animate-spin' : ''}`} />
+                                <span className="ml-1">{isUpdating ? '업데이트 중...' : '업데이트'}</span>
+                            </Button>
+                        )}
+                    </div>
+
+                    {/* 기간 설정 */}
                     <div className="flex items-center gap-3">
                         <div className="flex items-center gap-2">
                             <span className="text-sm text-gray-600 whitespace-nowrap">기간 설정:</span>
@@ -117,78 +177,123 @@ const ActivityLeaderboard = ({ onBack }) => {
 
                 {/* 리더보드 목록 */}
                 <div className="mb-12">
-                    {/* 상위 3명 시상대 */}
-                    <div className="bg-white rounded-lg border border-gray-200 p-8 mb-8">
-                        <h2 className="text-2xl font-bold text-center mb-8">TOP 3 순위</h2>
-                        <div className="flex justify-center items-end gap-6 sm:gap-10 mb-8">
-                            {/* 2위 */}
-                            {leaderboardData[1] && (
-                                <div className="text-center flex-shrink-0 w-24 sm:w-28">
-                                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-100 rounded-full flex items-center justify-center mb-3 mx-auto">
-                                        <span className="text-xl sm:text-2xl">🥈</span>
-                                    </div>
-                                    <div className="font-semibold text-base sm:text-lg mb-2" title={leaderboardData[1].username}>{leaderboardData[1].username}</div>
-                                    <div className="text-xs sm:text-sm text-gray-500 mb-3">{leaderboardData[1].totalScore.toLocaleString()}점</div>
-                                    <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gray-300 rounded-t-lg mx-auto"></div>
-                                </div>
-                            )}
-
-                            {/* 1위 */}
-                            {leaderboardData[0] && (
-                                <div className="text-center flex-shrink-0 w-28 sm:w-32">
-                                    <div className="w-20 h-20 sm:w-24 sm:h-24 bg-yellow-100 rounded-full flex items-center justify-center mb-3 mx-auto border-4 border-yellow-300">
-                                        <span className="text-2xl sm:text-3xl">🥇</span>
-                                    </div>
-                                    <div className="font-bold text-lg sm:text-xl mb-2" title={leaderboardData[0].username}>{leaderboardData[0].username}</div>
-                                    <div className="text-sm sm:text-base text-gray-600 mb-3">{leaderboardData[0].totalScore.toLocaleString()}점</div>
-                                    <div className="w-24 h-32 sm:w-28 sm:h-36 bg-yellow-400 rounded-t-lg mx-auto shadow-lg"></div>
-                                </div>
-                            )}
-
-                            {/* 3위 */}
-                            {leaderboardData[2] && (
-                                <div className="text-center flex-shrink-0 w-24 sm:w-28">
-                                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-amber-100 rounded-full flex items-center justify-center mb-3 mx-auto">
-                                        <span className="text-xl sm:text-2xl">🥉</span>
-                                    </div>
-                                    <div className="font-semibold text-base sm:text-lg mb-2" title={leaderboardData[2].username}>{leaderboardData[2].username}</div>
-                                    <div className="text-xs sm:text-sm text-gray-500 mb-3">{leaderboardData[2].totalScore.toLocaleString()}점</div>
-                                    <div className="w-20 h-12 sm:w-24 sm:h-16 bg-amber-400 rounded-t-lg mx-auto"></div>
-                                </div>
-                            )}
+                    {/* 데이터가 없는 경우 Empty State 표시 */}
+                    {!loading && !error && leaderboardData.length === 0 ? (
+                        <div className="text-center py-12">
+                            <EmptyState
+                                title={`${timePeriod === 'today' ? '오늘은' : timePeriod === 'week' ? '이번 주는' : '이번 달은'} 아직 활동이 없습니다`}
+                                description="다른 기간을 선택해 확인해 보세요."
+                                icon="📊"
+                                action={
+                                    <Button 
+                                        onClick={refreshData} 
+                                        variant="primary"
+                                        disabled={loading}
+                                    >
+                                        {loading ? '새로고침 중...' : '새로고침'}
+                                    </Button>
+                                }
+                            />
                         </div>
-                    </div>
+                    ) : (
+                        <>
+                            {/* 상위 3명 시상대 */}
+                            <div className="bg-white rounded-lg border border-gray-200 p-8 mb-8">
+                                <h2 className="text-2xl font-bold text-center mb-8">TOP 3 순위</h2>
+                                <div className="flex justify-center items-end gap-6 sm:gap-10 mb-8">
+                                    {/* 2위 */}
+                                    {leaderboardData[1] && (
+                                        <div className="text-center flex-shrink-0 w-24 sm:w-28">
+                                            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-100 rounded-full flex items-center justify-center mb-3 mx-auto">
+                                                <span className="text-xl sm:text-2xl">🥈</span>
+                                            </div>
+                                            <div className="font-semibold text-base sm:text-lg mb-2" title={leaderboardData[1].username}>{leaderboardData[1].username}</div>
+                                            <div className="text-xs sm:text-sm text-gray-500 mb-3">
+                                                {timePeriod === 'today' ? '오늘' : timePeriod === 'week' ? '이번 주' : '이번 달'}: {leaderboardData[1].periodScore ? leaderboardData[1].periodScore.toLocaleString() : leaderboardData[1].totalScore.toLocaleString()}점
+                                            </div>
+                                            <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gray-300 rounded-t-lg mx-auto"></div>
+                                        </div>
+                                    )}
 
-                    {/* 전체 순위 */}
-                    <div className="space-y-3">
-                        <h3 className="text-lg font-semibold mb-4">전체 순위</h3>
-                        {leaderboardData.map((user) => (
-                            <div key={user.username} className="bg-white border border-gray-200 rounded-lg p-6 flex items-center justify-between hover:shadow-md transition-shadow">
-                                <div className="flex items-center space-x-4">
-                                    {/* 순위 아이콘 */}
-                                    <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
-                                        <span className="text-2xl">
-                                            {user.rank === 1 ? '🥇' : user.rank === 2 ? '🥈' : user.rank === 3 ? '🥉' : '�'}
-                                        </span>
-                                    </div>
+                                    {/* 1위 */}
+                                    {leaderboardData[0] && (
+                                        <div className="text-center flex-shrink-0 w-28 sm:w-32">
+                                            <div className="w-20 h-20 sm:w-24 sm:h-24 bg-yellow-100 rounded-full flex items-center justify-center mb-3 mx-auto border-4 border-yellow-300">
+                                                <span className="text-2xl sm:text-3xl">🥇</span>
+                                            </div>
+                                            <div className="font-bold text-lg sm:text-xl mb-2" title={leaderboardData[0].username}>{leaderboardData[0].username}</div>
+                                            <div className="text-sm sm:text-base text-gray-600 mb-3">
+                                                {timePeriod === 'today' ? '오늘' : timePeriod === 'week' ? '이번 주' : '이번 달'}: {leaderboardData[0].periodScore ? leaderboardData[0].periodScore.toLocaleString() : leaderboardData[0].totalScore.toLocaleString()}점
+                                            </div>
+                                            <div className="w-24 h-32 sm:w-28 sm:h-36 bg-yellow-400 rounded-t-lg mx-auto shadow-lg"></div>
+                                        </div>
+                                    )}
 
-                                    {/* 사용자 정보 */}
-                                    <div>
-                                        <div className="font-semibold text-lg">{user.username}</div>
-                                        <div className="text-gray-500 text-sm">GitHub Username</div>
-                                    </div>
-                                </div>
-
-                                {/* 활동 통계 */}
-                                <div className="text-right">
-                                    <div className="font-bold text-lg mb-1">Score: {user.totalScore.toLocaleString()}</div>
-                                    <div className="text-sm text-gray-600">
-                                        Commits: {user.commitsCount} | PRs: {user.prCount} | Issues: {user.issueCount}
-                                    </div>
+                                    {/* 3위 */}
+                                    {leaderboardData[2] && (
+                                        <div className="text-center flex-shrink-0 w-24 sm:w-28">
+                                            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-amber-100 rounded-full flex items-center justify-center mb-3 mx-auto">
+                                                <span className="text-xl sm:text-2xl">🥉</span>
+                                            </div>
+                                            <div className="font-semibold text-base sm:text-lg mb-2" title={leaderboardData[2].username}>{leaderboardData[2].username}</div>
+                                            <div className="text-xs sm:text-sm text-gray-500 mb-3">
+                                                {timePeriod === 'today' ? '오늘' : timePeriod === 'week' ? '이번 주' : '이번 달'}: {leaderboardData[2].periodScore ? leaderboardData[2].periodScore.toLocaleString() : leaderboardData[2].totalScore.toLocaleString()}점
+                                            </div>
+                                            <div className="w-20 h-12 sm:w-24 sm:h-16 bg-amber-400 rounded-t-lg mx-auto"></div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
-                        ))}
-                    </div>
+
+                            {/* 전체 순위 */}
+                            <div className="space-y-3">
+                                <h3 className="text-lg font-semibold mb-4">전체 순위</h3>
+                                {leaderboardData.map((user) => (
+                                    <div key={user.username} className="bg-white border border-gray-200 rounded-lg p-6 flex items-center justify-between hover:shadow-md transition-shadow">
+                                        <div className="flex items-center space-x-4">
+                                            {/* 순위 아이콘 */}
+                                            <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
+                                                <span className="text-2xl">
+                                                    {user.rank === 1 ? '🥇' : user.rank === 2 ? '🥈' : user.rank === 3 ? '🥉' : '📊'}
+                                                </span>
+                                            </div>
+
+                                            {/* 사용자 정보 */}
+                                            <div className="flex-1">
+                                                <div className="font-semibold text-lg">{user.username}</div>
+                                                <div className="text-gray-500 text-sm">
+                                                    GitHub Username
+                                                    {user.lastUpdated && (
+                                                        <span className="ml-2 text-xs text-blue-600">
+                                                            • 최근 업데이트: {new Date(user.lastUpdated).toLocaleString()}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                {user.incompleteContributions > 0 && (
+                                                    <div className="text-xs text-amber-600 mt-1">
+                                                        진행 중인 기여: {user.incompleteContributions}개
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* 활동 통계 */}
+                                        <div className="text-right">
+                                            <div className="font-bold text-lg mb-1">
+                                                {timePeriod === 'today' ? '오늘' : timePeriod === 'week' ? '이번 주' : '이번 달'}: {user.periodScore ? user.periodScore.toLocaleString() : user.totalScore.toLocaleString()}점
+                                            </div>
+                                            <div className="text-sm text-gray-600">
+                                                PRs: {user.prCount} | Issues: {user.issueCount} | Reviews: {user.reviewCount || 0}
+                                                {user.contributionStreak > 0 && (
+                                                    <span className="ml-2 text-orange-600">🔥 {user.contributionStreak}일 연속</span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </>
+                    )}
                 </div>
 
 
@@ -237,10 +342,20 @@ const ActivityLeaderboard = ({ onBack }) => {
 
                             {/* 랭킹과 점수 */}
                             <div className="text-right">
-                                <div className="font-bold text-lg mb-1">Score: {currentUser.totalScore?.toLocaleString() || 0}</div>
-                                <div className="text-sm text-gray-600">
-                                    Commits: {currentUser.commitsCount || 0} | PRs: {currentUser.prCount || 0} | Issues: {currentUser.issueCount || 0}
+                                <div className="font-bold text-lg mb-1">
+                                    {timePeriod === 'today' ? '오늘' : timePeriod === 'week' ? '이번 주' : '이번 달'}: {currentUser.periodScore ? currentUser.periodScore.toLocaleString() : (currentUser.totalScore?.toLocaleString() || 0)}점
                                 </div>
+                                <div className="text-sm text-gray-600">
+                                    PRs: {currentUser.prCount || 0} | Issues: {currentUser.issueCount || 0} | Reviews: {currentUser.reviewCount || 0}
+                                    {currentUser.contributionStreak > 0 && (
+                                        <span className="ml-2 text-orange-600">🔥 {currentUser.contributionStreak}일 연속</span>
+                                    )}
+                                </div>
+                                {(currentUser.periodScore === 0 || (!currentUser.periodScore && currentUser.totalScore === 0)) && (
+                                    <div className="text-xs text-gray-500 mt-1">
+                                        {timePeriod === 'today' ? '오늘' : timePeriod === 'week' ? '이번 주에는' : '이번 달에는'} 아직 활동이 없습니다
+                                    </div>
+                                )}
                             </div>
                         </div>
                     ) : (
