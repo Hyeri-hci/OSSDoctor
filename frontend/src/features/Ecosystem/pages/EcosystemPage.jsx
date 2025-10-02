@@ -10,7 +10,7 @@ import { getRecommendedProjectsService } from '../api/index.js';
 const EcosystemPage = () => {
 
     // 기간 설정 상태 (메인 페이지용)
-    const [timePeriod, setTimePeriod] = useState('realtime');
+    const [timePeriod, setTimePeriod] = useState('today');
 
     // 랜덤 프로젝트 선택을 위한 상태
     const [currentProjectPage, setCurrentProjectPage] = useState(0); // 현재 보여주는 페이지 (0부터 시작)
@@ -289,13 +289,13 @@ const EcosystemPage = () => {
                                         <span className="text-sm text-gray-600 whitespace-nowrap">기간 설정:</span>
                                         <div className="flex bg-gray-100 rounded-lg p-1">
                                             <button
-                                                onClick={() => handleTimePeriodChange('realtime')}
-                                                className={`px-3 py-1 text-sm rounded-md transition-colors ${timePeriod === 'realtime'
+                                                onClick={() => handleTimePeriodChange('today')}
+                                                className={`px-3 py-1 text-sm rounded-md transition-colors ${timePeriod === 'today'
                                                     ? 'bg-white text-gray-900 shadow-sm'
                                                     : 'text-gray-600 hover:text-gray-900'
                                                 }`}
                                             >
-                                                실시간
+                                                오늘
                                             </button>
                                             <button
                                                 onClick={() => handleTimePeriodChange('week')}
@@ -328,6 +328,22 @@ const EcosystemPage = () => {
                                 <div className="text-center py-8">
                                     <div className="text-red-500">{leaderboardError}</div>
                                 </div>
+                            ) : leaderboardData.length === 0 ? (
+                                <div className="text-center py-12">
+                                    <div className="text-6xl mb-4">📊</div>
+                                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                                        {timePeriod === 'today' ? '오늘은' : timePeriod === 'week' ? '이번 주는' : '이번 달은'} 아직 활동이 없습니다
+                                    </h3>
+                                    <p className="text-gray-600 text-sm mb-6">
+                                        다른 기간을 선택해 확인해 보세요.
+                                    </p>
+                                    <button
+                                        onClick={navigateToLeaderboard}
+                                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors text-sm"
+                                    >
+                                        전체 리더보드 보기
+                                    </button>
+                                </div>
                             ) : (
                                 <>
                                     {/* 상위 3명 시상대 */}
@@ -341,7 +357,9 @@ const EcosystemPage = () => {
                                                         <span className="text-xl sm:text-2xl">🥈</span>
                                                     </div>
                                                     <div className="font-semibold text-base sm:text-lg mb-2" title={leaderboardData[1].username}>{leaderboardData[1].username}</div>
-                                                    <div className="text-xs sm:text-sm text-gray-500 mb-3">{leaderboardData[1].totalScore.toLocaleString()}점</div>
+                                                    <div className="text-xs sm:text-sm text-gray-500 mb-3">
+                                                        {timePeriod === 'today' ? '오늘' : timePeriod === 'week' ? '이번 주' : '이번 달'}: {leaderboardData[1].periodScore ? leaderboardData[1].periodScore.toLocaleString() : leaderboardData[1].totalScore.toLocaleString()}점
+                                                    </div>
                                                     <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gray-300 rounded-t-lg mx-auto"></div>
                                                 </div>
                                             )}
@@ -353,7 +371,9 @@ const EcosystemPage = () => {
                                                         <span className="text-2xl sm:text-3xl">🥇</span>
                                                     </div>
                                                     <div className="font-bold text-lg sm:text-xl mb-2" title={leaderboardData[0].username}>{leaderboardData[0].username}</div>
-                                                    <div className="text-sm sm:text-base text-gray-600 mb-3">{leaderboardData[0].totalScore.toLocaleString()}점</div>
+                                                    <div className="text-sm sm:text-base text-gray-600 mb-3">
+                                                        {timePeriod === 'today' ? '오늘' : timePeriod === 'week' ? '이번 주' : '이번 달'}: {leaderboardData[0].periodScore ? leaderboardData[0].periodScore.toLocaleString() : leaderboardData[0].totalScore.toLocaleString()}점
+                                                    </div>
                                                     <div className="w-24 h-32 sm:w-28 sm:h-36 bg-yellow-400 rounded-t-lg mx-auto shadow-lg"></div>
                                                 </div>
                                             )}
@@ -365,7 +385,9 @@ const EcosystemPage = () => {
                                                         <span className="text-xl sm:text-2xl">🥉</span>
                                                     </div>
                                                     <div className="font-semibold text-base sm:text-lg mb-2" title={leaderboardData[2].username}>{leaderboardData[2].username}</div>
-                                                    <div className="text-xs sm:text-sm text-gray-500 mb-3">{leaderboardData[2].totalScore.toLocaleString()}점</div>
+                                                    <div className="text-xs sm:text-sm text-gray-500 mb-3">
+                                                        {timePeriod === 'today' ? '오늘' : timePeriod === 'week' ? '이번 주' : '이번 달'}: {leaderboardData[2].periodScore ? leaderboardData[2].periodScore.toLocaleString() : leaderboardData[2].totalScore.toLocaleString()}점
+                                                    </div>
                                                     <div className="w-20 h-12 sm:w-24 sm:h-16 bg-amber-400 rounded-t-lg mx-auto"></div>
                                                 </div>
                                             )}
