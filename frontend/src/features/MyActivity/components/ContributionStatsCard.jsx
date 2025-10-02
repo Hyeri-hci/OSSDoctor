@@ -38,9 +38,9 @@ const ContributionStatsCard = ({ stats }) => {
                     <div className="text-2xl font-bold text-gray-900">{monthlyCommit}</div>
                 </div>
 
-                {/* Total Score */}
+                {/* Total Experience */}
                 <div className="text-center bg-white border border-gray-200 rounded-lg p-4">
-                    <div className="text-sm text-gray-600 mb-1">총 점수</div>
+                    <div className="text-sm text-gray-600 mb-1">총 경험치</div>
                     <div className="text-2xl font-bold text-gray-900">{totalScore}</div>
                 </div>
             </div>
