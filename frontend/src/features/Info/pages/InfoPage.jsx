@@ -36,7 +36,7 @@ const InfoPage = () => {
                 description: 'GitHub 리포지토리를 분석하여 프로젝트의 건강도, 보안성, 소셜 지표를 종합적으로 평가합니다.',
                 features: [
                     '건강도 점수 (50%): 커밋, 업데이트, PR, 이슈 해결 현황',
-                    '보안 점수 (30%): 보안 취약점 분석 (개발 예정)',
+                    '보안 점수 (30%): CVE 보안 취약점 분석',
                     '소셜 점수 (20%): 스타, 포크, 워처, 기여자 수',
                     '종합 점수 = (건강도 × 0.5) + (보안 × 0.3) + (소셜 × 0.2)'
                 ],
@@ -106,20 +106,6 @@ const InfoPage = () => {
                     'Pull Requests: 생성한 PR 수',
                     'Issues: 해결한 이슈 수',
                     'Total Score: 종합 활동 점수'
-                ]
-            }
-        },
-        {
-            id: 'security',
-            title: '보안 분석 (개발 예정)',
-            icon: '🔒',
-            content: {
-                description: '프로젝트의 보안 취약점을 분석하고 보안 점수를 제공합니다.',
-                plannedFeatures: [
-                    'CVE 데이터베이스 연동 취약점 검사',
-                    '의존성 보안 분석',
-                    '보안 모범 사례 체크',
-                    '보안 점수 및 개선 가이드 제공'
                 ]
             }
         },
@@ -253,22 +239,6 @@ const InfoPage = () => {
                                         <div key={index} className="flex items-start gap-3 p-3 bg-white rounded-lg">
                                             <div className="flex-shrink-0 w-2 h-2 bg-orange-500 rounded-full mt-2"></div>
                                             <span className="text-gray-700 leading-relaxed">{score}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                        
-                        {section.content.plannedFeatures && (
-                            <div className="mb-6">
-                                <h3 className="text-lg font-semibold text-gray-900 mb-4 border-l-4 border-cyan-500 pl-4">
-                                    개발 예정 기능
-                                </h3>
-                                <div className="grid gap-3">
-                                    {section.content.plannedFeatures.map((feature, index) => (
-                                        <div key={index} className="flex items-start gap-3 p-3 bg-white rounded-lg">
-                                            <div className="flex-shrink-0 w-2 h-2 bg-cyan-500 rounded-full mt-2"></div>
-                                            <span className="text-gray-700 leading-relaxed">{feature}</span>
                                         </div>
                                     ))}
                                 </div>
