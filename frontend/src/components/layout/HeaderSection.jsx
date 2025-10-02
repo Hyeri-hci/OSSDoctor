@@ -88,7 +88,7 @@ const HeaderSection = () => {
             onClick: handleMyActivityClick
         },
         { label: "업사이클링", href: "/ecosystem" },
-        { label: "정보", href: "#" }
+        { label: "정보", href: "/info" }
     ];
 
     return (
