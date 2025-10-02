@@ -40,6 +40,9 @@ public class NvdApiService {
     @Value("${nvd.token:}")
     private String nvdToken;
 
+    @Autowired
+    private WebClient webClient;
+
     private final OkHttpClient httpClient;
     private final ObjectMapper objectMapper;
 
