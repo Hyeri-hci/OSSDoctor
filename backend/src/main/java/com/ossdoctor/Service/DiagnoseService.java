@@ -14,6 +14,7 @@ import java.util.Map;
 public class DiagnoseService {
 
     private final GitHubApiService gitHubApiService;
+    private final SecurityService securityService;
 
     /**
      * 저장소 전체 진단 정보 조회
@@ -48,14 +49,21 @@ public class DiagnoseService {
                 .cast(Object.class)
                 .onErrorReturn(Map.of());
 
+        // 취약점 항목 반환
+        Mono<Object> vulnerabilities = securityService.getRepositoryVulnerabilities(owner, repo)
+                .cast(Object.class)
+                .onErrorReturn(Map.of());
+
+
         // 모든 데이터를 병렬로 수집하고 통합
-        return Mono.zip(contributorsMono, languagesMono, commitActivitiesMono, recentActivitiesMono)
+        return Mono.zip(contributorsMono, languagesMono, commitActivitiesMono, recentActivitiesMono, vulnerabilities)
                 .map(tuple -> buildDiagnosisResponse(
                         repositoryDTO,
                         tuple.getT1(),
                         tuple.getT2(),
                         tuple.getT3(),
                         tuple.getT4(),
+                        tuple.getT5(),
                         owner,
                         repo
                 ));
@@ -70,6 +78,7 @@ public class DiagnoseService {
             Object languages,
             Object commitActivities,
             Object recentActivities,
+            Object vulnerabilities,
             String owner,
             String repo) {
 
@@ -84,6 +93,7 @@ public class DiagnoseService {
         response.put("languages", languages);
         response.put("commitActivities", commitActivities);
         response.put("recentActivities", recentActivities);
+        response.put("vulnerabilities", vulnerabilities);
 
         // 점수 정보 (에러 발생 시 기본값 제공)
         try {
