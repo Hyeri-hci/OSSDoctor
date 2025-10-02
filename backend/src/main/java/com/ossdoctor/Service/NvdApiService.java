@@ -51,7 +51,9 @@ public class NvdApiService {
             }
         }
 
-        return DTOList;
+    public Flux<VulnerabilityDTO> convertToVulnerabilityDTOList(Flux<JsonNode> vulnerabilities, RepositoryDTO repositoryDTO) {
+        return vulnerabilities
+                .flatMap(vulNode -> JsonToVulnerabilityDTO(vulNode, repositoryDTO.getIdx()));
     }
 
     private List<VulnerabilityDTO> JsonToVulnerabilityDTO(JsonNode vulnerability, Long repositoryId) {
