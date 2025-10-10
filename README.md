@@ -479,13 +479,23 @@ OSSDoctor 프로젝트에 기여해주셔서 감사합니다! 다음과 같은 �
 
 ---
 
+### 📄 라이선스
+이 프로젝트는 [Apache License 2.0](LICENSE) 하에 배포됩니다.  
+자세한 내용은 [`LICENSE`](LICENSE) 및 [`NOTICE.md`](NOTICE.md) 파일을 참조하세요.
+
+OSSDoctor는 Apache 2.0 라이선스의 조건을 준수하며,  
+Spring Framework, React, Flyway 등 여러 오픈소스 라이브러리를 사용합니다.  
+각 서드파티 소프트웨어의 저작권 및 라이선스 정보는 [`NOTICE.md`](NOTICE.md) 파일에 명시되어 있습니다.
+
+---
+
 ## 🏆 주요 기여자
 
 <div align="center">
 
 | 역할 | 이름 | GitHub | 담당 업무 |
 |------|------|---------|-----------|
-| 🎯 **Project Lead** | 신혜리 | [@Hyeri-hci](https://github.com/Hyeri-hci) | 전체 기획 및 관리, front 개발 |
+| 🎯 **Project Lead** | 신혜리 | [@Hyeri-hci](https://github.com/Hyeri-hci) | 전체 기획 및 관리, front&Back 개발 |
 | 💻 **Backend Dev** | 정윤환 | [@Unani0528](https://github.com/Unani0528) | GitHub 연동, 보안 진단 시스템 |
 | 🎨 **Backend Dev** | 진다빈 | [@dabbun](https://github.com/dabbun) | DB, 점수 계산 시스템 |
 
