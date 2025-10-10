@@ -369,7 +369,7 @@ public class GitHubApiService {
     // owner_repo 키로 캐시 있나?
     // 있으면 -> 메서드 본문 실행 X, 저장된 값을 바로 리턴
     // 없으면 메서드 실행하고, 결과를 캐시에 저장
-    @Cacheable(value = "repositoryInfo", key = "#owner + '_' + #repo")
+    //@Cacheable(value = "repositoryInfo", key = "#owner + '_' + #repo")
     public Mono<RepositoryDTO> getRepositoryInfo(String owner, String repo) {
         log.info("Fetching repository info for {}/{}", owner, repo);
 
@@ -395,8 +395,41 @@ public class GitHubApiService {
                                 dto.setContributors(Math.min(totalContributorCount, 9));
                             })
                             .then(Mono.fromCallable(() -> {
-                                RepositoryDTO savedDto = repositoryService.findByGithubId(dto.getGithubRepoId())
-                                        .orElseGet(() -> repositoryService.save(dto));
+                                Optional<RepositoryDTO> existingOpt =
+                                        repositoryService.findByGithubId(dto.getGithubRepoId());
+                                RepositoryDTO savedDto;
+
+                                if (existingOpt.isPresent()) {
+                                    RepositoryDTO existing = existingOpt.get();
+
+                                    // 기존 레포 업데이트
+                                    existing.setDescription(dto.getDescription());
+                                    existing.setLanguage(dto.getLanguage());
+                                    existing.setStar(dto.getStar());
+                                    existing.setFork(dto.getFork());
+                                    existing.setWatchers(dto.getWatchers());
+                                    existing.setLicense(dto.getLicense());
+                                    existing.setTopics(dto.getTopics());
+                                    existing.setLastCommitedAt(dto.getLastCommitedAt());
+                                    existing.setLastUpdatedAt(dto.getLastUpdatedAt());
+                                    existing.setTotalCommits(dto.getTotalCommits());
+                                    existing.setOpenPullRequests(dto.getOpenPullRequests());
+                                    existing.setClosedPullRequests(dto.getClosedPullRequests());
+                                    existing.setMergedPullRequests(dto.getMergedPullRequests());
+                                    existing.setTotalPullRequests(dto.getTotalPullRequests());
+                                    existing.setOpenIssues(dto.getOpenIssues());
+                                    existing.setClosedIssues(dto.getClosedIssues());
+                                    existing.setTotalIssues(dto.getTotalIssues());
+                                    existing.setTotalContributors(dto.getTotalContributors());
+                                    existing.setContributors(dto.getContributors());
+
+                                    savedDto = repositoryService.save(existing);
+                                    log.info("🔄 Updated existing repository info: {}", existing.getName());
+                                } else {
+                                    savedDto = repositoryService.save(dto);
+                                    log.info("💾 Saved new repository info: {}", dto.getName());
+                                }
+
                                 calculateTotalScore(savedDto);
                                 return savedDto;
                             }).subscribeOn(Schedulers.boundedElastic()));
