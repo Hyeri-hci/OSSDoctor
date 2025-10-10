@@ -11,12 +11,38 @@ export const useDiagnose = () => {
     const [fullProjectName, setFullProjectName] = useState('');
 
     /**
+     * Backend의 취약점 데이터를 Frontend 형식으로 변환
+     */
+    const transformVulnerabilityData = useCallback((vulnerabilities) => {
+        if (!vulnerabilities || vulnerabilities.length === 0) {
+            return [];
+        }
+
+        return vulnerabilities.map(vuln => ({
+            id: vuln.cveId || 'N/A',
+            title: vuln.cveId || 'Unknown Vulnerability',
+            severity: vuln.severity ? vuln.severity.toLowerCase() : 'unknown',
+            cvss: 'N/A', // Backend에서 제공하지 않는 경우
+            status: vuln.fixed ? 'fixed' : 'open',
+            date: vuln.detectedAt ? new Date(vuln.detectedAt).toISOString().split('T')[0] : 'N/A',
+            description: vuln.description || 'No description available',
+            versions: [], // Backend에서 제공하지 않는 경우
+            technicalDetails: null, // Backend에서 제공하지 않는 경우
+            mitigation: null // Backend에서 제공하지 않는 경우
+        }));
+    }, []);
+
+    /**
      * 진단 결과 데이터를 프론트엔드 형식으로 변환
      */
     const transformDiagnosisData = useCallback((diagnosisResult) => {
         const repositoryData = diagnosisResult.repository;
         const contributorsData = diagnosisResult.contributors || [];
         const scoresData = diagnosisResult.scores;
+        const vulnerabilitiesData = diagnosisResult.vulnerabilities || [];
+
+        // 취약점 데이터 변환
+        const transformedVulnerabilities = transformVulnerabilityData(vulnerabilitiesData);
 
         return {
             // 저장소 기본 정보
@@ -65,9 +91,14 @@ export const useDiagnose = () => {
             license: repositoryData.license,
 
             // 점수 정보
-            scores: scoresData
+            scores: scoresData,
+
+            // 보안 취약점 정보
+            security: {
+                vulnerabilities: transformedVulnerabilities
+            }
         };
-    }, []);
+    }, [transformVulnerabilityData]);
 
     /**
      * 저장소 진단 실행
@@ -97,6 +128,14 @@ export const useDiagnose = () => {
 
             // 실제 API 호출
             const diagnosisResult = await diagnoseRepository(owner, repo);
+
+            // Nodata 체크 (활동이 없는 repository)
+            if (diagnosisResult.Nodata !== undefined) {
+                setError('해당 저장소는 아직 활동이 없습니다.');
+                setProjectData(null);
+                setIsLoading(false);
+                return;
+            }
 
             // 데이터 변환 및 설정
             const transformedData = transformDiagnosisData(diagnosisResult);
