@@ -64,7 +64,7 @@ public class DiagnoseService {
         // 취약점 항목 반환
         Mono<Object> vulnerabilities = securityService.getRepositoryVulnerabilities(owner, repo)
                 .cast(Object.class)
-                .onErrorReturn(Map.of());
+                .onErrorReturn(java.util.Collections.emptyList());
 
 
         // 모든 데이터를 병렬로 수집하고 통합
@@ -105,6 +105,7 @@ public class DiagnoseService {
         response.put("languages", languages);
         response.put("commitActivities", commitActivities);
         response.put("recentActivities", recentActivities);
+        
         response.put("vulnerabilities", vulnerabilities);
 
         // 점수 정보 (에러 발생 시 기본값 제공)
