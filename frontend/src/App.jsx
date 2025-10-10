@@ -1,11 +1,14 @@
 import React from "react";
 import AppRouter from "./router/index";
+import { MyActivityProvider } from "./contexts/MyActivityContext";
 import './index.css'
 
 export default function App() {
   return (
-    <div>
-      <AppRouter />
-    </div>
+    <MyActivityProvider>
+      <div>
+        <AppRouter />
+      </div>
+    </MyActivityProvider>
   );
 }
