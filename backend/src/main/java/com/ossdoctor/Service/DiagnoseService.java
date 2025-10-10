@@ -126,6 +126,7 @@ public class DiagnoseService {
         Map<String, Object> defaultScores = new HashMap<>();
         defaultScores.put("healthScore", 0);
         defaultScores.put("socialScore", 0);
+        defaultScores.put("securityScore", 0);
         defaultScores.put("totalScore", 0);
         defaultScores.put("healthDetails", Map.of());
         defaultScores.put("socialDetails", Map.of());
