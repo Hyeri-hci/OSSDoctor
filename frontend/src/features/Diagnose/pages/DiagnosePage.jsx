@@ -52,25 +52,56 @@ const Diagnose = () => {
                                         color="blue"
                                     />
                                 ) : error ? (
-                                    <EmptyState
-                                        title="프로젝트를 찾을 수 없습니다"
-                                        message={error}
-                                        action={
-                                            <Button
-                                                onClick={() => {
-                                                    setError('');
-                                                    setProjectData(null);
-                                                    // 검색창으로 포커스 이동
-                                                    if (searchSectionRef.current) {
-                                                        searchSectionRef.current.focusSearchInput();
-                                                    }
-                                                }}
-                                                variant="primary"
-                                            >
-                                                다시 검색하기
-                                            </Button>
-                                        }
-                                    />
+                                    <div className="space-y-6">
+                                        <EmptyState
+                                            title={error.includes('활동이 없습니다') ? '📭 활동이 없는 저장소입니다' : '🔍 프로젝트를 찾을 수 없습니다'}
+                                            message={error}
+                                            action={
+                                                <Button
+                                                    onClick={() => {
+                                                        resetState();
+                                                        // 검색창으로 포커스 이동
+                                                        if (searchSectionRef.current) {
+                                                            searchSectionRef.current.focusSearchInput();
+                                                        }
+                                                    }}
+                                                    variant="primary"
+                                                >
+                                                    다시 검색하기
+                                                </Button>
+                                            }
+                                        />
+                                        
+                                        {/* 활동이 없는 저장소일 때 추가 안내 */}
+                                        {error.includes('활동이 없습니다') && (
+                                            <div className="max-w-2xl mx-auto">
+                                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                                                    <h4 className="text-sm font-semibold text-blue-900 mb-3">
+                                                        활동이 없는 저장소란?
+                                                    </h4>
+                                                    <ul className="text-sm text-blue-800 space-y-2">
+                                                        <li className="flex items-start">
+                                                            <span className="mr-2">•</span>
+                                                            <span>아직 코드가 업로드되지 않은 빈 저장소</span>
+                                                        </li>
+                                                        <li className="flex items-start">
+                                                            <span className="mr-2">•</span>
+                                                            <span>커밋 기록이 없는 저장소</span>
+                                                        </li>
+                                                        <li className="flex items-start">
+                                                            <span className="mr-2">•</span>
+                                                            <span>초기화만 되고 개발이 시작되지 않은 저장소</span>
+                                                        </li>
+                                                    </ul>
+                                                    <div className="mt-4 pt-4 border-t border-blue-200">
+                                                        <p className="text-sm text-blue-800">
+                                                            저장소에 코드를 업로드하고 커밋을 생성한 후 다시 진단해 주세요.
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
                                 ) : projectData ? (
                                     <>
                                         <ProjectInfo projectData={projectData} />
