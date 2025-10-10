@@ -3,15 +3,14 @@ import CVEDetailModal from './CVEDetailModal';
 import { TimelineContainer } from '../../../components/common';
 import { getSeverityColor, getStatusColor } from '../utils/diagnoseUtils';
 import { ProjectDataType } from '../types/proTypes';
-import { getMockSecurityData } from '../mockData';
 
 const SecurityHistory = ({ projectData }) => {
     // 선택된 CVE 정보를 저장하는 상태
     const [selectedCVE, setSelectedCVE] = useState(null);
     // 모달 열림/닫힘 상태를 관리하는 boolean 상태
     const [isModalOpen, setIsModalOpen] = useState(false);
-    // 실제 데이터가 없는 경우 mock 데이터 사용
-    const securityIssues = projectData?.security?.vulnerabilities || getMockSecurityData();
+    // 실제 Backend 데이터 사용
+    const securityIssues = projectData?.security?.vulnerabilities || [];
     // 날짜별로 보안 이슈 그룹화
     const groupedIssues = securityIssues.reduce((groups, issue) => {
         const date = issue.date;
@@ -73,11 +72,24 @@ const SecurityHistory = ({ projectData }) => {
                         최근 발견된 보안 취약점과 대응 현황을 확인할 수 있습니다.
                     </p>
 
-                    {/* TimelineContainer 사용 */}
-                    <TimelineContainer
-                        data={timelineData}
-                        maxHeight="40rem"
-                        renderItem={(issue) => (
+                    {/* 데이터가 없을 때 메시지 표시 */}
+                    {securityIssues.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-12 text-center">
+                            <div className="text-6xl mb-4">🛡️</div>
+                            <h4 className="text-lg font-semibold text-gray-900 mb-2">
+                                발견된 보안 취약점이 없습니다
+                            </h4>
+                            <p className="text-sm text-gray-600 max-w-md">
+                                현재 이 저장소에서 알려진 CVE 취약점이 발견되지 않았습니다.
+                                정기적인 의존성 업데이트를 권장합니다.
+                            </p>
+                        </div>
+                    ) : (
+                        /* TimelineContainer 사용 */
+                        <TimelineContainer
+                            data={timelineData}
+                            maxHeight="40rem"
+                            renderItem={(issue) => (
                             <div
                                 onClick={() => handleCVEClick(issue)}
                                 className={`p-3 rounded-lg border cursor-pointer hover:shadow-md transition-shadow ${getSeverityBackgroundColor(issue.severity)}`}
@@ -110,8 +122,9 @@ const SecurityHistory = ({ projectData }) => {
                                     </div>
                                 </div>
                             </div>
-                        )}
-                    />
+                            )}
+                        />
+                    )}
                 </div>
 
                 {/* CVE Detail Modal */}
@@ -124,8 +137,6 @@ const SecurityHistory = ({ projectData }) => {
         </div>
     );
 };
-
-
 SecurityHistory.propTypes = {
     projectData: ProjectDataType
 };

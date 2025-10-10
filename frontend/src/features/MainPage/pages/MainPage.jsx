@@ -5,15 +5,18 @@ import { initiateGitHubLogin } from "../../../utils/github-auth";
 import HeroSection from "../components/HeroSection";
 import FeaturesSection from "../components/FeaturesSection";
 import RecommendedProjectsSection from "../components/RecommendedProjectsSection";
+import useMainRecommendedProjects from "../hooks/useMainRecommendedProjects";
 
 export default function MainPage() {
     const { isAuthenticated, checkAuthStatus, handleLogin } = useAuth();
+    const { projects: recommendedProjects, loading: projectsLoading, error: projectsError } = useMainRecommendedProjects();
 
     // OAuth 콜백 처리 - 백엔드에서 리다이렉트된 결과 처리
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
         const authStatus = urlParams.get('auth');
         const user = urlParams.get('user');
+        const message = urlParams.get('message');
 
         if (authStatus === 'success' && user) {
             handleLogin(); // 로그인 상태 업데이트
@@ -29,9 +32,34 @@ export default function MainPage() {
 
             // URL에서 파라미터 제거 (기본 동작)
             window.history.replaceState({}, document.title, window.location.pathname);
+        } else if (authStatus === 'session_expired') {
+            // 세션 만료로 인한 자동 로그아웃
+            console.log('세션이 만료되어 자동 로그아웃되었습니다');
+            alert('로그인 세션이 만료되었습니다. 다시 로그인해주세요.');
+            
+            // URL에서 파라미터 제거
+            window.history.replaceState({}, document.title, window.location.pathname);
+        } else if (authStatus === 'server_restarted') {
+            // 서버 재시작으로 인한 자동 로그아웃
+            console.log('서버가 재시작되어 자동 로그아웃되었습니다');
+            alert('서버가 재시작되어 세션이 만료되었습니다. 다시 로그인해주세요.');
+            
+            // URL에서 파라미터 제거
+            window.history.replaceState({}, document.title, window.location.pathname);
+        } else if (authStatus === 'cancelled') {
+            // GitHub OAuth 취소 - 정상적인 사용자 행동으로 처리
+            console.log('GitHub 로그인이 취소되었습니다');
+            
+            // 저장된 리다이렉션 정보 정리
+            sessionStorage.removeItem('redirectAfterLogin');
+            
+            // URL에서 파라미터 제거 (알림 없이 조용히 처리)
+            window.history.replaceState({}, document.title, window.location.pathname);
         } else if (authStatus === 'error') {
-            console.error('OAuth 로그인 실패');
-            alert('로그인에 실패했습니다. 다시 시도해주세요.');
+            console.error('OAuth 로그인 실패:', message);
+            
+            const errorMessage = message ? decodeURIComponent(message) : '알 수 없는 오류가 발생했습니다';
+            alert(`로그인에 실패했습니다: ${errorMessage}\n다시 시도해주세요.`);
 
             // 저장된 리다이렉션 정보 정리
             sessionStorage.removeItem('redirectAfterLogin');
@@ -112,7 +140,11 @@ export default function MainPage() {
                     onContributionClick={handleContributionClick}
                     onEcosystemClick={handleEcosystemClick}
                 />
-                <RecommendedProjectsSection />
+                <RecommendedProjectsSection 
+                    projects={recommendedProjects}
+                    loading={projectsLoading}
+                    error={projectsError}
+                />
             </div>
         </Layout>
     );

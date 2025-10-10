@@ -2,7 +2,13 @@ import React from "react";
 import PropTypes from "prop-types";
 
 const ContributionStatsCard = ({ stats }) => {
-    const { monthlyPR, monthlyIssue, monthlyCommit, totalScore } = stats;
+    // stats가 null이거나 undefined인 경우 기본값 사용
+    const { 
+        monthlyPR = 0, 
+        monthlyIssue = 0, 
+        monthlyCommit = 0, 
+        totalScore = 0 
+    } = stats || {};
 
     return (
         <div className="bg-white border border-gray-200 rounded-lg p-6">
@@ -38,9 +44,9 @@ const ContributionStatsCard = ({ stats }) => {
                     <div className="text-2xl font-bold text-gray-900">{monthlyCommit}</div>
                 </div>
 
-                {/* Total Score */}
+                {/* Total Experience */}
                 <div className="text-center bg-white border border-gray-200 rounded-lg p-4">
-                    <div className="text-sm text-gray-600 mb-1">총 점수</div>
+                    <div className="text-sm text-gray-600 mb-1">총 경험치</div>
                     <div className="text-2xl font-bold text-gray-900">{totalScore}</div>
                 </div>
             </div>
@@ -50,11 +56,11 @@ const ContributionStatsCard = ({ stats }) => {
 
 ContributionStatsCard.propTypes = {
     stats: PropTypes.shape({
-        monthlyPR: PropTypes.number.isRequired,
-        monthlyIssue: PropTypes.number.isRequired,
-        monthlyCommit: PropTypes.number.isRequired,
-        totalScore: PropTypes.number.isRequired,
-    }).isRequired,
+        monthlyPR: PropTypes.number,
+        monthlyIssue: PropTypes.number,
+        monthlyCommit: PropTypes.number,
+        totalScore: PropTypes.number,
+    }), // stats가 null일 수 있으므로 optional
 };
 
 export default ContributionStatsCard;

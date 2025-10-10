@@ -59,7 +59,7 @@ export const SearchResultType = PropTypes.shape({
 
 // 리더보드 데이터 타입
 export const LeaderboardDataType = PropTypes.shape({
-    realtime: PropTypes.arrayOf(LeaderboardUserType),
+    today: PropTypes.arrayOf(LeaderboardUserType),
     week: PropTypes.arrayOf(LeaderboardUserType),
     month: PropTypes.arrayOf(LeaderboardUserType)
 });
@@ -68,4 +68,4 @@ export const LeaderboardDataType = PropTypes.shape({
 export const EcosystemViewType = PropTypes.oneOf(['main', 'ecosystem', 'leaderboard']);
 
 // 시간 기간 타입
-export const TimePeriodType = PropTypes.oneOf(['realtime', 'week', 'month']);
+export const TimePeriodType = PropTypes.oneOf(['today', 'week', 'month']);

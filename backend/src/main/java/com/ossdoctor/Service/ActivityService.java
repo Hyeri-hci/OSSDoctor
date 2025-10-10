@@ -13,7 +13,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
@@ -54,11 +54,9 @@ public class ActivityService {
             RepositoryEntity repository = repositoryRepository.findByGithubRepoId(repositoryId)
                     // 못찾으면 예외발생 -> 로그
                     .orElseThrow(() -> new IllegalArgumentException("Repository not found: id=" + repositoryId));
-            UserEntity user = userRepository.findByNickname(dto.getAuthor()).orElse(null);
 
             IssueEntity issue = IssueEntity.builder()
                     .repository(repository)
-                    .user(user)
                     .userName(dto.getAuthor())
                     .issueNumber(dto.getNumber())
                     .title(dto.getTitle())
@@ -76,11 +74,9 @@ public class ActivityService {
         return Mono.fromCallable(() -> {
             RepositoryEntity repository = repositoryRepository.findByGithubRepoId(repositoryId)
                     .orElseThrow(() -> new IllegalArgumentException("Repository not found: id=" + repositoryId));
-            UserEntity user = userRepository.findByNickname(dto.getAuthor()).orElse(null);
 
             PullRequestEntity pr = PullRequestEntity.builder()
                     .repository(repository)
-                    .user(user)
                     .userName(dto.getAuthor())
                     .prNumber(dto.getNumber())
                     .title(dto.getTitle())
@@ -103,13 +99,13 @@ public class ActivityService {
         };
     }
 
-    private LocalDateTime parseDate(String isoDateTime) {
+    private ZonedDateTime parseDate(String isoDateTime) {
         if (isoDateTime == null || isoDateTime.equalsIgnoreCase("null") || isoDateTime.isBlank()) {
             return null;
         }
 
         try {
-            return LocalDateTime.parse(isoDateTime, DateTimeFormatter.ISO_DATE_TIME);
+            return ZonedDateTime.parse(isoDateTime, DateTimeFormatter.ISO_DATE_TIME);
         } catch (DateTimeParseException e) {
             log.info("날짜 파싱 실패: {}", isoDateTime);
             return null;

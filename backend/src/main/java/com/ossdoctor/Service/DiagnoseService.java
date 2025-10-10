@@ -14,6 +14,7 @@ import java.util.Map;
 public class DiagnoseService {
 
     private final GitHubApiService gitHubApiService;
+    private final SecurityService securityService;
 
     /**
      * 저장소 전체 진단 정보 조회
@@ -23,7 +24,19 @@ public class DiagnoseService {
      */
     public Mono<Map<String, Object>> getFullDiagnosisData(String owner, String repo) {
         return gitHubApiService.getRepositoryInfo(owner, repo)
-                .flatMap(repositoryDTO -> collectAllDiagnosisData(owner, repo, repositoryDTO))
+                .flatMap(repositoryDTO -> {
+                    // 저장소에 코드가 없으면 바로 "Nodata" 반환
+                    if (repositoryDTO.isNull()) {
+                        log.info("📭 Repository has no code: {}/{}", owner, repo);
+
+                        Map<String, Object> nodataResponse = new HashMap<>();
+                        nodataResponse.put("Nodata", 0);
+                        return Mono.just(nodataResponse);
+                    }
+
+                    // 코드가 있는 경우 정상적으로 진단 데이터 수집
+                    return collectAllDiagnosisData(owner, repo, repositoryDTO);
+                })
                 .doOnError(error -> log.error("진단 데이터 수집 실패: {}/{}", owner, repo, error));
     }
 
@@ -48,14 +61,21 @@ public class DiagnoseService {
                 .cast(Object.class)
                 .onErrorReturn(Map.of());
 
+        // 취약점 항목 반환
+        Mono<Object> vulnerabilities = securityService.getRepositoryVulnerabilities(owner, repo)
+                .cast(Object.class)
+                .onErrorReturn(java.util.Collections.emptyList());
+
+
         // 모든 데이터를 병렬로 수집하고 통합
-        return Mono.zip(contributorsMono, languagesMono, commitActivitiesMono, recentActivitiesMono)
+        return Mono.zip(contributorsMono, languagesMono, commitActivitiesMono, recentActivitiesMono, vulnerabilities)
                 .map(tuple -> buildDiagnosisResponse(
                         repositoryDTO,
                         tuple.getT1(),
                         tuple.getT2(),
                         tuple.getT3(),
                         tuple.getT4(),
+                        tuple.getT5(),
                         owner,
                         repo
                 ));
@@ -70,6 +90,7 @@ public class DiagnoseService {
             Object languages,
             Object commitActivities,
             Object recentActivities,
+            Object vulnerabilities,
             String owner,
             String repo) {
 
@@ -84,6 +105,8 @@ public class DiagnoseService {
         response.put("languages", languages);
         response.put("commitActivities", commitActivities);
         response.put("recentActivities", recentActivities);
+        
+        response.put("vulnerabilities", vulnerabilities);
 
         // 점수 정보 (에러 발생 시 기본값 제공)
         try {
@@ -104,6 +127,7 @@ public class DiagnoseService {
         Map<String, Object> defaultScores = new HashMap<>();
         defaultScores.put("healthScore", 0);
         defaultScores.put("socialScore", 0);
+        defaultScores.put("securityScore", 0);
         defaultScores.put("totalScore", 0);
         defaultScores.put("healthDetails", Map.of());
         defaultScores.put("socialDetails", Map.of());

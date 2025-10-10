@@ -6,7 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 
 @Data
 @Builder
@@ -20,6 +20,6 @@ public class IssueDTO {
     private int issueNumber;
     private String title;
     private ISSUE_STATE state;
-    private LocalDateTime createdAt;
-    private LocalDateTime closedAt;
+    private ZonedDateTime createdAt;
+    private ZonedDateTime closedAt;
 }

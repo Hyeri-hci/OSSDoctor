@@ -3,7 +3,7 @@ package com.ossdoctor.Entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 
 @Data
 @Builder
@@ -21,9 +21,6 @@ public class IssueEntity {
     @JoinColumn(name = "repository_id", nullable = false)
     private RepositoryEntity repository;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = true)
-    private UserEntity user;
 
     @Column(name = "user_name", length = 50, nullable = false)
     private String userName;
@@ -38,8 +35,8 @@ public class IssueEntity {
     private ISSUE_STATE state;
 
     @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
+    private ZonedDateTime createdAt;
 
     @Column(name = "closed_at", nullable = true)
-    private LocalDateTime closedAt;
+    private ZonedDateTime closedAt;
 }

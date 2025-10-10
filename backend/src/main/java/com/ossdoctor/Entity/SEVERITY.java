@@ -5,4 +5,5 @@ public enum SEVERITY {
     MEDIUM,
     HIGH,
     CRITICAL,
+    UNKNOWN;
 }

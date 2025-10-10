@@ -3,6 +3,7 @@ import {
     checkAuthStatus,
     logout
 } from '../utils/github-auth';
+import { startAuthMonitoring, stopAuthMonitoring } from '../utils/auth-monitor';
 
 /** * 사용자 인증 상태를 관리하는 커스텀 훅
  * @returns {Object} 인증 상태와 관련된 함수들
@@ -19,7 +20,7 @@ import {
 export const useAuth = () => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [user, setUser] = useState(null);
-    const [isLoading, setIsLoading] = useState(false); // 초기에는 로딩 상태가 아님
+    const [isLoading, setIsLoading] = useState(true); // 초기에 로딩 상태로 시작
     const [error, setError] = useState(null);
 
 
@@ -30,12 +31,36 @@ export const useAuth = () => {
 
             const authStatus = await checkAuthStatus();
 
-            if (authStatus.isLoggedIn && authStatus.user) {
+            if (authStatus.serverError) {
+                // 서버 연결 실패시 자동으로 로그아웃 상태로 설정
+                setIsAuthenticated(false);
+                setUser(null);
+                setError('서버에 연결할 수 없습니다');
+                
+                // 모니터링 중단
+                stopAuthMonitoring();
+            } else if (authStatus.isLoggedIn && authStatus.user) {
                 setIsAuthenticated(true);
                 setUser(authStatus.user);
+                
+                // 로그인 상태일 때 모니터링 시작
+                startAuthMonitoring(30000, (authStatus) => {
+                    console.log('인증 모니터링에서 로그아웃 감지');
+                    setIsAuthenticated(false);
+                    setUser(null);
+                    if (authStatus.serverError) {
+                        setError('서버 연결이 끊어졌습니다');
+                    }
+                });
             } else {
                 setIsAuthenticated(false);
                 setUser(null);
+                if (authStatus.error && !authStatus.serverError) {
+                    setError(authStatus.error);
+                }
+                
+                // 모니터링 중단
+                stopAuthMonitoring();
             }
         } catch (error) {
             console.error('Error checking authentication status:', error);
@@ -43,6 +68,7 @@ export const useAuth = () => {
 
             setIsAuthenticated(false);
             setUser(null);
+            stopAuthMonitoring();
         } finally {
             setIsLoading(false);
         }
@@ -68,14 +94,19 @@ export const useAuth = () => {
                 // 백엔드에서 현재 인증 상태 확인
                 const authStatus = await checkAuthStatus();
 
-                if (authStatus.isLoggedIn && authStatus.user) {
+                if (authStatus.serverError) {
+                    // 서버 연결 실패시 자동으로 로그아웃 상태로 설정
+                    setIsAuthenticated(false);
+                    setUser(null);
+                    setError('서버에 연결할 수 없습니다');
+                } else if (authStatus.isLoggedIn && authStatus.user) {
                     setIsAuthenticated(true);
                     setUser(authStatus.user);
                 } else {
                     setIsAuthenticated(false);
                     setUser(null);
 
-                    if (authStatus.error) {
+                    if (authStatus.error && !authStatus.serverError) {
                         setError(authStatus.error);
                     }
                 }
@@ -97,6 +128,9 @@ export const useAuth = () => {
         try {
             setIsLoading(true);
             setError(null);
+            
+            // 모니터링 중단
+            stopAuthMonitoring();
 
             await logout();
 
@@ -123,7 +157,12 @@ export const useAuth = () => {
 
             const authStatus = await checkAuthStatus();
 
-            if (authStatus.isLoggedIn && authStatus.user) {
+            if (authStatus.serverError) {
+                // 서버 연결 실패시 자동으로 로그아웃 상태로 설정
+                setIsAuthenticated(false);
+                setUser(null);
+                setError('서버에 연결할 수 없습니다');
+            } else if (authStatus.isLoggedIn && authStatus.user) {
                 setIsAuthenticated(true);
                 setUser(authStatus.user);
             } else {

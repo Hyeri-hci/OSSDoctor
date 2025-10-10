@@ -53,7 +53,7 @@ const ProjectCard = ({
                     {/* 초보자 난이도 배지 */}
                     {(goodFirstIssues >= 3 || project.difficulty === 'Beginner') && (
                         <span className="inline-block mt-1 text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full font-medium">
-                            👋 쉬운 기여
+                            쉬운 기여
                         </span>
                     )}
                     {/* 기타 난이도 배지 - 개선된 표시 로직 */}
@@ -63,7 +63,7 @@ const ProjectCard = ({
                                 ? 'bg-yellow-100 text-yellow-800' 
                                 : 'bg-red-100 text-red-800'
                         }`}>
-                            {project.difficulty === 'Intermediate' ? '🔧 중급자용' : '⚡ 고급자용'}
+                            {project.difficulty === 'Intermediate' ? '중급자용' : '고급자용'}
                         </span>
                     )}
                 </div>
@@ -150,13 +150,6 @@ const ProjectCard = ({
             onClick={handleClick}
         >
             <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 hover:shadow-lg transition-all duration-200 hover:-translate-y-1 h-full flex flex-col md:flex-row gap-4">
-                {/* Project Image - Desktop */}
-                {showImage && (
-                    <div className="hidden md:flex bg-gray-200 w-24 h-24 rounded items-center justify-center flex-shrink-0">
-                        {/* 추후 이미지 삽입 */}
-                    </div>
-                )}
-
                 {/* Project Information - 동일한 콘텐츠 구조 사용 */}
                 <div className="flex-1 min-w-0 flex flex-col">
                     {commonCardContent}

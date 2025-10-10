@@ -1,6 +1,5 @@
 package com.ossdoctor.DTO;
 
-import com.ossdoctor.Entity.SOURCE_TYPE;
 import lombok.*;
 
 import java.time.LocalDate;
@@ -18,14 +17,12 @@ public class RepositoryDTO {
     private String url;
     private String owner;
     private String language;
-    private SOURCE_TYPE sourceType;
     private String license;
     private int star;
     private int fork;
     private int watchers;
     private int contributors; // 주요 기여자 수 (최대 9명)
     private int totalContributors; // 총 기여자 수
-    private Long viewCount;
     private int totalCommits;
     private int openPullRequests;
     private int closedPullRequests;
@@ -38,4 +35,6 @@ public class RepositoryDTO {
     private LocalDate lastCommitedAt;
 
     private List<String> topics;
+
+    private boolean isNull;
 }

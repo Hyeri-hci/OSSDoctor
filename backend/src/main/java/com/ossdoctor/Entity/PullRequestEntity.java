@@ -6,7 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 
 @Data
 @Builder
@@ -24,10 +24,6 @@ public class PullRequestEntity {
     @JoinColumn(name = "repository_id", nullable = false)
     private RepositoryEntity repository;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = true)
-    private UserEntity user;
-
     @Column(name = "user_name", length = 50, nullable = false)
     private String userName;
 
@@ -41,8 +37,8 @@ public class PullRequestEntity {
     private PR_STATE state;
 
     @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
+    private ZonedDateTime createdAt;
 
     @Column(name = "merged_at", nullable = true)
-    private LocalDateTime mergedAt;
+    private ZonedDateTime mergedAt;
 }

@@ -3,8 +3,7 @@ package com.ossdoctor.controller;
 import com.ossdoctor.DTO.ContributionDTO;
 import com.ossdoctor.DTO.UserDTO;
 import com.ossdoctor.Entity.CONTRIBUTION_TYPE;
-import com.ossdoctor.Service.ContributionService;
-import com.ossdoctor.Service.UserService;
+import com.ossdoctor.Service.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -12,10 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Slf4j
 @RestController
@@ -25,7 +21,7 @@ public class MyActivityController {
 
     private final ContributionService contributionService;
     private final UserService userService;
-
+    private final BadgeService badgeService;
     /**
      * 사용자 기여 통계 조회 (Overview 탭용)
      */
@@ -79,11 +75,6 @@ public class MyActivityController {
             }
         })
         .flatMap(contributionService::getContributionsByNickname)
-        .flatMap(_ -> {
-            // 매번 GitHub에서 최신 데이터를 가져와서 업데이트
-            return contributionService.saveContributions(nickname)
-                .then(contributionService.getContributionsByNickname(nickname));
-        })
         .map(history -> ResponseEntity.ok().body(Map.of(
             "success", true,
             "data", history
@@ -133,6 +124,33 @@ public class MyActivityController {
                 "error", "레벨 정보를 불러올 수 없습니다."
             ));
         }
+    }
+
+    /**
+     * 사용자 최근 뱃지 조회
+     */
+
+    @GetMapping("/recent-badges/{nickname}")
+    public Mono<ResponseEntity<Map<String, Object>>> getRecentBadges(@PathVariable String nickname) {
+        log.info("사용자 뱃지 조회");
+
+        return Mono.fromCallable(() -> {
+                Optional<UserDTO> userOpt = userService.findByUsername(nickname);
+                if (userOpt.isEmpty()) {
+                    log.warn("뱃지 조회 - 사용자를 찾을 수 없어서 생성: {}", nickname);
+                    createDefaultUser(nickname);
+                }
+                return nickname;
+            })
+            .flatMap(badgeService::processAllBadges)
+            .map(badge -> ResponseEntity.ok().body(Map.of(
+                    "success", true,
+                    "data", badge
+            )))
+            .onErrorReturn(ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "error", "최근 뱃지 이력을 불러올 수 없습니다."
+            )));
     }
 
     /**

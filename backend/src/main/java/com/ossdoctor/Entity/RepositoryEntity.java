@@ -38,10 +38,6 @@ public class RepositoryEntity {
     @Column(length = 50)
     private String language;
 
-    @Column(name = "source_type")
-    @Enumerated(value = EnumType.STRING)
-    private SOURCE_TYPE sourceType;
-
     @Column(length = 50)
     private String license;
 
@@ -61,10 +57,6 @@ public class RepositoryEntity {
     @Column(name = "total_contributors", nullable = false)
     @Builder.Default
     private Integer totalContributors = 0;
-
-    @Column(name = "view_count", nullable = false)
-    @Builder.Default
-    private Long viewCount = 0L;
 
     @Column(name = "total_commit_count", nullable = false)
     @Builder.Default

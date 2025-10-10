@@ -1,7 +1,8 @@
 package com.ossdoctor.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
-import org.json.JSONObject;
+import lombok.extern.slf4j.Slf4j;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,6 +24,7 @@ import com.ossdoctor.Service.GitHubOAuthService;
 import com.ossdoctor.util.CookieUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 
+@Slf4j
 @RestController
 public class OAuthController {
 
@@ -46,33 +48,63 @@ public class OAuthController {
      * access token 발급 → 사용자 정보 조회 → JWT 생성 → 쿠키 저장 → 프론트엔드 리다이렉트
      */
     @GetMapping("/oauth/callback")
-    public ResponseEntity<?> githubCallback(@RequestParam("code") String code) {
+    public ResponseEntity<?> githubCallback(
+            @RequestParam(value = "code", required = false) String code,
+            @RequestParam(value = "error", required = false) String error,
+            @RequestParam(value = "error_description", required = false) String errorDescription) {
+        
+        // 1. 사용자가 GitHub OAuth를 취소한 경우 처리
+        if (error != null) {
+            log.info("GitHub OAuth 취소됨 - error: {}, description: {}", error, errorDescription);
+            
+            // 오류가 아닌 메인 페이지로 정상 리다이렉트 (취소는 정상적인 사용자 행동)
+            HttpHeaders redirectHeaders = new HttpHeaders();
+            redirectHeaders.setLocation(URI.create(frontendUrl + "/?auth=cancelled"));
+            
+            return ResponseEntity.status(HttpStatus.FOUND)
+                    .headers(redirectHeaders)
+                    .build();
+        }
+        
+        // 2. authorization code가 없는 경우
+        if (code == null || code.trim().isEmpty()) {
+            log.warn("GitHub OAuth callback에 code 파라미터가 없음");
+            
+            HttpHeaders redirectHeaders = new HttpHeaders();
+            redirectHeaders.setLocation(URI.create(frontendUrl + "/?auth=error&message=" + 
+                    URLEncoder.encode("인증 코드가 없습니다", StandardCharsets.UTF_8)));
+            
+            return ResponseEntity.status(HttpStatus.FOUND)
+                    .headers(redirectHeaders)
+                    .build();
+        }
+        
         try {
-            // 1. 설정값 검증
+            // 3. 설정값 검증
             jwtService.validateJwtSecret();
             gitHubOAuthService.validateOAuthConfiguration();
 
-            // 2. JWT 키 생성 및 만료시간 설정
+            // 4. JWT 키 생성 및 만료시간 설정
             Date now = new Date();
             Date expiryDate = new Date(now.getTime() + 3600000); // 1시간
 
-            // 3. GitHub에 access token 요청
+            // 5. GitHub에 access token 요청
             String accessToken = gitHubOAuthService.getAccessToken(code);
 
-            // 4. access token으로 사용자 정보 조회
-            JSONObject userJson = gitHubOAuthService.getUserInfo(accessToken);
+            // 6. access token으로 사용자 정보 조회
+            JsonNode userJson = gitHubOAuthService.getUserInfo(accessToken);
 
-            // 5. 사용자 정보를 데이터베이스에 저장 또는 업데이트
+            // 7. 사용자 정보를 데이터베이스에 저장 또는 업데이트
             userService.saveOrUpdateUserFromGithub(userJson);
 
-            // 6. 사용자 정보로 JWT 생성
+            // 8. 사용자 정보로 JWT 생성
             String jwt = jwtService.createJwtToken(userJson, now, expiryDate);
 
-            // 7. JWT를 HTTP-only 쿠키로 설정
+            // 9. JWT를 HTTP-only 쿠키로 설정
             ResponseCookie jwtCookie = CookieUtil.createAuthCookie(jwt);
 
-            // 8. 프론트엔드로 성공 리다이렉트
-            String nickname = userJson.getString("login");
+            // 10. 프론트엔드로 성공 리다이렉트
+            String nickname = userJson.get("login").asText();
             HttpHeaders redirectHeaders = new HttpHeaders();
             redirectHeaders.setLocation(URI.create(frontendUrl + "/?auth=success&user=" +
                     URLEncoder.encode(nickname, StandardCharsets.UTF_8)));
@@ -83,6 +115,8 @@ public class OAuthController {
                     .build();
 
         } catch (Exception e) {
+            log.error("GitHub OAuth 처리 중 오류 발생", e);
+            
             // 에러 발생 시 프론트엔드로 에러 리다이렉트 (URL 인코딩 적용)
             HttpHeaders redirectHeaders = new HttpHeaders();
             String errorMessage = URLEncoder.encode(e.getMessage(), StandardCharsets.UTF_8);

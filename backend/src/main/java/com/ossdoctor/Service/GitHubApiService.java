@@ -3,6 +3,8 @@ package com.ossdoctor.Service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.ossdoctor.DTO.*;
 import com.ossdoctor.Entity.*;
+import com.ossdoctor.Repository.RepositoryRepository;
+import com.ossdoctor.Repository.VulnerabilityRepository;
 import com.ossdoctor.config.GithubApiProperties;
 import com.ossdoctor.exception.GitHubApiException;
 import lombok.AllArgsConstructor;
@@ -21,10 +23,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 import reactor.util.retry.Retry;
 
-import java.time.Duration;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
@@ -43,6 +42,7 @@ public class GitHubApiService {
     private final RepositoryService repositoryService;
     private final ActivityService activityService;
     private final ScoreService scoreService;
+    private final VulnerabilityRepository vulnerabilityRepository;
 
 
     // ========== REST API 사용 메서드 ==========
@@ -252,6 +252,121 @@ public class GitHubApiService {
     }
     """;
 
+    // 기여 관련 뱃지
+    private static final String CONTRIBUTION_SUMMARY_QUERY = """
+    query GetContributionSummary($login: String!, $since: DateTime!) {
+      user(login: $login) {
+        login
+        contributionsCollection(from: $since) {
+          commitContributionsByRepository(maxRepositories: 50) {
+            repository {
+              name
+            }
+            contributions(first: 100) {
+              totalCount
+            }
+          }
+          pullRequestContributionsByRepository(maxRepositories: 50) {
+            repository {
+              name
+            }
+            contributions(first: 100) {
+              nodes {
+                pullRequest {
+                  mergedAt
+                }
+              }
+            }
+          }
+          issueContributionsByRepository(maxRepositories: 50) {
+            repository {
+              name
+            }
+            contributions(first: 100) {
+              nodes {
+                issue {
+                  closedAt
+                }
+              }
+            }
+          }
+          pullRequestReviewContributionsByRepository(maxRepositories: 50) {
+            repository {
+              name
+            }
+            contributions(first: 100) {
+              totalCount
+            }
+          }
+        }
+      }
+    }
+    """;
+
+    // Social 관련 뱃지
+    private static final String SOCIAL_COUNTS_QUERY = """
+    query GetSocialCounts($login: String!) {
+      user(login: $login) {
+        login
+        starredRepositories {
+          totalCount
+        }
+        watching {
+          totalCount
+        }
+        repositories(isFork: true) {
+          totalCount
+        }
+      }
+    }
+    """;
+
+    // 연속 commit 관련 뱃지
+    private static final String CONTRIBUTION_CALENDAR_QUERY = """
+    query GetContributionCalendar($login: String!, $from: DateTime!, $to: DateTime!) {
+      user(login: $login) {
+        contributionsCollection(from: $from, to: $to) {
+          contributionCalendar {
+            totalContributions
+            weeks {
+              contributionDays {
+                date
+                contributionCount
+              }
+            }
+          }
+        }
+      }
+    }
+    """;
+    private final RepositoryRepository repositoryRepository;
+
+    // PR 상태 추적
+    private static final String PULL_REQUEST_QUERY = """
+    query GetPullRequest($owner: String!, $repo: String!, $number: Int!) {
+      repository(owner: $owner, name: $repo) {
+        pullRequest(number: $number) {
+          state
+          mergedAt
+          closedAt
+        }
+      }
+    }
+    """;
+
+    // Issue 상태 추적
+    private static final String ISSUE_QUERY = """
+    query GetIssue($owner: String!, $repo: String!, $number: Int!) {
+      repository(owner: $owner, name: $repo) {
+        issue(number: $number) {
+          state
+          closedAt
+        }
+      }
+    }
+    """;
+
+
     // =========== 공개 API 메서드 ===========
 
     // Repository 기본 정보 조회
@@ -268,34 +383,76 @@ public class GitHubApiService {
 
         // GraphQL Query 호출
         return executeGraphQLQuery(REPOSITORY_QUERY, variables)
+                .doOnNext(response -> log.info("GraphQL Response: {}", response.toPrettyString()))
                 .map(this::parseRepositoryInfo) // JSON -> DTO
-                .flatMap(dto ->
-                        // contributor 수를 가져와 DTO에 설정
-                        getContributorCount(owner, repo)
-                                .doOnNext(totalContributorCount -> {
-                                    dto.setTotalContributors(totalContributorCount);
-                                    dto.setContributors(Math.min(totalContributorCount, 9));
-                                })
-                                .then(Mono.fromCallable(() -> {
-                                    RepositoryDTO savedDto = repositoryService.findByGithubId(dto.getGithubRepoId())
-                                            .orElseGet(() -> repositoryService.save(dto));
-                                    calculateTotalScore(savedDto);
-                                    return savedDto;
-                                }).subscribeOn(Schedulers.boundedElastic())))
+                .flatMap(dto -> {
+                    log.info(dto.toString());
+                    boolean noCode = dto.isNull() || dto.getTotalCommits() == 0;
+                    if (noCode) {
+                        log.info("📭 Repository has no code. Skipping contributor fetch.");
+                        return Mono.just(dto); // contributor 조회 및 DB 저장 스킵
+                    }
+                    // contributor 수를 가져와 DTO에 설정
+                    return getContributorCount(owner, repo)
+                            .doOnNext(totalContributorCount -> {
+                                dto.setTotalContributors(totalContributorCount);
+                                dto.setContributors(Math.min(totalContributorCount, 9));
+                            })
+                            .then(Mono.fromCallable(() -> {
+                                Optional<RepositoryDTO> existingOpt =
+                                        repositoryService.findByGithubId(dto.getGithubRepoId());
+                                RepositoryDTO savedDto;
+
+                                if (existingOpt.isPresent()) {
+                                    RepositoryDTO existing = existingOpt.get();
+
+                                    // 기존 레포 업데이트
+                                    existing.setDescription(dto.getDescription());
+                                    existing.setLanguage(dto.getLanguage());
+                                    existing.setStar(dto.getStar());
+                                    existing.setFork(dto.getFork());
+                                    existing.setWatchers(dto.getWatchers());
+                                    existing.setLicense(dto.getLicense());
+                                    existing.setTopics(dto.getTopics());
+                                    existing.setLastCommitedAt(dto.getLastCommitedAt());
+                                    existing.setLastUpdatedAt(dto.getLastUpdatedAt());
+                                    existing.setTotalCommits(dto.getTotalCommits());
+                                    existing.setOpenPullRequests(dto.getOpenPullRequests());
+                                    existing.setClosedPullRequests(dto.getClosedPullRequests());
+                                    existing.setMergedPullRequests(dto.getMergedPullRequests());
+                                    existing.setTotalPullRequests(dto.getTotalPullRequests());
+                                    existing.setOpenIssues(dto.getOpenIssues());
+                                    existing.setClosedIssues(dto.getClosedIssues());
+                                    existing.setTotalIssues(dto.getTotalIssues());
+                                    existing.setTotalContributors(dto.getTotalContributors());
+                                    existing.setContributors(dto.getContributors());
+
+                                    savedDto = repositoryService.save(existing);
+                                    log.info("🔄 Updated existing repository info: {}", existing.getName());
+                                } else {
+                                    savedDto = repositoryService.save(dto);
+                                    log.info("💾 Saved new repository info: {}", dto.getName());
+                                }
+
+                                //calculateTotalScore(savedDto);
+                                return savedDto;
+                            }).subscribeOn(Schedulers.boundedElastic()));
+                })
                 .onErrorMap(this::handleApiError); // 에러 핸들링
     }
+
 
     // 커밋 활동 통계 조회 - 최근 30일간 커밋 활동 분석하여 일별 통계 반환
     // 프론트엔드의 차트에서 활용 (통계 일자는 변경 가능)
     @Cacheable(value = "commitActivity", key = "#owner + '_' + #repo")
     public Mono<List<CommitDTO>> getCommitActivity(String owner, String repo) {
         // 최근 30일간의 커밋만 요청하기 위한 조건
-        LocalDateTime since = LocalDateTime.now().minusDays(30);
+        ZonedDateTime since = ZonedDateTime.now().minusDays(30);
 
         Map<String, Object> variables = Map.of(
                 "owner", owner,
                 "name", repo,
-                "since", since.format(DateTimeFormatter.ISO_DATE_TIME));
+                "since", since.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
 
         return executeGraphQLQuery(COMMIT_ACTIVITY_QUERY, variables)
                 .map(this::parseCommitActivity)
@@ -305,7 +462,6 @@ public class GitHubApiService {
     // 최근 활동 이력 조회 - 최근 7일간 Pull Request, Issue 등 활동 가져와 프로젝트 최근 동향 파악
     @Cacheable(value = "recentActivities", key = "#owner + '_' +#repo")
     public Mono<List<ActivityDTO>> getRecentActivities(String owner, String repo) {
-        // LocalDateTime since = LocalDateTime.now().minusDays(7);
 
         Map<String, Object> variables = Map.of(
                 "owner", owner,
@@ -340,18 +496,98 @@ public class GitHubApiService {
     }
 
     // 기여한 내역 불러오기
-    public Mono<List<ContributionDTO>> getContributionSince(String owner, LocalDateTime since) {
+    public Mono<List<ContributionDTO>> getContributionSince(String owner, ZonedDateTime since) {
+
         Map<String, Object> variables = Map.of(
                 "login", owner,
-                "since", since.format(DateTimeFormatter.ISO_DATE_TIME)
+                "since", since.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
         );
         
         return executeGraphQLQuery(FULL_CONTRIBUTIONS_QUERY, variables)
                 .doOnError(error -> {
                     log.error("GitHub GraphQL API 호출 실패: {}", error.getMessage());
                 })
+                .doOnNext(response -> log.info("GraphQL Response: {}", response.toPrettyString()))
                 .flatMap(this::parseContributions)
                 .doOnError(error -> log.error("GraphQL 응답 파싱 실패: {}", error.getMessage()))
+                .onErrorMap(this::handleApiError);
+    }
+
+    // 뱃지 조건 확인용
+    public Mono<List<BadgeMetricDTO>> getContributionSummary(String owner, ZonedDateTime since) {
+        log.info("Fetching Contribution summary for {}", owner);
+
+        Map<String, Object> variables = Map.of(
+                "login", owner,
+                "since", since.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+        );
+
+        return executeGraphQLQuery(CONTRIBUTION_SUMMARY_QUERY, variables)
+                .doOnNext(response -> log.info("GraphQL Response: {}", response.toPrettyString()))
+                .map(this::parseContributionSummaryAsMetrics)
+                .onErrorMap(this::handleApiError);
+    }
+
+    public Mono<List<BadgeMetricDTO>> getSocialCount(String owner) {
+        log.info("Fetching Social count for {}", owner);
+        Map<String, Object> variables = Map.of(
+                "login", owner
+        );
+
+        return executeGraphQLQuery(SOCIAL_COUNTS_QUERY, variables)
+                .doOnNext(response -> log.info("GraphQL Response: {}", response.toPrettyString()))
+                .map(this::parseSocialCount)
+                .onErrorMap(this::handleApiError);
+    }
+
+    // 연속 커밋
+    public Mono<BadgeMetricDTO> getContributionCalendar(String owner, ZonedDateTime since) {
+        log.info("Fetching Contribution calendar for {}", owner);
+
+        // 현재 시각을 to 변수로 설정
+        ZonedDateTime now = ZonedDateTime.now();
+
+        Map<String, Object> variables = Map.of(
+                "login", owner,
+                "from", since.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
+                "to", now.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+        );
+
+        return executeGraphQLQuery(CONTRIBUTION_CALENDAR_QUERY, variables)
+                .doOnNext(response -> log.info("GraphQL Response: {}", response.toPrettyString()))
+                .map(this::parseContributionCalendar)
+                .onErrorMap(this::handleApiError);
+    }
+
+    // PR 추적
+    public Mono<ContributionDTO> getPullRequest(String owner, String repo, int number) {
+        log.info("Fetching Pull Request #{} from {}/{}", number, owner, repo);
+
+        Map<String, Object> variables = Map.of(
+                "owner", owner,
+                "repo", repo,
+                "number", number
+        );
+
+        return executeGraphQLQuery(PULL_REQUEST_QUERY, variables)
+                .doOnNext(response -> log.info("GraphQL Response: {}", response.toPrettyString()))
+                .map(this::parsePullRequest)
+                .onErrorMap(this::handleApiError);
+    }
+
+    // Issue 추적
+    public Mono<ContributionDTO> getIssue(String owner, String repo, int number) {
+        log.info("Fetching Issue #{} from {}/{}", number, owner, repo);
+
+        Map<String, Object> variables = Map.of(
+                "owner", owner,
+                "repo", repo,
+                "number", number
+        );
+
+        return executeGraphQLQuery(ISSUE_QUERY, variables)
+                .doOnNext(response -> log.info("GraphQL Response: {}", response.toPrettyString()))
+                .map(this::parseIssue)
                 .onErrorMap(this::handleApiError);
     }
 
@@ -506,13 +742,32 @@ public class GitHubApiService {
         String pushedAtStr = repository.path("updatedAt").asText();
         LocalDate pushedAt = OffsetDateTime.parse(pushedAtStr).toLocalDate();
 
-        String commitedAtStr = repository.path("defaultBranchRef")
-                .path("target")
-                .path("history")
-                .path("nodes")
-                .get(0)
-                .path("committedDate").asText();
-        LocalDate commitedAt = OffsetDateTime.parse(commitedAtStr).toLocalDate();
+        JsonNode defaultBranchRef = repository.path("defaultBranchRef");
+        LocalDate commitedAt = null;
+        int totalCommits = 0;
+        boolean isNull = false;
+
+        if (defaultBranchRef.isMissingNode() || defaultBranchRef.isNull()) {
+            isNull = true; // 브랜치가 없으면 코드가 없음
+            return RepositoryDTO.builder()
+                    .isNull(isNull)
+                    .build();
+        } else {
+            JsonNode nodes = defaultBranchRef.path("target").path("history").path("nodes");
+            if (nodes.isArray() && nodes.size() > 0) {
+                String commitedAtStr = nodes.get(0).path("committedDate").asText(null);
+                if (commitedAtStr != null) {
+                    commitedAt = OffsetDateTime.parse(commitedAtStr).toLocalDate();
+                }
+            } else {
+                isNull = true; // 브랜치는 있지만 커밋이 없으면 코드 없음
+                return RepositoryDTO.builder()
+                        .isNull(isNull)
+                        .totalCommits(0)
+                        .build();
+            }
+            totalCommits = defaultBranchRef.path("target").path("history").path("totalCommit").asInt();
+        }
 
         return RepositoryDTO.builder()
                 .githubRepoId(repository.get("databaseId").asLong())
@@ -521,14 +776,13 @@ public class GitHubApiService {
                 .url(repository.path("url").asText())
                 .owner(owner)
                 .language(topLanguages) // top3 언어, 예시) "C,Java,Python"
-                .sourceType(SOURCE_TYPE.ANALYZED) // 프로젝트 분석용
                 .star(repository.path("stargazerCount").asInt()) // star
                 .fork(repository.path("forkCount").asInt())
                 .watchers(repository.path("watchers").path("totalCount").asInt())
                 .license(repository.path("licenseInfo").path("spdxId").asText(null))
                 .topics(topics)
                 .lastCommitedAt(commitedAt) // 모니터링 점수
-                .totalCommits(repository.path("defaultBranchRef").path("target").path("history").path("totalCommit").asInt(0))
+                .totalCommits(totalCommits)
                 .openPullRequests(repository.path("openPullRequests").path("totalCount").asInt())
                 .closedPullRequests(repository.path("closedPullRequests").path("totalCount").asInt(0))
                 .mergedPullRequests(repository.path("mergedPullRequests").path("totalCount").asInt(0))
@@ -538,6 +792,7 @@ public class GitHubApiService {
                 .totalIssues(repository.path("totalIssues").path("totalCount").asInt(0))
                 .lastUpdatedAt(pushedAt) // 모니터링 점수
                 .totalContributors(0) // 초기값으로 설정, 이후 getContributorCount()에서 업데이트됨
+                .isNull(isNull)
                 .build();
     }
 
@@ -564,6 +819,151 @@ public class GitHubApiService {
                         .day(getDayOfWeek(entry.getKey()))
                         .build())
                 .collect(Collectors.toList());
+    }
+
+    private List<BadgeMetricDTO> parseContributionSummaryAsMetrics(JsonNode response) {
+        JsonNode collection = response.path("data").path("user").path("contributionsCollection");
+
+        int totalCommits = 0;
+        for (JsonNode repoNode : collection.path("commitContributionsByRepository")) {
+            totalCommits += repoNode.path("contributions").path("totalCount").asInt(0);
+        }
+
+        int totalPRs = 0;
+        int mergedPRs = 0;
+        for (JsonNode repoNode : collection.path("pullRequestContributionsByRepository")) {
+            JsonNode nodes = repoNode.path("contributions").path("nodes");
+            totalPRs += nodes.size();
+            for (JsonNode node : nodes) {
+                JsonNode prNode = node.path("pullRequest");
+                if (!prNode.path("mergedAt").isNull()) mergedPRs++;
+            }
+        }
+
+        int totalIssues = 0;
+        int closedIssues = 0;
+        for (JsonNode repoNode : collection.path("issueContributionsByRepository")) {
+            JsonNode nodes = repoNode.path("contributions").path("nodes");
+            totalIssues += nodes.size();
+            for (JsonNode node : nodes) {
+                JsonNode issueNode = node.path("issue");
+                if (!issueNode.path("closedAt").isNull()) closedIssues++;
+            }
+        }
+
+        int totalReviews = 0;
+        for (JsonNode repoNode : collection.path("pullRequestReviewContributionsByRepository")) {
+            totalReviews += repoNode.path("contributions").path("totalCount").asInt(0);
+        }
+
+        Map<BADGE_CATEGORY, Integer> counts = Map.of(
+                BADGE_CATEGORY.COMMIT, totalCommits,
+                BADGE_CATEGORY.PR_EXTERNAL, totalPRs,
+                BADGE_CATEGORY.PR_MERGE, mergedPRs,
+                BADGE_CATEGORY.ISSUE_CREATE, totalIssues,
+                BADGE_CATEGORY.ISSUE_SOLVE, closedIssues,
+                BADGE_CATEGORY.CODE_REVIEW, totalReviews
+        );
+
+        return counts.entrySet().stream()
+                .map(entry -> BadgeMetricDTO.builder()
+                        .badgeCategory(entry.getKey())
+                        .count(entry.getValue())
+                        .build())
+                .toList();
+    }
+
+    private List<BadgeMetricDTO> parseSocialCount(JsonNode response) {
+        JsonNode social = response.path("data").path("user");
+
+        // BADGE_CATEGORY 기준으로 카운트 매핑
+        Map<BADGE_CATEGORY, Integer> socialCounts = Map.of(
+                BADGE_CATEGORY.STAR, social.path("starredRepositories").path("totalCount").asInt(),
+                BADGE_CATEGORY.FORK, social.path("repositories").path("totalCount").asInt(),
+                BADGE_CATEGORY.WATCH, social.path("watching").path("totalCount").asInt()
+        );
+
+        return socialCounts.entrySet().stream()
+                .map(entry -> BadgeMetricDTO.builder()
+                        .badgeCategory(entry.getKey())
+                        .count(entry.getValue())
+                        .build())
+                .toList();
+    }
+
+    private BadgeMetricDTO parseContributionCalendar(JsonNode response) {
+        JsonNode weeks = response.path("data").path("user")
+                .path("contributionsCollection")
+                .path("contributionCalendar")
+                .path("weeks");
+
+        List<CommitDTO> commits = new ArrayList<>();
+
+        if (weeks.isArray()) {
+            // 주마다
+            for (JsonNode week : weeks) {
+                // 날마다
+                for (JsonNode day : week.path("contributionDays")) {
+                    commits.add(CommitDTO.builder()
+                            .date(day.path("date").asText())
+                            .commits(day.path("contributionCount").asInt())
+                            .build());
+                }
+            }
+        }
+
+        // 최장 연속 커밋 수 계산
+        int longestStreak = calculateLongestStreak(commits);
+
+        return BadgeMetricDTO.builder()
+                .badgeCategory(BADGE_CATEGORY.COMMIT_STREAK)
+                .count(longestStreak)
+                .build();
+    }
+
+    private ContributionDTO parsePullRequest(JsonNode response) {
+        JsonNode pr = response.path("data").path("repository").path("pullRequest");
+
+        // 상태 계산
+        CONTRIBUTION_TYPE state = pr.hasNonNull("mergedAt")
+                ? CONTRIBUTION_TYPE.MERGED
+                : "OPEN".equals(pr.path("state").asText())
+                ? CONTRIBUTION_TYPE.OPEN
+                : CONTRIBUTION_TYPE.CLOSED;
+
+        // 종료 시점 계산
+        ZonedDateTime endAt = null;
+        if (pr.hasNonNull("mergedAt")) {
+            endAt = parseDate(pr.path("mergedAt").asText());
+        } else if ("CLOSED".equals(pr.path("state").asText()) && pr.hasNonNull("closedAt")) {
+            endAt = parseDate(pr.path("closedAt").asText());
+        }
+
+        return ContributionDTO.builder()
+                .state(state)
+                .endAt(endAt)
+                .referenceType(REFERENCE_TYPE.PR)
+                .build();
+    }
+
+    private ContributionDTO parseIssue(JsonNode response) {
+        JsonNode issue = response.path("data").path("repository").path("issue");
+
+        // 상태 계산
+        CONTRIBUTION_TYPE state = "OPEN".equals(issue.path("state").asText())
+                ? CONTRIBUTION_TYPE.OPEN
+                : CONTRIBUTION_TYPE.CLOSED;
+
+        // 종료 시점 계산
+        ZonedDateTime endAt = issue.hasNonNull("closedAt")
+                ? parseDate(issue.path("closedAt").asText())
+                : null;
+
+        return ContributionDTO.builder()
+                .state(state)
+                .endAt(endAt)
+                .referenceType(REFERENCE_TYPE.ISSUE)
+                .build();
     }
 
     // 최근 활동 파싱
@@ -650,8 +1050,8 @@ public class GitHubApiService {
             JsonNode repoNode,
             REFERENCE_TYPE refType,
             Function<JsonNode, CONTRIBUTION_TYPE> stateMapper,
-            Function<JsonNode, LocalDateTime> createdAtMapper,
-            Function<JsonNode, LocalDateTime> endAtMapper,
+            Function<JsonNode, ZonedDateTime> createdAtMapper,
+            Function<JsonNode, ZonedDateTime> endAtMapper,
             Function<JsonNode, Integer> numberMapper,
             Function<JsonNode, String> titleMapper
     ) {
@@ -664,8 +1064,8 @@ public class GitHubApiService {
                 .flatMap(node -> {
                     try {
                         CONTRIBUTION_TYPE state = stateMapper.apply(node);
-                        LocalDateTime createdAt = createdAtMapper.apply(node);
-                        LocalDateTime endAt = endAtMapper.apply(node);
+                        ZonedDateTime createdAt = createdAtMapper.apply(node);
+                        ZonedDateTime endAt = endAtMapper.apply(node);
                         Integer number = numberMapper.apply(node);
                         String title = titleMapper.apply(node);
 
@@ -833,11 +1233,13 @@ public class GitHubApiService {
 
         ScoreDTO healthScore = calculateHealthScore(repo_dto);
         ScoreDTO socialScore = calculateSocialScore(repo_dto);
+        ScoreDTO securityScore = getSecurityScoreDTO(repo_dto);
         ScoreDTO totalScore = calculateTotalScore(repo_dto);
 
         Map<String, Object> scores = new HashMap<>();
         scores.put("healthScore", healthScore.getScore());
         scores.put("socialScore", socialScore.getScore());
+        scores.put("securityScore", securityScore.getScore());
         scores.put("totalScore", totalScore.getScore());
 
         // 점수별 세부 정보
@@ -869,7 +1271,7 @@ public class GitHubApiService {
 
     // 건강 점수 계산 최종
     private ScoreDTO calculateHealthScore(RepositoryDTO repo) {
-
+        log.info("calculateHealthScore");
         int commitScore = scoreCalculator.calculateCommitScore(repo.getTotalCommits());
         int updateScore = scoreCalculator.calculateUpdateScore(repo.getLastUpdatedAt());
         int prScore = scoreCalculator.calculatePRScore(repo.getMergedPullRequests());
@@ -886,9 +1288,51 @@ public class GitHubApiService {
                 .build());
     }
 
+    // Security ScoreDTO를 반환하는 메서드
+    private ScoreDTO getSecurityScoreDTO(RepositoryDTO repositoryDTO){
+        String owner = repositoryDTO.getOwner();
+        String repo = repositoryDTO.getName();
+        Optional<RepositoryEntity> repositoryEntityOptional = repositoryRepository.findByOwnerAndName(owner,repo);
+        RepositoryEntity repositoryEntity = repositoryEntityOptional.get();
+        List<VulnerabilityEntity> vulnerabilityEntityList = vulnerabilityRepository.findByRepositoryIdAndFixedFalse(repositoryEntity);
+        ScoreDTO scoreDTO = calculateSecurityScore(vulnerabilityEntityList, repositoryEntity);
+        log.info("getSecurityScoreDTO 나감");
+        return scoreDTO;
+    }
+
+    private ScoreDTO calculateSecurityScore(List<VulnerabilityEntity> vulnerabilityEntityList, RepositoryEntity repositoryEntity) {
+        int score = 100;
+        for (VulnerabilityEntity entity : vulnerabilityEntityList) {
+            if(score <= 0){
+                score = 0;
+                /*ScoreDTO scoreDTO = ScoreDTO.builder()
+                        .repositoryId(repositoryEntity.getIdx())
+                        .scoreType(SCORE_TYPE.SECURITY)
+                        .score(score)
+                        .build();
+                return scoreDTO;*/
+                break;
+            }
+            else{
+                switch (entity.getSeverity()) {
+                    case UNKNOWN ->  score -= 1;
+                    case LOW ->   score -= 2;
+                    case MEDIUM ->   score -= 3;
+                    case HIGH ->   score -= 4;
+                    case CRITICAL ->   score -= 5;
+                }
+            }
+        }
+        ScoreDTO scoreDTO = ScoreDTO.builder()
+                .repositoryId(repositoryEntity.getIdx())
+                .scoreType(SCORE_TYPE.SECURITY)
+                .score(score)
+                .build();
+        return scoreService.save(scoreDTO);
+    }
+
     // 소셜 점수 계산 최종
     private ScoreDTO calculateSocialScore(RepositoryDTO repo) {
-
         int star = repo.getStar();
         int fork = repo.getFork();
         int watchers = repo.getWatchers();
@@ -915,11 +1359,12 @@ public class GitHubApiService {
 
         int healthScore = calculateHealthScore(repo).getScore() * 5;
         int socialScore = calculateSocialScore(repo).getScore() * 2;
+        int securityScore = getSecurityScoreDTO(repo).getScore() * 3;
 
         log.info("repo: " + repo.getName());
 
         // 최종 점수는 반올림
-        int totalScore = (healthScore + socialScore) / 10;
+        int totalScore = (healthScore + socialScore + securityScore) / 10;
 
         return scoreService.save(ScoreDTO.builder()
                 .repositoryId(repo.getIdx())
@@ -957,12 +1402,32 @@ public class GitHubApiService {
         }
     }
 
-    // 문자열 -> LocalDateTime
-    private LocalDateTime parseDate(String dateStr) {
+    // 문자열 -> ZonedDateTime
+    private ZonedDateTime parseDate(String dateStr) {
         if (dateStr == null || dateStr.isBlank() || "null".equalsIgnoreCase(dateStr)) {
             return null;
         }
-        return LocalDateTime.parse(dateStr, DateTimeFormatter.ISO_DATE_TIME);
+        return ZonedDateTime.parse(dateStr, DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+    }
+
+    // 최장 연속 커밋 계산
+    private int calculateLongestStreak(List<CommitDTO> commits) {
+        int longest = 0, current = 0;
+        LocalDate prev = null;
+
+        for (CommitDTO commit : commits) {
+            LocalDate cur = LocalDate.parse(commit.getDate());
+            if (commit.getCommits() > 0) {
+                if (prev != null && cur.equals(prev.plusDays(1))) {
+                    current++;
+                } else {
+                    current = 1;
+                }
+                longest = Math.max(longest, current);
+            }
+            prev = cur;
+        }
+        return longest;
     }
 
     // GitHub Api 예외 처리

@@ -6,6 +6,7 @@ import MainPage from "../features/MainPage/pages/MainPage";
 import DiagnosePage from "../features/Diagnose/pages/DiagnosePage";
 import MyActivityPage from "../features/MyActivity/pages/MyActivityPage";
 import EcosystemPage from "../features/Ecosystem/pages/EcosystemPage";
+import InfoPage from "../features/Info/pages/InfoPage";
 
 export default function AppRouter() {
   return (
@@ -22,6 +23,9 @@ export default function AppRouter() {
 
         {/* Ecosystem Page Route Path */}
         <Route path="/ecosystem" element={<EcosystemPage />} />
+        
+        {/* Info Page Route Path */}
+        <Route path="/info" element={<InfoPage />} />
         
         
       </Routes>

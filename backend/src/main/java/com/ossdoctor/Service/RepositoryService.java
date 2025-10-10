@@ -7,12 +7,14 @@ import com.ossdoctor.Repository.RepositoryRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 @Service
 @AllArgsConstructor
 public class RepositoryService {
@@ -29,7 +31,7 @@ public class RepositoryService {
         return toDTO(repositoryRepository.save(toEntity(dto)));
     }
 
-    private RepositoryDTO toDTO(RepositoryEntity entity) {
+    public RepositoryDTO toDTO(RepositoryEntity entity) {
 
         List<String> topics;
         try {
@@ -50,7 +52,6 @@ public class RepositoryService {
                 .url(entity.getUrl())
                 .owner(entity.getOwner())
                 .language(entity.getLanguage())
-                .sourceType(entity.getSourceType())
                 .license(entity.getLicense())
                 .star(entity.getStar())
                 .fork(entity.getFork())
@@ -58,7 +59,6 @@ public class RepositoryService {
                 .contributors(entity.getContributors())
                 .totalContributors(entity.getTotalContributors())
                 .description(entity.getDescription())
-                .viewCount(entity.getViewCount())
                 .totalCommits(entity.getTotalCommits())
                 .openPullRequests(entity.getOpenPullRequests())
                 .mergedPullRequests(entity.getMergedPullRequests())
@@ -72,15 +72,15 @@ public class RepositoryService {
                 .build();
     }
 
-    private RepositoryEntity toEntity(RepositoryDTO dto) {
+    public RepositoryEntity toEntity(RepositoryDTO dto) {
 
         RepositoryEntity entity = RepositoryEntity.builder()
+                .idx(dto.getIdx() != null ? dto.getIdx() : null)
                 .githubRepoId(dto.getGithubRepoId())
                 .name(dto.getName())
                 .url(dto.getUrl())
                 .owner(dto.getOwner())
                 .language(dto.getLanguage())
-                .sourceType(dto.getSourceType())
                 .license(dto.getLicense())
                 .star(dto.getStar())
                 .fork(dto.getFork())
@@ -88,7 +88,6 @@ public class RepositoryService {
                 .contributors(dto.getContributors())
                 .totalContributors(dto.getTotalContributors())
                 .description(dto.getDescription())
-                .viewCount(dto.getViewCount() != null ? dto.getViewCount() : 0L)
                 .totalCommits(dto.getTotalCommits())
                 .openPullRequests(dto.getOpenPullRequests())
                 .mergedPullRequests(dto.getMergedPullRequests())
@@ -115,6 +114,7 @@ public class RepositoryService {
 
     @Transactional
     public RepositoryDTO findByFullName(String owner, String name) {
+        log.info("findByFullName");
         return toDTO(repositoryRepository.findByOwnerAndName(owner, name)
                 .orElseThrow(() ->
                         new EntityNotFoundException("Repository with name " + name + " not found")));

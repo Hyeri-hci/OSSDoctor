@@ -17,6 +17,7 @@ public class GithubApiProperties {
     public static class Api {
         private String baseUrl = "https://api.github.com";
         private String graphqlUrl = "https://api.github.com/graphql";
+        private String nvdUrl = "https://services.nvd.nist.gov/rest/json/cves/2.0";
 
         private int rateLimitMaxRetries = 3;
         private int cacheExpiryMinutes = 10;

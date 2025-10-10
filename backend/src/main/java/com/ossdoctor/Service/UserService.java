@@ -3,10 +3,10 @@ package com.ossdoctor.Service;
 import com.ossdoctor.DTO.UserDTO;
 import com.ossdoctor.Entity.UserEntity;
 import com.ossdoctor.Repository.UserRepository;
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.json.JSONObject;
 
 import java.util.Optional;
 
@@ -35,15 +35,17 @@ public class UserService {
 
     /**
      * GitHub 사용자 정보를 데이터베이스에 저장 또는 업데이트
-     * @param userJson GitHub API에서 받은 사용자 정보
+     * @param userJson GitHub API에서 받은 사용자 정보 (Jackson JsonNode)
      * @return 저장된 사용자 DTO
      */
-    public UserDTO saveOrUpdateUserFromGithub(JSONObject userJson) {
+    public UserDTO saveOrUpdateUserFromGithub(JsonNode userJson) {
         try {
-            Long githubId = userJson.getLong("id");
-            String nickname = userJson.getString("login");
-            String avatarUrl = userJson.optString("avatar_url", null);
-            String bio = userJson.optString("bio", null);
+            Long githubId = userJson.get("id").asLong();
+            String nickname = userJson.get("login").asText();
+            String avatarUrl = userJson.has("avatar_url") && !userJson.get("avatar_url").isNull() 
+                ? userJson.get("avatar_url").asText() : null;
+            String bio = userJson.has("bio") && !userJson.get("bio").isNull() 
+                ? userJson.get("bio").asText() : null;
 
             // 기존 사용자 확인
             Optional<UserDTO> existingUser = findByGithubId(githubId);
