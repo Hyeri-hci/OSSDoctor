@@ -75,6 +75,7 @@ public class RepositoryService {
     public RepositoryEntity toEntity(RepositoryDTO dto) {
 
         RepositoryEntity entity = RepositoryEntity.builder()
+                .idx(dto.getIdx() != null ? dto.getIdx() : null)
                 .githubRepoId(dto.getGithubRepoId())
                 .name(dto.getName())
                 .url(dto.getUrl())

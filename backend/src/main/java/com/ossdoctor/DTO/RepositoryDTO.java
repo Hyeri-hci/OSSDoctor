@@ -35,4 +35,6 @@ public class RepositoryDTO {
     private LocalDate lastCommitedAt;
 
     private List<String> topics;
+
+    private boolean isNull;
 }

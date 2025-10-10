@@ -24,7 +24,19 @@ public class DiagnoseService {
      */
     public Mono<Map<String, Object>> getFullDiagnosisData(String owner, String repo) {
         return gitHubApiService.getRepositoryInfo(owner, repo)
-                .flatMap(repositoryDTO -> collectAllDiagnosisData(owner, repo, repositoryDTO))
+                .flatMap(repositoryDTO -> {
+                    // 저장소에 코드가 없으면 바로 "Nodata" 반환
+                    if (repositoryDTO.isNull()) {
+                        log.info("📭 Repository has no code: {}/{}", owner, repo);
+
+                        Map<String, Object> nodataResponse = new HashMap<>();
+                        nodataResponse.put("Nodata", 0);
+                        return Mono.just(nodataResponse);
+                    }
+
+                    // 코드가 있는 경우 정상적으로 진단 데이터 수집
+                    return collectAllDiagnosisData(owner, repo, repositoryDTO);
+                })
                 .doOnError(error -> log.error("진단 데이터 수집 실패: {}/{}", owner, repo, error));
     }
 
