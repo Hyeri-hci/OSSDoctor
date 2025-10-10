@@ -68,7 +68,7 @@ const CVEDetailModal = ({ cve, isOpen, onClose, position }) => {
                         {cve.status.toUpperCase()}
                     </span>
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${getSeverityColor(cve.severity)}`}>
-                        {cve.severity} (CVSS {cve.cvss})
+                        {cve.severity.toUpperCase()}
                     </span>
                 </div>
 
@@ -85,83 +85,30 @@ const CVEDetailModal = ({ cve, isOpen, onClose, position }) => {
                         <span className="ml-2 text-sm font-medium">{cve.date}</span>
                     </div>
                     <div>
-                        <span className="text-xs text-gray-600">대응일:</span>
-                        <span className="ml-2 text-sm font-medium">{cve.date}</span>
+                        <span className="text-xs text-gray-600">상태:</span>
+                        <span className={`ml-2 text-sm font-medium ${cve.status === 'fixed' ? 'text-green-600' : 'text-red-600'}`}>
+                            {cve.status === 'fixed' ? '수정됨' : '미해결'}
+                        </span>
                     </div>
                 </div>
 
-                {/* Affected Versions */}
-                {cve.versions && cve.versions.length > 0 && (
-                    <div>
-                        <h4 className="text-sm font-semibold text-gray-900 mb-2">영향받는 버전</h4>
-                        <div className="flex flex-wrap gap-1">
-                            {cve.versions.map((version, index) => (
-                                <span
-                                    key={index}
-                                    className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-md font-mono"
-                                >
-                                    {version}
-                                </span>
-                            ))}
-                        </div>
-                    </div>
-                )}
-
-                {/* CVSS Metrics */}
-                {cve.cvss && cve.cvss !== 'N/A' && (
-                    <div>
-                        <h4 className="text-sm font-semibold text-gray-900 mb-2">CVSS 메트릭</h4>
-                        <div className="flex flex-wrap gap-1 mb-3">
-                            <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded">
-                                CVSS Version 4.0
-                            </span>
-                            <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded">
-                                CVSS Version 3.x
-                            </span>
-                            <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded">
-                                CVSS Version 2.8
-                            </span>
-                        </div>
-
-                        <div className="text-xs text-gray-600 mb-3">
-                            NVD enrichment efforts reference publicly available information to associate vector strings,
-                            CVE information contributed by other sources is also displayed.
-                        </div>
-
-                        <div className="bg-yellow-50 border border-yellow-200 rounded p-2">
-                            <div className="font-semibold text-xs text-gray-900 mb-1">
-                                CVSS {cve.cvss} Severity and Vector Strings:
-                            </div>
-                            <div className="flex items-center space-x-2">
-                                <span className="bg-yellow-100 px-1 py-0.5 rounded text-xs font-mono">V4</span>
-                                <span className="text-xs font-mono">NIST: NVD</span>
-                                <span className="bg-gray-100 px-1 py-0.5 rounded text-xs">N/A</span>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* Technical Details */}
-                {cve.technicalDetails && (
-                    <div>
-                        <h4 className="text-sm font-semibold text-gray-900 mb-2">기술적 세부사항</h4>
-                        <div className="bg-gray-50 p-3 rounded-lg">
-                            <pre className="text-xs text-gray-700 whitespace-pre-wrap">
-                                {cve.technicalDetails}
-                            </pre>
-                        </div>
-                    </div>
-                )}
-
-                {/* Mitigation */}
-                {cve.mitigation && (
-                    <div>
-                        <h4 className="text-sm font-semibold text-gray-900 mb-2">완화 방법</h4>
-                        <div className="bg-green-50 border border-green-200 rounded p-3">
-                            <p className="text-xs text-green-800">{cve.mitigation}</p>
-                        </div>
-                    </div>
-                )}
+                {/* 추가 정보 안내 */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <h4 className="text-sm font-semibold text-blue-900 mb-2">
+                        💡 추가 정보
+                    </h4>
+                    <p className="text-xs text-blue-800 mb-2">
+                        이 취약점에 대한 자세한 정보는 다음 링크에서 확인할 수 있습니다:
+                    </p>
+                    <a
+                        href={`https://nvd.nist.gov/vuln/detail/${cve.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-blue-600 hover:text-blue-800 underline"
+                    >
+                        NVD 데이터베이스에서 {cve.id} 보기 →
+                    </a>
+                </div>
             </div>
         </Modal>
     );
@@ -169,16 +116,12 @@ const CVEDetailModal = ({ cve, isOpen, onClose, position }) => {
 
 CVEDetailModal.propTypes = {
     cve: PropTypes.shape({
-        id: PropTypes.string.isRequired,
-        title: PropTypes.string.isRequired,
-        description: PropTypes.string.isRequired,
-        severity: PropTypes.string.isRequired,
-        cvss: PropTypes.string, // Backend에서 제공하지 않을 수 있음
-        status: PropTypes.string.isRequired,
-        date: PropTypes.string.isRequired,
-        versions: PropTypes.arrayOf(PropTypes.string), // Backend에서 제공하지 않을 수 있음
-        technicalDetails: PropTypes.string,
-        mitigation: PropTypes.string
+        id: PropTypes.string.isRequired,           // cveId
+        title: PropTypes.string.isRequired,        // cveId (동일)
+        description: PropTypes.string.isRequired,  // description
+        severity: PropTypes.string.isRequired,     // severity (LOW, MEDIUM, HIGH, CRITICAL)
+        status: PropTypes.string.isRequired,       // fixed ? 'fixed' : 'open'
+        date: PropTypes.string.isRequired          // detectedAt
     }),
     isOpen: PropTypes.bool.isRequired,
     onClose: PropTypes.func.isRequired,
