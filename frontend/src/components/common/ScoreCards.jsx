@@ -135,10 +135,10 @@ const ScoreCards = ({
 
     // 백엔드 점수 구조에 맞게 점수 매핑
     const defaultScores = {
-        // 백엔드에서 totalScore, healthScore로 넘어옴
+        // 백엔드에서 totalScore, healthScore, securityScore로 넘어옴
         totalScore: scores?.totalScore || 0,
         healthScore: scores?.healthScore || 0,
-        securityScore: 0, // 보안 점수는 아직 미구현
+        securityScore: scores?.securityScore !== undefined ? scores.securityScore : 0, // 백엔드에서 제공하는 보안 점수 사용
 
         // MyActivity용 점수들
         prMerged: scores?.prMerged || 0,
@@ -164,7 +164,6 @@ const ScoreCards = ({
     return (
         <div className={`grid ${gridCols} gap-2 sm:gap-3 md:gap-4`}>
             {cardsConfig.map((card) => {
-                const IconComponent = card.icon;
                 const isActive = activeTab === card.id;
                 const score = defaultScores[card.scoreKey] || 0;
 
@@ -194,9 +193,9 @@ const ScoreCards = ({
 
 ScoreCards.propTypes = {
     scores: PropTypes.shape({
-        ovrall: PropTypes.number,
-        health: PropTypes.number,
-        security: PropTypes.number,
+        totalScore: PropTypes.number,
+        healthScore: PropTypes.number,
+        securityScore: PropTypes.number,
         prMerged: PropTypes.number,
         issuesCreated: PropTypes.number,
         reviewsCount: PropTypes.number,
