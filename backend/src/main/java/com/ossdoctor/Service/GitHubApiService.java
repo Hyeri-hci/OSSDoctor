@@ -340,7 +340,6 @@ public class GitHubApiService {
     }
     """;
     private final RepositoryRepository repositoryRepository;
-    private final VulnerabilityService vulnerabilityService;
 
     // PR 상태 추적
     private static final String PULL_REQUEST_QUERY = """
@@ -1291,7 +1290,6 @@ public class GitHubApiService {
 
     // Security ScoreDTO를 반환하는 메서드
     private ScoreDTO getSecurityScoreDTO(RepositoryDTO repositoryDTO){
-        log.info("getSecurityScoreDTO 들어옴");
         String owner = repositoryDTO.getOwner();
         String repo = repositoryDTO.getName();
         Optional<RepositoryEntity> repositoryEntityOptional = repositoryRepository.findByOwnerAndName(owner,repo);
@@ -1303,7 +1301,6 @@ public class GitHubApiService {
     }
 
     private ScoreDTO calculateSecurityScore(List<VulnerabilityEntity> vulnerabilityEntityList, RepositoryEntity repositoryEntity) {
-        log.info("calculateSecurityScore");
         int score = 100;
         for (VulnerabilityEntity entity : vulnerabilityEntityList) {
             if(score <= 0){
@@ -1336,7 +1333,6 @@ public class GitHubApiService {
 
     // 소셜 점수 계산 최종
     private ScoreDTO calculateSocialScore(RepositoryDTO repo) {
-        log.info("calculateSocialScore");
         int star = repo.getStar();
         int fork = repo.getFork();
         int watchers = repo.getWatchers();
