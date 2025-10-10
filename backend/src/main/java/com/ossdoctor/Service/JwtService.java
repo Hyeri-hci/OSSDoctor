@@ -2,7 +2,7 @@ package com.ossdoctor.Service;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import org.json.JSONObject;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -39,13 +39,15 @@ public class JwtService {
     /**
      * 사용자 정보로 JWT 토큰 생성
      */
-    public String createJwtToken(JSONObject userJson, Date now, Date expiryDate) {
+    public String createJwtToken(JsonNode userJson, Date now, Date expiryDate) {
         Key jwtkey = Keys.hmacShaKeyFor(jwtSecret.getBytes());
 
-        String nickname = userJson.getString("login");
-        int userId = userJson.getInt("id");
-        String avatarUrl = userJson.optString("avatar_url", "");
-        String bio = userJson.optString("bio", "");
+        String nickname = userJson.get("login").asText();
+        int userId = userJson.get("id").asInt();
+        String avatarUrl = userJson.has("avatar_url") && !userJson.get("avatar_url").isNull() 
+            ? userJson.get("avatar_url").asText() : "";
+        String bio = userJson.has("bio") && !userJson.get("bio").isNull() 
+            ? userJson.get("bio").asText() : "";
 
         return Jwts.builder()
                 .subject(String.valueOf(userId))

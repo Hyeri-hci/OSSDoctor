@@ -2,7 +2,7 @@ package com.ossdoctor.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
-import org.json.JSONObject;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -92,7 +92,7 @@ public class OAuthController {
             String accessToken = gitHubOAuthService.getAccessToken(code);
 
             // 6. access token으로 사용자 정보 조회
-            JSONObject userJson = gitHubOAuthService.getUserInfo(accessToken);
+            JsonNode userJson = gitHubOAuthService.getUserInfo(accessToken);
 
             // 7. 사용자 정보를 데이터베이스에 저장 또는 업데이트
             userService.saveOrUpdateUserFromGithub(userJson);
@@ -104,7 +104,7 @@ public class OAuthController {
             ResponseCookie jwtCookie = CookieUtil.createAuthCookie(jwt);
 
             // 10. 프론트엔드로 성공 리다이렉트
-            String nickname = userJson.getString("login");
+            String nickname = userJson.get("login").asText();
             HttpHeaders redirectHeaders = new HttpHeaders();
             redirectHeaders.setLocation(URI.create(frontendUrl + "/?auth=success&user=" +
                     URLEncoder.encode(nickname, StandardCharsets.UTF_8)));

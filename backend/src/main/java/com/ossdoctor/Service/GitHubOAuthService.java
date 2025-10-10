@@ -1,6 +1,7 @@
 package com.ossdoctor.Service;
 
-import org.json.JSONObject;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -73,7 +74,7 @@ public class GitHubOAuthService {
     }
 
     // GitHub API로 사용자 정보 조회
-    public JSONObject getUserInfo(String accessToken) throws Exception {
+    public JsonNode getUserInfo(String accessToken) throws Exception {
         RestTemplate restTemplate = new RestTemplate();
 
         // GitHub API 요청 헤더 설정
@@ -89,7 +90,8 @@ public class GitHubOAuthService {
                 "https://api.github.com/user", HttpMethod.GET, request, String.class);
 
         String responseBody = response.getBody();
-        JSONObject userJson = new JSONObject(responseBody);
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode userJson = mapper.readTree(responseBody);
 
         // 필수 필드 검증
         if (!userJson.has("login") || !userJson.has("id")) {
@@ -102,13 +104,14 @@ public class GitHubOAuthService {
     // GitHub 응답에서 access token 파싱
     private String parseAccessToken(String responseBody) {
         String accessToken = null;
+        ObjectMapper mapper = new ObjectMapper();
 
         // JSON 형식인지 확인
         if (responseBody.trim().startsWith("{")) {
             try {
-                JSONObject jsonResponse = new JSONObject(responseBody);
+                JsonNode jsonResponse = mapper.readTree(responseBody);
                 if (jsonResponse.has("access_token")) {
-                    accessToken = jsonResponse.getString("access_token");
+                    accessToken = jsonResponse.get("access_token").asText();
                 }
             } catch (Exception e) {
                 // JSON 파싱 실패 시 URL 인코딩 형식으로 처리
