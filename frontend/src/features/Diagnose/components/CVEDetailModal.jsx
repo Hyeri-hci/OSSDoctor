@@ -91,51 +91,55 @@ const CVEDetailModal = ({ cve, isOpen, onClose, position }) => {
                 </div>
 
                 {/* Affected Versions */}
-                <div>
-                    <h4 className="text-sm font-semibold text-gray-900 mb-2">영향받는 버전</h4>
-                    <div className="flex flex-wrap gap-1">
-                        {cve.versions.map((version, index) => (
-                            <span
-                                key={index}
-                                className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-md font-mono"
-                            >
-                                OpenSSL {version}
-                            </span>
-                        ))}
+                {cve.versions && cve.versions.length > 0 && (
+                    <div>
+                        <h4 className="text-sm font-semibold text-gray-900 mb-2">영향받는 버전</h4>
+                        <div className="flex flex-wrap gap-1">
+                            {cve.versions.map((version, index) => (
+                                <span
+                                    key={index}
+                                    className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-md font-mono"
+                                >
+                                    {version}
+                                </span>
+                            ))}
+                        </div>
                     </div>
-                </div>
+                )}
 
                 {/* CVSS Metrics */}
-                <div>
-                    <h4 className="text-sm font-semibold text-gray-900 mb-2">CVSS 메트릭</h4>
-                    <div className="flex flex-wrap gap-1 mb-3">
-                        <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded">
-                            CVSS Version 4.0
-                        </span>
-                        <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded">
-                            CVSS Version 3.x
-                        </span>
-                        <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded">
-                            CVSS Version 2.8
-                        </span>
-                    </div>
-
-                    <div className="text-xs text-gray-600 mb-3">
-                        NVD enrichment efforts reference publicly available information to associate vector strings,
-                        CVE information contributed by other sources is also displayed.
-                    </div>
-
-                    <div className="bg-yellow-50 border border-yellow-200 rounded p-2">
-                        <div className="font-semibold text-xs text-gray-900 mb-1">
-                            CVSS {cve.cvss} Severity and Vector Strings:
+                {cve.cvss && cve.cvss !== 'N/A' && (
+                    <div>
+                        <h4 className="text-sm font-semibold text-gray-900 mb-2">CVSS 메트릭</h4>
+                        <div className="flex flex-wrap gap-1 mb-3">
+                            <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded">
+                                CVSS Version 4.0
+                            </span>
+                            <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded">
+                                CVSS Version 3.x
+                            </span>
+                            <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded">
+                                CVSS Version 2.8
+                            </span>
                         </div>
-                        <div className="flex items-center space-x-2">
-                            <span className="bg-yellow-100 px-1 py-0.5 rounded text-xs font-mono">V4</span>
-                            <span className="text-xs font-mono">NIST: NVD</span>
-                            <span className="bg-gray-100 px-1 py-0.5 rounded text-xs">N/A</span>
+
+                        <div className="text-xs text-gray-600 mb-3">
+                            NVD enrichment efforts reference publicly available information to associate vector strings,
+                            CVE information contributed by other sources is also displayed.
+                        </div>
+
+                        <div className="bg-yellow-50 border border-yellow-200 rounded p-2">
+                            <div className="font-semibold text-xs text-gray-900 mb-1">
+                                CVSS {cve.cvss} Severity and Vector Strings:
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <span className="bg-yellow-100 px-1 py-0.5 rounded text-xs font-mono">V4</span>
+                                <span className="text-xs font-mono">NIST: NVD</span>
+                                <span className="bg-gray-100 px-1 py-0.5 rounded text-xs">N/A</span>
+                            </div>
                         </div>
                     </div>
-                </div>
+                )}
 
                 {/* Technical Details */}
                 {cve.technicalDetails && (
@@ -169,10 +173,10 @@ CVEDetailModal.propTypes = {
         title: PropTypes.string.isRequired,
         description: PropTypes.string.isRequired,
         severity: PropTypes.string.isRequired,
-        cvss: PropTypes.string.isRequired,
+        cvss: PropTypes.string, // Backend에서 제공하지 않을 수 있음
         status: PropTypes.string.isRequired,
         date: PropTypes.string.isRequired,
-        versions: PropTypes.arrayOf(PropTypes.string).isRequired,
+        versions: PropTypes.arrayOf(PropTypes.string), // Backend에서 제공하지 않을 수 있음
         technicalDetails: PropTypes.string,
         mitigation: PropTypes.string
     }),
