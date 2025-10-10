@@ -6,6 +6,7 @@ import com.ossdoctor.Repository.CpeRepository;
 import org.springframework.stereotype.Service;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Flux;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -43,50 +44,22 @@ public class CpeService {
 
     /**
      * 취약점 조회할 DTO 리스트를 입력받아서 CPE DB에서 매칭되는 항목만 반환
-     * @param dtoList 파싱된 의존성 목록
      * @return DB에서 발견된 CPE 목록 (중복 제거됨)
      */
-    public List<CpeDTO> findCpeList(List<CpeDTO> dtoList) {
-        if (dtoList == null || dtoList.isEmpty()) {
-            return new ArrayList<>();
-        }
-
-        log.info("🔍 CPE 매칭 시작: {}개 의존성 조회", dtoList.size());
-
-        Set<CpeDTO> resultSet = new LinkedHashSet<>(); // 중복 제거를 위해 Set 사용
-        int matchedCount = 0;
-        int totalSearched = 0;
-
-        for (CpeDTO inputDto : dtoList) {
-            if (inputDto.getProduct() == null || inputDto.getProduct().trim().isEmpty()) {
-                log.debug("⏭️ 제품명이 없는 항목 건너뛰기: {}", inputDto);
-                continue;
-            }
-
-            totalSearched++;
-            List<CpeDTO> entityList = searchCpe(inputDto);
-
-            if (!entityList.isEmpty()) {
-                matchedCount++;
-                log.info("✅ CPE 매칭 발견: {} -> {}개 결과",
-                        formatCpeString(inputDto), entityList.size());
-
-                // 개별 매칭 결과 로깅
-                for (CpeDTO dto : entityList) {
-                    resultSet.add(dto);
-                    log.debug("  📋 매칭된 CPE: {}", formatCpeString(dto));
-                }
-            } else {
-                log.debug("❌ CPE 매칭 실패: {}", formatCpeString(inputDto));
-            }
-        }
-
-        List<CpeDTO> resultList = new ArrayList<>(resultSet);
-
-        log.info("🎯 CPE 매칭 완료: {}개 중 {}개 매칭, 총 {}개 CPE 발견 (중복 제거 후)",
-                totalSearched, matchedCount, resultList.size());
-
-        return resultList;
+    public Flux<CpeDTO> findCpeList(Flux<CpeDTO> dtoFlux) {
+        return dtoFlux
+                .filter(dto -> dto.getProduct() != null && !dto.getProduct().trim().isEmpty())
+                .flatMap(inputDto -> {
+                    List<CpeDTO> entityList = searchCpe(inputDto); // 만약 이 부분도 비동기라면 Mono/Flux로 바꿔야 함
+                    if (!entityList.isEmpty()) {
+                        entityList.forEach(dto -> log.debug("  📋 매칭된 CPE: {}", formatCpeString(dto)));
+                        return Flux.fromIterable(entityList);
+                    } else {
+                        log.debug("❌ CPE 매칭 실패: {}", formatCpeString(inputDto));
+                        return Flux.empty();
+                    }
+                })
+                .distinct(); // 중복 제거
     }
 
     /**
