@@ -23,10 +23,10 @@
 - [🚀 빠른 시작](#-빠른-시작)
 - [📱 사용 방법](#-사용-방법)
 - [🛠️ 기술 스택](#️-기술-스택)
+- [📄 라이선스](#-라이선스)
 - [🤝 기여하기](#-기여하기)
 - [🏆 주요 기여자](#-주요-기여자)
 - [📞 지원 및 문의](#-지원-및-문의)
-- [📄 라이선스](#-라이선스)
 
 ---
 
@@ -446,6 +446,16 @@ npm run test:e2e
 
 ---
 
+## 📄 라이선스
+이 프로젝트는 [Apache License 2.0](LICENSE) 하에 배포됩니다.  
+자세한 내용은 [`LICENSE`](LICENSE) 및 [`NOTICE.md`](NOTICE.md) 파일을 참조하세요.
+
+OSSDoctor는 Apache 2.0 라이선스의 조건을 준수하며,  
+Spring Framework, React, Flyway 등 여러 오픈소스 라이브러리를 사용합니다.  
+각 서드파티 소프트웨어의 저작권 및 라이선스 정보는 [`NOTICE.md`](NOTICE.md) 파일에 명시되어 있습니다.
+
+---
+
 ## 🤝 기여하기
 
 OSSDoctor 프로젝트에 기여해주셔서 감사합니다! 다음과 같은 방법으로 기여할 수 있습니다:
@@ -476,16 +486,6 @@ OSSDoctor 프로젝트에 기여해주셔서 감사합니다! 다음과 같은 �
 - **SQL**: SQL Formatter
 - **JavaScript/React**: ESLint + Prettier
 - **커밋 메시지**: Conventional Commits 규약
-
----
-
-### 📄 라이선스
-이 프로젝트는 [Apache License 2.0](LICENSE) 하에 배포됩니다.  
-자세한 내용은 [`LICENSE`](LICENSE) 및 [`NOTICE.md`](NOTICE.md) 파일을 참조하세요.
-
-OSSDoctor는 Apache 2.0 라이선스의 조건을 준수하며,  
-Spring Framework, React, Flyway 등 여러 오픈소스 라이브러리를 사용합니다.  
-각 서드파티 소프트웨어의 저작권 및 라이선스 정보는 [`NOTICE.md`](NOTICE.md) 파일에 명시되어 있습니다.
 
 ---
 
