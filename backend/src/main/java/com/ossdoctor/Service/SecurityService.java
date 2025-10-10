@@ -25,6 +25,7 @@ public class SecurityService {
 
     public Mono<List<VulnerabilityDTO>> getRepositoryVulnerabilities(String owner, String repo) {
         return Mono.fromCallable(() -> repositoryService.findByFullName(owner, repo))
+                .subscribeOn(reactor.core.scheduler.Schedulers.boundedElastic()) // blocking 호출을 별도 스레드에서 실행
                 .doOnNext(repositoryDTO -> {
                     if (repositoryDTO == null) {
                         log.info("DB에서 {}의 {}리포지토리가 없음.", owner, repo);
@@ -33,6 +34,10 @@ public class SecurityService {
                     }
                 })
                 .flatMap(repositoryDTO -> {
+                    if (repositoryDTO == null) {
+                        log.warn("Repository {}/{} not found in database", owner, repo);
+                        return Mono.just(Collections.<VulnerabilityDTO>emptyList());
+                    }
                     // 의존성 파싱하기
                     Flux<CpeDTO> dependencies = dependencyExtractionService.extractDependencies(owner, repo)
                             .doOnNext(cpe -> log.info("파싱 결과 : {}", cpe));
@@ -96,11 +101,12 @@ public class SecurityService {
 
                     return vulnerabilityService.findByRepositoryIdVulnerabilities(repositoryDTO);
                 })
-                .doOnSuccess(result -> log.info("finish"))
-                .doOnError(e -> log.error("!!!!!에러 발생!!!!!", e))
+                .timeout(java.time.Duration.ofSeconds(30)) // 30초 timeout 추가
+                .doOnSuccess(result -> log.info("✅ Vulnerability scan completed: {} items", result.size()))
+                .doOnError(e -> log.error("❌ Error occurred during vulnerability scan for {}/{}: {}", owner, repo, e.getMessage()))
                 .onErrorResume(e -> {
-                    log.error("!!!!!에러 발생!!!!!", e);
-                    return Mono.just(Collections.emptyList());
+                    log.error("❌ Vulnerability scan failed for {}/{}, returning empty list: {}", owner, repo, e.getMessage());
+                    return Mono.just(Collections.<VulnerabilityDTO>emptyList());
                 });
     }
 }
