@@ -379,8 +379,10 @@ public class GitHubApiService {
 
         // GraphQL Query 호출
         return executeGraphQLQuery(REPOSITORY_QUERY, variables)
+                .doOnNext(response -> log.info("GraphQL Response: {}", response.toPrettyString()))
                 .map(this::parseRepositoryInfo) // JSON -> DTO
                 .flatMap(dto -> {
+                    log.info(dto.toString());
                     boolean noCode = dto.isNull() || dto.getTotalCommits() == 0;
                     if (noCode) {
                         log.info("📭 Repository has no code. Skipping contributor fetch.");
@@ -727,7 +729,7 @@ public class GitHubApiService {
                         .totalCommits(0)
                         .build();
             }
-            totalCommits = defaultBranchRef.path("target").path("history").path("totalCount").asInt(0);
+            totalCommits = defaultBranchRef.path("target").path("history").path("totalCommit").asInt();
         }
 
         return RepositoryDTO.builder()
