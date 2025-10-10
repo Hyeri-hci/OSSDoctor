@@ -126,13 +126,12 @@ const HeaderSection = () => {
                                 <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse"></div>
                             ) : isAuthenticated && user ? (
                                 <div className="flex items-center space-x-2">
-                                    {/* 사용자 아바타 또는 기본 아이콘 */}
                                     {user.avatarUrl ? (
                                         <img
                                             src={user.avatarUrl}
                                             alt={`${user.login} avatar`}
                                             onClick={handleUserIconClick}
-                                            className="w-8 h-8 rounded-full cursor-pointer hover:ring-2 hover:ring-gray-300 transition-all"
+                                            className="w-8 h-8 rounded-full cursor-pointer hover:ring-2 hover:ring-blue-300 transition-all"
                                             title={`${user.login} - 로그아웃하려면 클릭`}
                                         />
                                     ) : (
