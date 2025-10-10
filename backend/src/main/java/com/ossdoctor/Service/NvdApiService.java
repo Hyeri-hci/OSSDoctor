@@ -203,9 +203,7 @@ public class NvdApiService {
             return defaultValue;
         }
 
-        return value.toLowerCase()
-                .replace(" ", "_")
-                .replace("-", "_");
+        return value.toLowerCase();
     }
 
     /**
