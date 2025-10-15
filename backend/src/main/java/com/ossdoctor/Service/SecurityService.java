@@ -2,13 +2,13 @@ package com.ossdoctor.Service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.ossdoctor.DTO.CpeDTO;
+import com.ossdoctor.DTO.RepositoryDTO;
 import com.ossdoctor.DTO.VulnerabilityDTO;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
 
 import java.util.Collections;
 import java.util.List;
@@ -23,90 +23,48 @@ public class SecurityService {
     private final VulnerabilityService vulnerabilityService;
     private final RepositoryService repositoryService;
 
+    /**
+     * 전체 흐름:
+     * 1) repo 조회 (동기 -> fromCallable)
+     * 2) dependencies -> cpe matching -> uri -> nvd scan -> convert to VulnerabilityDTO Flux
+     * 3) collectList() 해서 vulnList 획득
+     * 4) vulnerabilityService.reconcileAndSave(vulnList, repositoryDTO) 실행 (boundedElastic)
+     * 5) 저장 완료 후 vulnerabilityService.findByRepositoryIdAndFixedFalseMono(...)로 최신 리스트 조회하여 반환
+     */
     public Mono<List<VulnerabilityDTO>> getRepositoryVulnerabilities(String owner, String repo) {
         return Mono.fromCallable(() -> repositoryService.findByFullName(owner, repo))
-                .subscribeOn(reactor.core.scheduler.Schedulers.boundedElastic()) // blocking 호출을 별도 스레드에서 실행
-                .doOnNext(repositoryDTO -> {
-                    if (repositoryDTO == null) {
-                        log.info("DB에서 {}의 {}리포지토리가 없음.", owner, repo);
-                    } else {
-                        log.info("DB에서 {}의 {}리포지토리 조회 성공.", owner, repo);
-                    }
-                })
                 .flatMap(repositoryDTO -> {
                     if (repositoryDTO == null) {
-                        log.warn("Repository {}/{} not found in database", owner, repo);
+                        log.warn("⚠️ Repository not found: {}/{}", owner, repo);
                         return Mono.just(Collections.<VulnerabilityDTO>emptyList());
                     }
-                    // 의존성 파싱하기
-                    Flux<CpeDTO> dependencies = dependencyExtractionService.extractDependencies(owner, repo)
-                            .doOnNext(cpe -> log.info("파싱 결과 : {}", cpe));
 
-                    // 테스트용 코드 추가
-                    /*
-                    CpeDTO testDto = CpeDTO.builder()
-                            .part("a")
-                            .vendor("10web")
-                            .product("10web_social_post_feed")
-                            .version("1.1.0")
-                            .build();
-
-                    dependencies = Flux.concat(dependencies, Flux.just(testDto));
-                    */
-                    // CPE 조회하기
-                    Flux<CpeDTO> matchedCpeFlux = dependencies
-                            .collectList()
-                            .doOnNext(list -> {
-                                if (list.isEmpty()) {
-                                    log.info("{}에서 의존성 찾을 수 없음", repo);
-                                } else {
-                                    log.info("{}의 의존성 파싱 완료", repo);
-                                }
-                            })
-                            .flatMapMany(Flux::fromIterable)
+                    // Build vulnFlux (single use) — do not cause multiple subscriptions
+                    Flux<VulnerabilityDTO> vulnFlux = dependencyExtractionService.extractDependencies(owner, repo)
                             .flatMap(cpe -> cpeService.findCpeList(Flux.just(cpe)))
-                            .doOnNext(cpe -> log.info("cpe : {}", cpe));
-
-                    // NVD에 조회할 API URI 생성하기
-                    Flux<String> cpeUriFlux = matchedCpeFlux
-                            .collectList()
-                            .doOnNext(list -> {
-                                if (list.isEmpty()) {
-                                    log.info("CPE DB에서 매칭되는 의존성 없음");
-                                } else {
-                                    log.info("CPE DB에서 CPE 매칭 성공");
-                                }
-                            })
-                            .flatMapMany(Flux::fromIterable)
                             .flatMap(cpe -> nvdApiService.convertCpeListToUriList(Flux.just(cpe)))
-                            .doOnNext(cpeUri -> log.info("cpe URI : {}", cpeUri));
-
-                    // NVD에 API 날려서 응답 받기
-                    Flux<JsonNode> nvdApiResponseJsonFlux = cpeUriFlux
-                            .collectList()
-                            .doOnNext(list -> {
-                                if (list.isEmpty()) {
-                                    log.info("API URI 생성 실패");
-                                } else {
-                                    log.info("API 보낼 URI 생성 성공");
-                                }
-                            })
-                            .flatMapMany(Flux::fromIterable)
                             .flatMap(uri -> nvdApiService.scanVulnerabilities(Flux.just(uri)))
-                            .doOnNext(jsonresponse -> log.info("nvd 응답(json) {}", jsonresponse));
+                            .filter(json -> json != null && json.size() > 0)
+                            .transform(jsonFlux -> nvdApiService.convertToVulnerabilityDTOList(jsonFlux, repositoryDTO))
+                            .distinct(VulnerabilityDTO::getCveId); // in-flux dedupe
 
-                    Flux<VulnerabilityDTO> vulnerabilityDTOFlux = nvdApiService.convertToVulnerabilityDTOList(nvdApiResponseJsonFlux, repositoryDTO);
+                    // collect, reconcile/save in boundedElastic, then read DB and return
+                    return vulnFlux.collectList()
+                            .flatMap(vulnList -> {
+                                // 1) if empty -> return current DB active list (no changes)
+                                if (vulnList == null || vulnList.isEmpty()) {
+                                    return vulnerabilityService.findByRepositoryIdMono(repositoryDTO);
+                                }
 
-                    vulnerabilityService.checkAllDtoFluxAndSave(vulnerabilityDTOFlux,repositoryDTO);
-
-                    return vulnerabilityService.findByRepositoryIdVulnerabilities(repositoryDTO);
+                                // 2) reconcile & save on boundedElastic, then fetch latest active list
+                                return vulnerabilityService.reconcileAndSave(vulnList, repositoryDTO)
+                                        .then(vulnerabilityService.findByRepositoryIdMono(repositoryDTO));
+                            });
                 })
-                .timeout(java.time.Duration.ofSeconds(30)) // 30초 timeout 추가
-                .doOnSuccess(result -> log.info("✅ Vulnerability scan completed: {} items", result.size()))
-                .doOnError(e -> log.error("❌ Error occurred during vulnerability scan for {}/{}: {}", owner, repo, e.getMessage()))
+                .doOnError(e -> log.error("getRepositoryVulnerabilities error", e))
                 .onErrorResume(e -> {
-                    log.error("❌ Vulnerability scan failed for {}/{}, returning empty list: {}", owner, repo, e.getMessage());
-                    return Mono.just(Collections.<VulnerabilityDTO>emptyList());
+                    log.error("getRepositoryVulnerabilities exception", e);
+                    return Mono.just(Collections.emptyList());
                 });
     }
 }

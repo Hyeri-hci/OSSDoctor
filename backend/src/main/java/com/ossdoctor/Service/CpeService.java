@@ -70,60 +70,61 @@ public class CpeService {
         String product = inputDto.getProduct();
         String version = inputDto.getVersion();
 
-        // 1. Vendor, Product, Version 모두 있는 경우 (가장 정확한 매칭)
+        // 1. vendor, product, version 모두 있는 경우 (정확히 3개 모두 일치)
         if (vendor != null && !vendor.trim().isEmpty() &&
+                product != null && !product.trim().isEmpty() &&
                 version != null && !version.trim().isEmpty()) {
 
             List<CpeEntity> exactMatch = cpeRepository.findByVendorAndProductAndVersion(vendor, product, version);
             if (!exactMatch.isEmpty()) {
                 log.debug("🎯 정확한 매칭 (vendor:product:version): {}:{}:{}", vendor, product, version);
-                List<CpeDTO> dtoMatch =  new ArrayList<>();
-                for(CpeEntity entity :exactMatch) {
-                    dtoMatch.add(toDTO(entity));
-                }
-                return dtoMatch;
+                return convertToDTOList(exactMatch);
             }
         }
 
-        // 2. Vendor와 Product만 있는 경우
-        if (vendor != null && !vendor.trim().isEmpty()) {
-            List<CpeEntity> vendorProductMatch = cpeRepository.findByVendorAndProduct(vendor, product);
-            if (!vendorProductMatch.isEmpty()) {
-                log.debug("🎯 부분 매칭 (vendor:product): {}:{}", vendor, product);
-                List<CpeDTO> dtoMatch =  new ArrayList<>();
-                for(CpeEntity entity :vendorProductMatch) {
-                    dtoMatch.add(toDTO(entity));
-                }
-                return dtoMatch;
-            }
-        }
+        // 2. product, version이 있는 경우 (두 개 모두 일치)
+        if (product != null && !product.trim().isEmpty() &&
+                version != null && !version.trim().isEmpty()) {
 
-        // 3. Product와 Version만 있는 경우
-        if (version != null && !version.trim().isEmpty()) {
             List<CpeEntity> productVersionMatch = cpeRepository.findByProductAndVersion(product, version);
             if (!productVersionMatch.isEmpty()) {
                 log.debug("🎯 부분 매칭 (product:version): {}:{}", product, version);
-                List<CpeDTO> dtoMatch =  new ArrayList<>();
-                for(CpeEntity entity :productVersionMatch) {
-                    dtoMatch.add(toDTO(entity));
+                return convertToDTOList(productVersionMatch);
+            }
+        }
+
+        // 3. version이 없고, vendor, product만 있거나 product만 있는 경우 (version '*' 인 경우)
+        if ((version == null || version.trim().isEmpty()) && product != null && !product.trim().isEmpty()) {
+
+            if (vendor != null && !vendor.trim().isEmpty()) {
+                // vendor, product만 있는 경우 version이 '*'인 값만 조회
+                List<CpeEntity> vendorProductWildcardVersion = cpeRepository.findByVendorAndProductAndVersion(vendor, product, "*");
+                if (!vendorProductWildcardVersion.isEmpty()) {
+                    log.debug("🎯 와일드카드 버전 매칭 (vendor:product:version=*): {}:{}:*", vendor, product);
+                    return convertToDTOList(vendorProductWildcardVersion);
                 }
-                return dtoMatch;
+            } else {
+                // product만 있는 경우 version이 '*'인 값만 조회
+                List<CpeEntity> productWildcardVersion = cpeRepository.findByProductAndVersion(product, "*");
+                if (!productWildcardVersion.isEmpty()) {
+                    log.debug("🎯 와일드카드 버전 매칭 (product:version=*): {}:*", product);
+                    return convertToDTOList(productWildcardVersion);
+                }
             }
         }
 
-        // 4. Product만으로 검색 (마지막 선택)
-        List<CpeEntity> productOnlyMatch = cpeRepository.findByProduct(product);
-        if (!productOnlyMatch.isEmpty()) {
-            log.debug("🎯 기본 매칭 (product): {}", product);
-            List<CpeDTO> dtoMatch = new ArrayList<>();
-            for(CpeEntity entity :productOnlyMatch) {
-                dtoMatch.add(toDTO(entity));
-            }
-            return dtoMatch;
-        }
-
+        // 일치하는 결과 없으면 빈 리스트 반환
         return new ArrayList<>();
     }
+
+    private List<CpeDTO> convertToDTOList(List<CpeEntity> entities) {
+        List<CpeDTO> dtoList = new ArrayList<>();
+        for (CpeEntity entity : entities) {
+            dtoList.add(toDTO(entity));
+        }
+        return dtoList;
+    }
+
 
     /**
      * CPE 정보를 문자열로 포맷팅
