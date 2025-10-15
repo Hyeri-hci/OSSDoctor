@@ -162,7 +162,6 @@ public class NvdApiService {
                 .headers(headers -> {
                     headers.set("Accept", "application/json");
                     headers.set("User-Agent", "OSSDoctor/1.0");
-                    headers.set("apiKey", "a2eb3d65-8620-4149-becb-5ef356be7c27");
                     if (nvdToken != null && !nvdToken.trim().isEmpty()) {
                         headers.set("apiKey", nvdToken);
                     }

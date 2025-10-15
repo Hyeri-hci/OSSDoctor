@@ -53,12 +53,12 @@ public class SecurityService {
                             .flatMap(vulnList -> {
                                 // 1) if empty -> return current DB active list (no changes)
                                 if (vulnList == null || vulnList.isEmpty()) {
-                                    return vulnerabilityService.findByRepositoryIdAndFixedFalseMono(repositoryDTO);
+                                    return vulnerabilityService.findByRepositoryIdMono(repositoryDTO);
                                 }
 
                                 // 2) reconcile & save on boundedElastic, then fetch latest active list
                                 return vulnerabilityService.reconcileAndSave(vulnList, repositoryDTO)
-                                        .then(vulnerabilityService.findByRepositoryIdAndFixedFalseMono(repositoryDTO));
+                                        .then(vulnerabilityService.findByRepositoryIdMono(repositoryDTO));
                             });
                 })
                 .doOnError(e -> log.error("getRepositoryVulnerabilities error", e))
