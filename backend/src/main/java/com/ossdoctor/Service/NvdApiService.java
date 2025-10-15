@@ -57,13 +57,24 @@ public class NvdApiService {
 
         return Flux.fromIterable(vulnerabilities)
                 .map(vul -> {
-                    log.info("✅의존성 DTO 만들기 위한 응답 파싱한 내용");
+                    log.info("✅ 의존성 DTO 만들기 위한 응답 파싱한 내용");
                     String id = vul.path("cve").path("id").asText();
                     log.info("CVE ID: {}", id);
-                    SEVERITY severity = SEVERITY.valueOf(
-                            vul.path("cve").path("metrics").path("cvssMetricV31").path(0).path("cvssData").path("baseSeverity").asText()
-                    );
-                    log.info("CVE SEVERITY: {}", severity.toString());
+
+                    // baseSeverity 찾기 (v3.1 → v3.0 → v2 순서로 fallback)
+                    String severityText =
+                            vul.path("cve").path("metrics").path("cvssMetricV31").path(0).path("cvssData").path("baseSeverity").asText();
+                    if (severityText.isEmpty()) {
+                        severityText =
+                                vul.path("cve").path("metrics").path("cvssMetricV30").path(0).path("cvssData").path("baseSeverity").asText();
+                    }
+                    if (severityText.isEmpty()) {
+                        severityText =
+                                vul.path("cve").path("metrics").path("cvssMetricV2").path(0).path("baseSeverity").asText();
+                    }
+                    SEVERITY severity = SEVERITY.valueOf(severityText.isEmpty() ? "UNKNOWN" : severityText.toUpperCase());
+                    log.info("CVE SEVERITY: {}", severity);
+
                     String description = vul.path("cve").path("descriptions").path(0).path("value").asText();
                     log.info("CVE DESCRIPTION: {}", description);
 
@@ -77,6 +88,7 @@ public class NvdApiService {
                             .build();
                 });
     }
+
 
 
     /**
@@ -150,6 +162,7 @@ public class NvdApiService {
                 .headers(headers -> {
                     headers.set("Accept", "application/json");
                     headers.set("User-Agent", "OSSDoctor/1.0");
+                    headers.set("apiKey", "a2eb3d65-8620-4149-becb-5ef356be7c27");
                     if (nvdToken != null && !nvdToken.trim().isEmpty()) {
                         headers.set("apiKey", nvdToken);
                     }
