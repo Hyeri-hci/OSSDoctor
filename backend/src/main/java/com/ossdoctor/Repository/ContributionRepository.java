@@ -1,7 +1,6 @@
 package com.ossdoctor.Repository;
 
 import com.ossdoctor.Entity.ContributionEntity;
-import com.ossdoctor.Entity.REFERENCE_TYPE;
 import com.ossdoctor.Entity.UserEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

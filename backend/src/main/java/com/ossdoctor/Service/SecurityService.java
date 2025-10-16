@@ -1,8 +1,5 @@
 package com.ossdoctor.Service;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.ossdoctor.DTO.CpeDTO;
-import com.ossdoctor.DTO.RepositoryDTO;
 import com.ossdoctor.DTO.VulnerabilityDTO;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

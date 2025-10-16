@@ -2,7 +2,6 @@ package com.ossdoctor.Repository;
 
 import com.ossdoctor.Entity.CpeEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 
 import java.util.List;
 

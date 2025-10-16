@@ -5,9 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ossdoctor.DTO.CpeDTO;
 import com.ossdoctor.DTO.RepositoryDTO;
 import com.ossdoctor.DTO.VulnerabilityDTO;
-import com.ossdoctor.Entity.RepositoryEntity;
 import com.ossdoctor.Entity.SEVERITY;
-import com.ossdoctor.Repository.VulnerabilityRepository;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,15 +15,11 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.io.IOException;
 import java.time.Duration;
-import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 
 /**
  * NVD API를 활용한 취약점 조회 서비스

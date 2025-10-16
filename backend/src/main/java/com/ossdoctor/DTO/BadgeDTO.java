@@ -1,8 +1,6 @@
 package com.ossdoctor.DTO;
 
 import com.ossdoctor.Entity.BADGE_CATEGORY;
-import com.ossdoctor.Entity.PERIOD;
-import com.ossdoctor.Entity.UserEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

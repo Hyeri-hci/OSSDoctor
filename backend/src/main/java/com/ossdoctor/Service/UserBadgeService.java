@@ -2,11 +2,9 @@ package com.ossdoctor.Service;
 
 import com.ossdoctor.DTO.BadgeDTO;
 import com.ossdoctor.DTO.UserBadgeDTO;
-import com.ossdoctor.DTO.UserDTO;
 import com.ossdoctor.Entity.BADGE_CATEGORY;
 import com.ossdoctor.Entity.BadgeEntity;
 import com.ossdoctor.Entity.UserBadgeEntity;
-import com.ossdoctor.Entity.UserEntity;
 import com.ossdoctor.Repository.BadgeRepository;
 import com.ossdoctor.Repository.UserBadgeRepository;
 import com.ossdoctor.Repository.UserRepository;

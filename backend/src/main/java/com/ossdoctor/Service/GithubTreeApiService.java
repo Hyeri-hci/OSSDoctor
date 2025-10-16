@@ -1,8 +1,6 @@
 package com.ossdoctor.Service;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ossdoctor.DTO.CpeDTO;
 import com.ossdoctor.DTO.GithubTreeFileResponseDTO;
 import com.ossdoctor.DTO.GithubTreeNodeDTO;
 import com.ossdoctor.DTO.GithubTreeResponseDTO;

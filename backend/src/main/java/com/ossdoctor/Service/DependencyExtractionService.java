@@ -1,12 +1,10 @@
 package com.ossdoctor.Service;
 
 import com.ossdoctor.parser.DependencyParser;
-import com.ossdoctor.DTO.GithubTreeNodeDTO;
 import com.ossdoctor.DTO.CpeDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 import java.util.*;
 import java.nio.file.Paths;

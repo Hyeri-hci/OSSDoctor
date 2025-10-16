@@ -5,7 +5,6 @@ import com.ossdoctor.DTO.UserDTO;
 import com.ossdoctor.Entity.CONTRIBUTION_TYPE;
 import com.ossdoctor.Entity.ContributionEntity;
 import com.ossdoctor.Entity.REFERENCE_TYPE;
-import com.ossdoctor.Entity.UserEntity;
 import com.ossdoctor.Repository.ContributionRepository;
 import com.ossdoctor.Repository.UserRepository;
 import lombok.AllArgsConstructor;

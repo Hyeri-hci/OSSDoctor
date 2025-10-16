@@ -1,6 +1,5 @@
 package com.ossdoctor.Service;
 
-import com.ossdoctor.DTO.RepositoryDTO;
 import com.ossdoctor.DTO.ScoreDTO;
 import com.ossdoctor.Entity.ScoreEntity;
 import com.ossdoctor.Repository.ScoreRepository;
