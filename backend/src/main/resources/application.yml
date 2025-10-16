@@ -39,6 +39,10 @@ spring:
             client-id: ${GITHUB_CLIENT_ID}
             client-secret: ${GITHUB_CLIENT_SECRET}
 
+  mvc:
+    async:
+      request-timeout: 300s
+
 # JWT 설정
 jwt:
   secret:

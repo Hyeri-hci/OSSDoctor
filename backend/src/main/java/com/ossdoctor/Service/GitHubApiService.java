@@ -1281,11 +1281,11 @@ public class GitHubApiService {
 
         int healthScore = commitScore + updateScore + prScore + issueScore;
 
-        return scoreService.save(ScoreDTO.builder()
+        return ScoreDTO.builder()
                 .repositoryId(repo.getIdx())
                 .scoreType(SCORE_TYPE.HEALTH)
                 .score(healthScore)
-                .build());
+                .build() ;
     }
 
     // Security ScoreDTO를 반환하는 메서드
@@ -1323,12 +1323,11 @@ public class GitHubApiService {
                 }
             }
         }
-        ScoreDTO scoreDTO = ScoreDTO.builder()
+        return ScoreDTO.builder()
                 .repositoryId(repositoryEntity.getIdx())
                 .scoreType(SCORE_TYPE.SECURITY)
                 .score(score)
                 .build();
-        return scoreService.save(scoreDTO);
     }
 
     // 소셜 점수 계산 최종
@@ -1347,31 +1346,47 @@ public class GitHubApiService {
 
         int socialScore = starScore + forkScore + watcherScore + contributorScore;
 
-        return scoreService.save(ScoreDTO.builder()
+        return ScoreDTO.builder()
                 .repositoryId(repo.getIdx())
                 .scoreType(SCORE_TYPE.SOCIAL)
                 .score(socialScore)
-                .build());
+                .build();
     }
 
     // 종합 점수 계산
     private ScoreDTO calculateTotalScore(RepositoryDTO repo) {
 
-        int healthScore = calculateHealthScore(repo).getScore() * 5;
-        int socialScore = calculateSocialScore(repo).getScore() * 2;
-        int securityScore = getSecurityScoreDTO(repo).getScore() * 3;
+        ScoreDTO healthScoreDTO = calculateHealthScore(repo);
+        ScoreDTO socialScoreDTO = calculateSocialScore(repo);
+        ScoreDTO securityScoreDTO = getSecurityScoreDTO(repo);
+
+        int healthScore = healthScoreDTO.getScore() * 5;
+        int socialScore = socialScoreDTO.getScore() * 2;
+        int securityScore = securityScoreDTO.getScore() * 3;
+
+        List<ScoreDTO> scores = new ArrayList<>();
+        scores.add(healthScoreDTO);
+        scores.add(socialScoreDTO);
+        scores.add(securityScoreDTO);
 
         log.info("repo: " + repo.getName());
 
         // 최종 점수는 반올림
         int totalScore = (healthScore + socialScore + securityScore) / 10;
 
-        return scoreService.save(ScoreDTO.builder()
+        ScoreDTO totalScoreDTO = ScoreDTO.builder()
                 .repositoryId(repo.getIdx())
                 .scoreType(SCORE_TYPE.TOTAL)
                 .score(totalScore)
-                .build());
+                .build();
+
+        scores.add(totalScoreDTO);
+
+        scoreService.saveAllScores(scores);
+
+        return totalScoreDTO;
     }
+
 
     // ========== 유틸리티 메서드들 ==========
 

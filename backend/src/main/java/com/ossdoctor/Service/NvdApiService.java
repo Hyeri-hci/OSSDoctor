@@ -5,9 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ossdoctor.DTO.CpeDTO;
 import com.ossdoctor.DTO.RepositoryDTO;
 import com.ossdoctor.DTO.VulnerabilityDTO;
-import com.ossdoctor.Entity.RepositoryEntity;
 import com.ossdoctor.Entity.SEVERITY;
-import com.ossdoctor.Repository.VulnerabilityRepository;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,15 +15,11 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.io.IOException;
 import java.time.Duration;
-import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 
 /**
  * NVD API를 활용한 취약점 조회 서비스
@@ -57,13 +51,24 @@ public class NvdApiService {
 
         return Flux.fromIterable(vulnerabilities)
                 .map(vul -> {
-                    log.info("✅의존성 DTO 만들기 위한 응답 파싱한 내용");
+                    log.info("✅ 의존성 DTO 만들기 위한 응답 파싱한 내용");
                     String id = vul.path("cve").path("id").asText();
                     log.info("CVE ID: {}", id);
-                    SEVERITY severity = SEVERITY.valueOf(
-                            vul.path("cve").path("metrics").path("cvssMetricV31").path(0).path("cvssData").path("baseSeverity").asText()
-                    );
-                    log.info("CVE SEVERITY: {}", severity.toString());
+
+                    // baseSeverity 찾기 (v3.1 → v3.0 → v2 순서로 fallback)
+                    String severityText =
+                            vul.path("cve").path("metrics").path("cvssMetricV31").path(0).path("cvssData").path("baseSeverity").asText();
+                    if (severityText.isEmpty()) {
+                        severityText =
+                                vul.path("cve").path("metrics").path("cvssMetricV30").path(0).path("cvssData").path("baseSeverity").asText();
+                    }
+                    if (severityText.isEmpty()) {
+                        severityText =
+                                vul.path("cve").path("metrics").path("cvssMetricV2").path(0).path("baseSeverity").asText();
+                    }
+                    SEVERITY severity = SEVERITY.valueOf(severityText.isEmpty() ? "UNKNOWN" : severityText.toUpperCase());
+                    log.info("CVE SEVERITY: {}", severity);
+
                     String description = vul.path("cve").path("descriptions").path(0).path("value").asText();
                     log.info("CVE DESCRIPTION: {}", description);
 
@@ -77,6 +82,7 @@ public class NvdApiService {
                             .build();
                 });
     }
+
 
 
     /**

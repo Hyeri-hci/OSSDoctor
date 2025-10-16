@@ -6,8 +6,6 @@ import com.ossdoctor.Repository.LevelRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.logging.Level;
-
 @Service
 @AllArgsConstructor
 public class LevelService {

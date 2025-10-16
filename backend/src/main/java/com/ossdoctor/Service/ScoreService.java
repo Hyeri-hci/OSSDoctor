@@ -1,5 +1,6 @@
 package com.ossdoctor.Service;
 
+import com.ossdoctor.DTO.ScoreDTO;
 import com.ossdoctor.Entity.ScoreEntity;
 import com.ossdoctor.Repository.ScoreRepository;
 import lombok.AllArgsConstructor;
@@ -40,5 +41,12 @@ public class ScoreService {
                 .score(saved.getScore())
                 .createdAt(saved.getCreatedAt())
                 .build();
+    }
+
+    // 모든 점수 한 번에 저장
+    public void saveAllScores(List<ScoreDTO>  scoreDTOList) {
+        for (ScoreDTO scoreDTO : scoreDTOList) {
+            save(scoreDTO);
+        }
     }
 }

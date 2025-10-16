@@ -1,7 +1,6 @@
 package com.ossdoctor.controller;
 
 import com.ossdoctor.DTO.*;
-import com.ossdoctor.Service.BadgeService;
 import com.ossdoctor.Service.UserBadgeService;
 import com.ossdoctor.Service.UserService;
 import lombok.RequiredArgsConstructor;
