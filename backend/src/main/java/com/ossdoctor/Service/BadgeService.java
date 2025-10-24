@@ -6,6 +6,7 @@ import com.ossdoctor.Entity.BadgeEntity;
 import com.ossdoctor.Repository.BadgeRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
@@ -122,27 +123,29 @@ public class BadgeService {
 
     // 공통 뱃지 지급 로직(조건 체크)
     private void awardBadgeIfEligible(UserDTO user, BadgeMetricDTO metric) {
-        Map<Integer, Integer> thresholds = getThresholdsForCategory(metric.getBadgeCategory()); // 조건
+        Map<Integer, Integer> thresholds = getThresholdsForCategory(metric.getBadgeCategory());
 
         thresholds.forEach((level, requiredCount) -> {
-            // 지급 확인 -> 지급O : 중복 지급 X
-            boolean alreadyAwarded = userBadgeService.existsByUserIdAndBadgeLevelAndBadgeCategory(
-                    user.getIdx(), level, metric.getBadgeCategory()
-            );
+            synchronized ((user.getIdx() + "-" + metric.getBadgeCategory() + "-" + level).intern()) {
+                boolean alreadyAwarded = userBadgeService.existsByUserIdAndBadgeLevelAndBadgeCategory(
+                        user.getIdx(), level, metric.getBadgeCategory()
+                );
 
-            if (!alreadyAwarded && metric.getCount() >= requiredCount) {
-                // 실제 뱃지 찾기
-                BadgeEntity badge = badgeRepository.findByCategoryAndLevel(
-                        metric.getBadgeCategory(), level
-                ).orElseThrow(() -> new RuntimeException("Badge not found"));
+                if (!alreadyAwarded && metric.getCount() >= requiredCount) {
+                    BadgeEntity badge = badgeRepository.findByCategoryAndLevel(
+                            metric.getBadgeCategory(), level
+                    ).orElseThrow(() -> new RuntimeException("Badge not found"));
 
-                // DB 저장
-                userBadgeService.save(UserBadgeDTO.builder()
-                        .userId(user.getIdx())
-                        .badgeId(badge.getIdx())
-                        .build());
-
-                log.info("사용자 {}에게 {} 레벨 {} 뱃지 지급", user.getNickname(), metric.getBadgeCategory(), level);
+                    try {
+                        userBadgeService.save(UserBadgeDTO.builder()
+                                .userId(user.getIdx())
+                                .badgeId(badge.getIdx())
+                                .build());
+                        log.info("사용자 {}에게 {} 레벨 {} 뱃지 지급", user.getNickname(), metric.getBadgeCategory(), level);
+                    } catch (DataIntegrityViolationException e) {
+                        log.warn("중복 뱃지 저장 시도 감지: {}", metric);
+                    }
+                }
             }
         });
     }
