@@ -41,7 +41,7 @@ spring:
 
   mvc:
     async:
-      request-timeout: 300s
+      request-timeout: 600s
 
 # JWT 설정
 jwt:

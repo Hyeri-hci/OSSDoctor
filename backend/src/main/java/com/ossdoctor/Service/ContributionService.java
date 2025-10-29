@@ -9,6 +9,7 @@ import com.ossdoctor.Repository.ContributionRepository;
 import com.ossdoctor.Repository.UserRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -44,20 +45,26 @@ public class ContributionService {
         public ContributionDTO getDto() { return dto; }
         public boolean isNewlySaved() { return isNewlySaved; }
     }
-    
+
     private SaveResult saveWithResult(ContributionDTO dto) {
-        // 중복 체크: 실제 엔티티를 조회해서 확인
-        Optional<ContributionEntity> existingEntity = contributionRepository
-            .findByUserAndRepositoryAndNumberAndReferenceType(
-                dto.getUserId(), dto.getRepositoryName(), dto.getNumber(), dto.getReferenceType()
-            );
-        
-        if (existingEntity.isPresent()) {
-            return new SaveResult(toDTO(existingEntity.get()), false);
+        synchronized ((dto.getUserId() + dto.getRepositoryName() + dto.getNumber() + dto.getReferenceType()).intern()) {
+            try {
+                Optional<ContributionEntity> existing = contributionRepository
+                        .findByUserAndRepositoryAndNumberAndReferenceType(
+                                dto.getUserId(), dto.getRepositoryName(), dto.getNumber(), dto.getReferenceType()
+                        );
+                if (existing.isPresent()) return new SaveResult(toDTO(existing.get()), false);
+                ContributionEntity saved = contributionRepository.save(toEntity(dto));
+                return new SaveResult(toDTO(saved), true);
+            } catch (DataIntegrityViolationException e) {
+                log.warn("중복 기여 저장 시도 감지: {}", dto);
+                Optional<ContributionEntity> existing = contributionRepository
+                        .findByUserAndRepositoryAndNumberAndReferenceType(
+                                dto.getUserId(), dto.getRepositoryName(), dto.getNumber(), dto.getReferenceType()
+                        );
+                return new SaveResult(toDTO(existing.orElseThrow()), false);
+            }
         }
-        
-        ContributionDTO savedDto = toDTO(contributionRepository.save(toEntity(dto)));
-        return new SaveResult(savedDto, true);
     }
 
     private ContributionDTO toDTO(ContributionEntity entity) {
