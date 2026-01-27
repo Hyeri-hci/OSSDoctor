@@ -14,7 +14,7 @@ const BadgesTab = () => {
     if (loading) {
         return (
             <LoadingSpinner
-                message="뱃지 데이터를 불러오는 중입니다..."
+                message="Loading badge data..."
                 size="md"
                 color="blue"
             />
@@ -30,7 +30,7 @@ const BadgesTab = () => {
                     className="mt-4"
                     variant="primary"
                 >
-                    다시 시도
+                    Try Again
                 </Button>
             </div>
         );
@@ -47,7 +47,7 @@ const BadgesTab = () => {
                             {getCategoryDisplayName(category)}
                         </h4>
                         <p className="text-sm text-gray-600">
-                            {categoryBadges.filter(badge => badge.earned).length} / {categoryBadges.length} 뱃지 획득
+                            {categoryBadges.filter(badge => badge.earned).length} / {categoryBadges.length} badges earned
                         </p>
                     </div>
 
@@ -66,14 +66,14 @@ const BadgesTab = () => {
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h3 className="text-lg font-semibold text-gray-900">뱃지 전체 이력</h3>
+                <h3 className="text-lg font-semibold text-gray-900">All Badges</h3>
                 <div className="text-sm text-gray-600">
-                    {earnedCount}/{totalCount} 획득 ({badgeStats.percentage}%)
+                    {earnedCount}/{totalCount} earned ({badgeStats.percentage}%)
                 </div>
             </div>
 
             <p className="text-sm text-gray-600">
-                기여한 프로젝트와 활동을 인정받은 뱃지를 확인하세요. 카테고리별로 보거나 획득 상태로 필터링할 수 있습니다.
+                View badges earned for your project contributions and activities. Filter by category or earned status.
             </p>
 
             <div className="flex flex-wrap justify-between items-center gap-2">
@@ -84,7 +84,7 @@ const BadgesTab = () => {
                         size="sm"
                         className="whitespace-nowrap"
                     >
-                        전체 ({totalCount})
+                        All ({totalCount})
                     </Button>
 
                     <Button
@@ -93,7 +93,7 @@ const BadgesTab = () => {
                         size="sm"
                         className="whitespace-nowrap"
                     >
-                        획득 ({earnedCount})
+                        Earned ({earnedCount})
                     </Button>
 
                     <Button
@@ -102,7 +102,7 @@ const BadgesTab = () => {
                         size="sm"
                         className="whitespace-nowrap"
                     >
-                        미획득 ({totalCount - earnedCount})
+                        Not Earned ({totalCount - earnedCount})
                     </Button>
                 </div>
 
@@ -113,7 +113,7 @@ const BadgesTab = () => {
                         size="sm"
                         className="whitespace-nowrap"
                     >
-                        전체 목록
+                        All List
                     </Button>
 
                     <Button
@@ -122,7 +122,7 @@ const BadgesTab = () => {
                         size="sm"
                         className="whitespace-nowrap"
                     >
-                        카테고리별
+                        By Category
                     </Button>
                 </div>
             </div>
@@ -132,7 +132,7 @@ const BadgesTab = () => {
                     <div>
                         {filteredBadges.length === 0 ? (
                             <div className="text-center py-8 text-gray-500">
-                                해당 조건에 맞는 뱃지가 없습니다.
+                                No badges match the selected criteria.
                             </div>
                         ) : (
                             renderCategorizedBadges()
@@ -142,7 +142,7 @@ const BadgesTab = () => {
                     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
                         {filteredBadges.length === 0 ? (
                             <div className="col-span-full text-center py-8 text-gray-500">
-                                해당 조건에 맞는 뱃지가 없습니다.
+                                No badges match the selected criteria.
                             </div>
                         ) : (
                             filteredBadges.map((badge) => (

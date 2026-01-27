@@ -39,7 +39,7 @@ const BadgeCard = ({ badge }) => {
             {/* Badge Requirement (for unearned badges only) */}
             {!earned && requirement && (
                 <div className="text-xs text-gray-500 border-t border-gray-200 pt-2 mt-2">
-                    <div className="font-medium mb-1">획득 조건:</div>
+                    <div className="font-medium mb-1">Requirement:</div>
                     <div className="leading-tight">{requirement}</div>
                 </div>
             )}

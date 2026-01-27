@@ -66,22 +66,22 @@ const SecurityHistory = ({ projectData }) => {
             <div className="p-4 space-y-6">
                 <div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                        Repository 보안 이력
+                        Repository Security History
                     </h3>
                     <p className="text-sm text-gray-600 mb-6">
-                        최근 발견된 보안 취약점과 대응 현황을 확인할 수 있습니다.
+                        View recently discovered security vulnerabilities and response status.
                     </p>
 
-                    {/* 데이터가 없을 때 메시지 표시 */}
+                    {/* Empty State Message */}
                     {securityIssues.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-12 text-center">
                             <div className="text-6xl mb-4">🛡️</div>
                             <h4 className="text-lg font-semibold text-gray-900 mb-2">
-                                발견된 보안 취약점이 없습니다
+                                No security vulnerabilities found
                             </h4>
                             <p className="text-sm text-gray-600 max-w-md">
-                                현재 이 저장소에서 알려진 CVE 취약점이 발견되지 않았습니다.
-                                정기적인 의존성 업데이트를 권장합니다.
+                                No known CVE vulnerabilities have been found in this repository.
+                                Regular dependency updates are recommended.
                             </p>
                         </div>
                     ) : (

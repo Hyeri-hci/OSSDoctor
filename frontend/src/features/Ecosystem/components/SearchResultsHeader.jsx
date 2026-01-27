@@ -37,13 +37,13 @@ const SearchResultsHeader = ({
                     <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg transform transition-all duration-300 ease-out opacity-100 translate-y-0">
                         <div className="flex flex-wrap items-center justify-between gap-4">
                             <div className="text-sm text-blue-600">
-                                검색 조건 적용됨
+                                Search filters applied
                             </div>
                             
                             <div className="flex flex-wrap items-center gap-2">
                                 {searchQuery && (
                                     <span className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-blue-600 bg-white border border-blue-300 rounded-lg">
-                                        검색어: &quot;{searchQuery}&quot;
+                                        Search: &quot;{searchQuery}&quot;
                                     </span>
                                 )}
                                 
@@ -51,7 +51,7 @@ const SearchResultsHeader = ({
                                     onClick={onClearFilters}
                                     className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-blue-600 bg-white hover:bg-blue-50 border border-blue-300 rounded-lg transition-colors duration-200"
                                 >
-                                    모든 필터 지우기
+                                    Clear all filters
                                 </button>
                             </div>
                         </div>
@@ -62,9 +62,9 @@ const SearchResultsHeader = ({
             {/* 검색 결과 헤더 - 검색이 수행된 경우에만 표시 */}
             {hasSearched && (
                 <div ref={containerRef} className="mb-6 transform transition-all duration-300 ease-out opacity-100 translate-y-0">
-                    <h2 className="text-2xl font-bold mb-2">검색 결과</h2>
+                    <h2 className="text-2xl font-bold mb-2">Search Results</h2>
                     <p className="text-gray-600">
-                        {displayedProjects.length}개의 프로젝트를 찾았습니다 (배치 {currentBatch}, 페이지 {currentPage}/{totalPagesInBatch})
+                        Found {displayedProjects.length} projects (Batch {currentBatch}, Page {currentPage}/{totalPagesInBatch})
                     </p>
                 </div>
             )}

@@ -101,7 +101,7 @@ const ProjectExplorer = ({ onBack, initialSearchQuery = '' }) => {
     // 검색 실행 함수
     const handleSearch = async () => {
         if (!canSearch) {
-            alert('검색하려면 프로젝트 이름을 입력하거나 프로그래밍 언어, 라이선스 중 하나 이상을 선택해주세요.');
+            alert('To search, please enter a project name or select at least one programming language or license.');
             return;
         }
 
@@ -124,17 +124,17 @@ const ProjectExplorer = ({ onBack, initialSearchQuery = '' }) => {
                     className="mb-6"
                 >
                     <ArrowLeftIcon className="w-5 h-5 mr-2" />
-                    뒤로가기
+                    Back
                 </Button>
 
-                {/* 페이지 제목 */}
+                {/* Page Title */}
                 <div className="text-center mb-12">
-                    <h1 className="text-2xl md:text-3xl font-bold mb-4">OSS 프로젝트 검색 및 필터링</h1>
+                    <h1 className="text-2xl md:text-3xl font-bold mb-4">OSS Project Search and Filter</h1>
                     <p className="text-gray-600 mb-2">
-                        기여하고 싶은 오픈소스 프로젝트를 찾아보세요
+                        Find open source projects you want to contribute to
                     </p>
                     <p className="text-sm text-blue-600">
-                        💡 검색하려면 프로그래밍 언어를 선택하거나 프로젝트명을 입력해주세요
+                        💡 To search, select a programming language or enter a project name
                     </p>
                 </div>
 
@@ -159,11 +159,11 @@ const ProjectExplorer = ({ onBack, initialSearchQuery = '' }) => {
                     onSearch={handleSearch}
                 />
 
-                {/* 에러 메시지 표시 */}
+                {/* Error Message Display */}
                 {error && (
                     <div className="mb-8 p-4 bg-red-50 border border-red-200 rounded-lg">
                         <div className="flex items-center">
-                            <div className="text-red-600 font-medium">검색 중 오류가 발생했습니다</div>
+                            <div className="text-red-600 font-medium">An error occurred during search</div>
                         </div>
                         <div className="text-red-500 text-sm mt-1">{error}</div>
                     </div>

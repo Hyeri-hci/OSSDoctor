@@ -15,7 +15,7 @@ const HealthOverview = ({ projectData }) => {
     if (!displayData) {
         return (
             <div className="p-4 flex items-center justify-center h-64">
-                <div className="text-gray-500">데이터를 불러오는 중...</div>
+                <div className="text-gray-500">Loading data...</div>
             </div>
         );
     }
@@ -123,10 +123,10 @@ const HealthOverview = ({ projectData }) => {
             <div className="p-6 space-y-8">
                 <div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                        PR 및 Issue 활동 이력
+                        PR and Issue Activity History
                     </h3>
                     <p className="text-sm text-gray-600 mb-6">
-                        최근 Pull Request와 Issue 처리 현황을 보여줍니다.
+                        Shows recent Pull Request and Issue handling status.
                     </p>
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         {/* 왼쪽: PR 통계 */}
@@ -196,13 +196,13 @@ const HealthOverview = ({ projectData }) => {
                     </div>
                 </div>
 
-                {/* 커밋 활동 분포 섹션 */}
+                {/* Weekly Commit Activity Section */}
                 <div>
                     <h3 className="text-base font-semibold text-gray-900 mb-3">
-                        주간 커밋 활동 분포
+                        Weekly Commit Activity
                     </h3>
                     <div className="text-xs text-gray-600 mb-4">
-                        이번 주 월요일부터 일요일까지 커밋 활동 패턴 (월~일)
+                        Commit activity pattern from this week Monday to Sunday (Mon-Sun)
                     </div>
                     <div className="w-full overflow-hidden">
                         <div className="min-w-0 w-full">
@@ -214,23 +214,23 @@ const HealthOverview = ({ projectData }) => {
                         </div>
                     </div>
                     <div className="text-center text-xs text-gray-600 mt-2">
-                        일별 커밋 수
+                        Daily Commits
                     </div>
                 </div>
 
                 <div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                        Repository 활동 이력
+                        Repository Activity History
                     </h3>
                     <p className="text-sm text-gray-600 mb-6">
-                        프로젝트의 최근 활동 내역을 확인할 수 있습니다.
+                        View the project's recent activity history.
                     </p>
 
                     {/* recentActivities 날짜별로 그룹화하여 TimelineContainer 넘김 */}
                     {(() => {
                         const activities = Array.isArray(displayData.recentActivities) ? displayData.recentActivities : [];
                         if (activities.length === 0) {
-                            return <div className="p-4 text-center text-gray-400">최근 활동 내역이 없습니다.</div>;
+                            return <div className="p-4 text-center text-gray-400">No recent activity.</div>;
                         }
                         // YYYY-MM-DD 기준으로 그룹화
                         const groupByDate = {};
@@ -253,7 +253,7 @@ const HealthOverview = ({ projectData }) => {
                                 maxHeight="32rem"
                                 renderItem={(activity) => {
                                     if (!activity || typeof activity !== 'object') {
-                                        return <div className="p-3 text-gray-400">잘못된 활동 데이터</div>;
+                                        return <div className="p-3 text-gray-400">Invalid activity data</div>;
                                     }
                                     const type = activity.type || activity.activityType || '';
                                     const title = activity.title || activity.message || activity.activityTitle || '';

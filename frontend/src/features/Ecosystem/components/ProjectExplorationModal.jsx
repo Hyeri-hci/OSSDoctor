@@ -64,26 +64,26 @@ const ProjectExplorationModal = ({
         <Modal
             isOpen={isOpen}
             onClose={handleModalClose}
-            title="다른 프로젝트 탐색"
+            title="Explore Other Projects"
             closeOnBackdrop={!loadingNextBatch}
             closeOnEscape={!loadingNextBatch}
         >
             <div className="p-6">
                 <div className="text-center mb-6">
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                        프로젝트 그룹 탐색
+                        Project Group Navigation
                     </h3>
                     <p className="text-gray-600 text-sm">
-                        현재 {currentBatch}번째 그룹을 보고 있습니다 • 각 그룹마다 30개의 서로 다른 프로젝트
+                        Currently viewing group {currentBatch} • Each group contains 30 different projects
                     </p>
                 </div>
                 
-                {/* 그룹 네비게이션 */}
+                {/* Group Navigation */}
                 <div className="space-y-4">
-                    {/* 현재까지 탐색한 그룹들 */}
+                    {/* Previously explored groups */}
                     {maxBatchReached > 1 && !loadingNextBatch && (
                         <div>
-                            <h4 className="text-sm font-medium text-gray-700 mb-3">이미 본 그룹들</h4>
+                            <h4 className="text-sm font-medium text-gray-700 mb-3">Previously Viewed Groups</h4>
                             <div className="grid grid-cols-4 gap-2">
                                 {Array.from({ length: maxBatchReached }, (_, i) => i + 1).map((groupNum) => (
                                     <Button
@@ -96,17 +96,17 @@ const ProjectExplorationModal = ({
                                             : "text-gray-700 hover:bg-gray-50"
                                         } justify-center`}
                                     >
-                                        그룹 {groupNum}
+                                        Group {groupNum}
                                     </Button>
                                 ))}
                             </div>
                         </div>
                     )}
                     
-                    {/* 새로운 그룹 탐색 */}
+                    {/* Explore new groups */}
                     {canLoadMoreBatches && (
                         <div>
-                            <h4 className="text-sm font-medium text-gray-700 mb-3">새로운 프로젝트 발견하기</h4>
+                            <h4 className="text-sm font-medium text-gray-700 mb-3">Discover New Projects</h4>
                             <Button
                                 onClick={handleLoadNextBatch}
                                 disabled={loadingNextBatch}
@@ -115,41 +115,41 @@ const ProjectExplorationModal = ({
                                 {loadingNextBatch ? (
                                     <>
                                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                                        새로운 프로젝트 로딩 중...
+                                        Loading new projects...
                                     </>
                                 ) : (
                                     <>
-                                        {maxBatchReached + 1}번째 그룹 탐색하기 (30개의 새로운 프로젝트)
+                                        Explore Group {maxBatchReached + 1} (30 new projects)
                                     </>
                                 )}
                             </Button>
                         </div>
                     )}
                     
-                    {/* 로딩 중 안내 메시지 */}
+                    {/* Loading message */}
                     {loadingNextBatch ? (
                         <div className="bg-green-50 rounded-lg p-4 mt-4">
                             <div className="flex items-start gap-3">
                                 <div className="w-5 h-5 border-2 border-green-500 border-t-transparent rounded-full animate-spin flex-shrink-0 mt-0.5" />
                                 <div>
-                                    <p className="text-green-800 text-sm font-medium mb-1">새로운 프로젝트를 찾는 중입니다</p>
+                                    <p className="text-green-800 text-sm font-medium mb-1">Searching for new projects</p>
                                     <p className="text-green-700 text-sm">
-                                        GitHub에서 {maxBatchReached + 1}번째 그룹의 프로젝트들을 가져오고 있습니다. 
-                                        잠시만 기다려주세요!
+                                        Fetching group {maxBatchReached + 1} projects from GitHub. 
+                                        Please wait!
                                     </p>
                                 </div>
                             </div>
                         </div>
                     ) : (
-                        /* 일반 안내 메시지 */
+                        /* General tip message */
                         <div className="bg-blue-50 rounded-lg p-4 mt-4">
                             <div className="flex items-start gap-3">
                                 <span className="text-blue-500 text-lg">💡</span>
                                 <div>
-                                    <p className="text-blue-800 text-sm font-medium mb-1">탐색 팁</p>
+                                    <p className="text-blue-800 text-sm font-medium mb-1">Exploration Tip</p>
                                     <p className="text-blue-700 text-sm">
-                                        각 그룹은 GitHub에서 실시간으로 가져온 서로 다른 프로젝트들입니다. 
-                                        마음에 드는 프로젝트를 찾을 때까지 계속 탐색해보세요!
+                                        Each group contains different projects fetched in real-time from GitHub. 
+                                        Keep exploring until you find a project you like!
                                     </p>
                                 </div>
                             </div>

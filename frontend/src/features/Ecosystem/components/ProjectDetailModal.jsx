@@ -75,7 +75,7 @@ const ProjectDetailModal = ({ isOpen, onClose, project }) => {
                                     className="flex items-center gap-1"
                                 >
                                     <LinkIcon className="w-4 h-4" />
-                                    홈페이지
+                                    Homepage
                                 </Button>
                             )}
                             <Button
@@ -85,7 +85,7 @@ const ProjectDetailModal = ({ isOpen, onClose, project }) => {
                                 className="flex items-center gap-1"
                             >
                                 <CodeBracketIcon className="w-4 h-4" />
-                                GitHub에서 보기
+                                View on GitHub
                             </Button>
                         </div>
                     </div>
@@ -136,10 +136,10 @@ const ProjectDetailModal = ({ isOpen, onClose, project }) => {
                         </div>
                     </div>
 
-                    {/* 설명 */}
+                    {/* Description */}
                     {project.description && (
                         <div>
-                            <h3 className="text-lg font-semibold text-gray-900 mb-3">설명</h3>
+                            <h3 className="text-lg font-semibold text-gray-900 mb-3">Description</h3>
                             <p className="text-gray-700 leading-relaxed">
                                 {project.description}
                             </p>
@@ -149,20 +149,20 @@ const ProjectDetailModal = ({ isOpen, onClose, project }) => {
                     {/* 메타 정보 */}
                     <div className="grid md:grid-cols-2 gap-6">
                         <div>
-                            <h3 className="text-lg font-semibold text-gray-900 mb-3">프로젝트 정보</h3>
+                            <h3 className="text-lg font-semibold text-gray-900 mb-3">Project Info</h3>
                             <div className="space-y-3">
                                 <div className="flex items-center gap-3">
                                     <span 
                                         className="w-4 h-4 rounded-full flex-shrink-0"
                                         style={{ backgroundColor: languageColor }}
                                     />
-                                    <span className="text-sm text-gray-600">주요 언어:</span>
+                                    <span className="text-sm text-gray-600">Primary Language:</span>
                                     <span className="font-medium text-gray-900">{language}</span>
                                 </div>
 
                                 {project.license && (
                                     <div className="flex items-center gap-3">
-                                        <div className="text-sm text-gray-600">라이선스:</div>
+                                        <div className="text-sm text-gray-600">License:</div>
                                         <Badge variant="outline" size="sm">
                                             {project.license.name || project.license}
                                         </Badge>
@@ -172,7 +172,7 @@ const ProjectDetailModal = ({ isOpen, onClose, project }) => {
                                 {project.created_at && (
                                     <div className="flex items-center gap-3">
                                         <CalendarDaysIcon className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                                        <span className="text-sm text-gray-600">생성일:</span>
+                                        <span className="text-sm text-gray-600">Created:</span>
                                         <span className="font-medium text-gray-900">
                                             {formatDate(project.created_at)}
                                         </span>
@@ -182,7 +182,7 @@ const ProjectDetailModal = ({ isOpen, onClose, project }) => {
                                 {project.updated_at && (
                                     <div className="flex items-center gap-3">
                                         <CalendarDaysIcon className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                                        <span className="text-sm text-gray-600">최근 업데이트:</span>
+                                        <span className="text-sm text-gray-600">Last Update:</span>
                                         <span className="font-medium text-gray-900">
                                             {formatDate(project.updated_at)}
                                         </span>
@@ -191,10 +191,10 @@ const ProjectDetailModal = ({ isOpen, onClose, project }) => {
                             </div>
                         </div>
 
-                        {/* 기여자 정보 */}
+                        {/* Contributor Info */}
                         {project.owner && (
                             <div>
-                                <h3 className="text-lg font-semibold text-gray-900 mb-3">소유자</h3>
+                                <h3 className="text-lg font-semibold text-gray-900 mb-3">Owner</h3>
                                 <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                                     {project.owner.avatar_url ? (
                                         <img
@@ -220,10 +220,10 @@ const ProjectDetailModal = ({ isOpen, onClose, project }) => {
                         )}
                     </div>
 
-                    {/* 토픽들 */}
+                    {/* Topics */}
                     {project.topics && project.topics.length > 0 && (
                         <div>
-                            <h3 className="text-lg font-semibold text-gray-900 mb-3">토픽</h3>
+                            <h3 className="text-lg font-semibold text-gray-900 mb-3">Topics</h3>
                             <div className="flex flex-wrap gap-2">
                                 {project.topics.map((topic, index) => (
                                     <Badge key={index} variant="secondary" size="sm">
@@ -239,28 +239,28 @@ const ProjectDetailModal = ({ isOpen, onClose, project }) => {
                         <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                             <div className="flex items-center gap-2 mb-2">
                                 <span className="text-lg">🌟</span>
-                                <h3 className="text-lg font-semibold text-green-900">초보자 환영!</h3>
+                                <h3 className="text-lg font-semibold text-green-900">Beginner Friendly!</h3>
                             </div>
                             <p className="text-green-800 text-sm">
-                                이 프로젝트에는 <strong>{project.goodFirstIssues}개</strong>의 
-                                Good First Issues가 있어 초보자도 쉽게 기여할 수 있습니다.
+                                This project has <strong>{project.goodFirstIssues}</strong> 
+                                Good First Issues that beginners can easily contribute to.
                             </p>
                         </div>
                     )}
                 </div>
 
-                {/* 푸터 */}
+                {/* Footer */}
                 <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-6 py-4">
                     <div className="flex justify-between items-center">
                         <div className="text-xs text-gray-500">
-                            GitHub에서 더 자세한 정보를 확인하세요
+                            View more details on GitHub
                         </div>
                         <div className="flex gap-3">
                             <Button onClick={onClose} variant="outline" size="sm">
-                                닫기
+                                Close
                             </Button>
                             <Button onClick={handleOpenGitHub} variant="primary" size="sm">
-                                GitHub에서 보기
+                                View on GitHub
                             </Button>
                         </div>
                     </div>

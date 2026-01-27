@@ -81,24 +81,24 @@ const CVEDetailModal = ({ cve, isOpen, onClose, position }) => {
                 {/* Timeline */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
-                        <span className="text-xs text-gray-600">발견일:</span>
+                        <span className="text-xs text-gray-600">Discovered:</span>
                         <span className="ml-2 text-sm font-medium">{cve.date}</span>
                     </div>
                     <div>
-                        <span className="text-xs text-gray-600">상태:</span>
+                        <span className="text-xs text-gray-600">Status:</span>
                         <span className={`ml-2 text-sm font-medium ${cve.status === 'fixed' ? 'text-green-600' : 'text-red-600'}`}>
-                            {cve.status === 'fixed' ? '수정됨' : '미해결'}
+                            {cve.status === 'fixed' ? 'Fixed' : 'Unresolved'}
                         </span>
                     </div>
                 </div>
 
-                {/* 추가 정보 안내 */}
+                {/* Additional Information */}
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                     <h4 className="text-sm font-semibold text-blue-900 mb-2">
-                        💡 추가 정보
+                        💡 Additional Information
                     </h4>
                     <p className="text-xs text-blue-800 mb-2">
-                        이 취약점에 대한 자세한 정보는 다음 링크에서 확인할 수 있습니다:
+                        For more details about this vulnerability, please visit the following link:
                     </p>
                     <a
                         href={`https://nvd.nist.gov/vuln/detail/${cve.id}`}
@@ -106,7 +106,7 @@ const CVEDetailModal = ({ cve, isOpen, onClose, position }) => {
                         rel="noopener noreferrer"
                         className="text-xs text-blue-600 hover:text-blue-800 underline"
                     >
-                        NVD 데이터베이스에서 {cve.id} 보기 →
+                        View {cve.id} on NVD Database →
                     </a>
                 </div>
             </div>

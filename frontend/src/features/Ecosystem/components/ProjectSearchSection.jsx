@@ -62,7 +62,7 @@ const ProjectSearchSection = ({
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div>
                         <label className="block text-sm font-medium mb-2 text-gray-700">
-                            프로그래밍 언어
+                            Programming Language
                         </label>
                         <Select
                             value={selectedLanguage}
@@ -73,7 +73,7 @@ const ProjectSearchSection = ({
 
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                            라이선스
+                            License
                         </label>
                         <Select
                             value={selectedLicense}
@@ -84,7 +84,7 @@ const ProjectSearchSection = ({
 
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                            최근 업데이트
+                            Recent Update
                         </label>
                         <Select
                             value={selectedCommitDate}
@@ -96,7 +96,7 @@ const ProjectSearchSection = ({
                     <div>
                         <div className="flex items-center gap-2 mb-2">
                             <label className="block text-sm font-medium text-gray-700">
-                                정렬 기준
+                                Sort By
                             </label>
                             <button
                                 onClick={handleGuideModalOpen}
@@ -114,15 +114,15 @@ const ProjectSearchSection = ({
                     </div>
                 </div>
 
-                {/* 검색창 */}
+                {/* Search Input */}
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                        프로젝트 검색
+                        Project Search
                     </label>
                     <div className="relative">
                         <Input
                             type="text"
-                            placeholder="프로젝트 이름 또는 설명으로 검색"
+                            placeholder="Search by project name or description"
                             value={searchQuery}
                             onChange={(e) => onSearchChange(e.target.value)}
                             className="pl-10"
@@ -134,10 +134,10 @@ const ProjectSearchSection = ({
                     <div className="mt-3 min-h-0 transition-all duration-200">
                         {onlyTimeFilterSelected && (
                             <div className="text-sm text-orange-600 bg-orange-50 border border-orange-200 rounded-lg p-3">
-                                <p className="font-medium">💡 검색 도움말</p>
-                                <p className="mt-1"><strong>최근 업데이트</strong>는 다른 검색 조건과 함께 사용할 수 있는 필터입니다.</p>
+                                <p className="font-medium">💡 Search Help</p>
+                                <p className="mt-1"><strong>Recent Update</strong> is a filter that can be used with other search criteria.</p>
                                 <p className="mt-2 text-xs text-orange-500 bg-orange-100 rounded px-2 py-1">
-                                    <strong>검색하려면:</strong> 프로젝트 이름을 검색하시거나 프로그래밍 언어, 라이선스 중 하나 이상을 선택해주세요.
+                                    <strong>To search:</strong> Enter a project name or select at least one programming language or license.
                                 </p>
                             </div>
                         )}
@@ -156,12 +156,12 @@ const ProjectSearchSection = ({
                             {loading ? (
                                 <>
                                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                    검색중...
+                                    Searching...
                                 </>
                             ) : (
                                 <>
                                     <MagnifyingGlassIcon className="w-4 h-4" />
-                                    프로젝트 검색
+                                    Search Projects
                                 </>
                             )}
                         </Button>
@@ -172,14 +172,14 @@ const ProjectSearchSection = ({
                                     onClick={onClearFilters}
                                     className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded-lg transition-colors duration-200 whitespace-nowrap"
                                 >
-                                    ✕ 필터 초기화
+                                    ✕ Clear Filters
                                 </button>
                             )}
                             
                             {!loading && hasActiveFilters && (
                                 <div className="text-sm text-green-600 whitespace-nowrap flex items-center gap-1">
                                     <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                                    필터 적용됨
+                                    Filters Applied
                                 </div>
                             )}
                         </div>
@@ -187,7 +187,7 @@ const ProjectSearchSection = ({
 
                     {hasActiveFilters && (
                         <div className="text-sm text-gray-600 text-center sm:text-right">
-                            {activeFiltersCount}개 필터 적용됨
+                            {activeFiltersCount} filter(s) applied
                         </div>
                     )}
                 </div>

@@ -38,7 +38,7 @@ const ProjectPagination = ({
                 {/* 현재 그룹 정보 */}
                 <div className="text-center">
                     <p className="text-gray-600 text-sm">
-                        그룹 {currentBatch} • 페이지 {currentPage}/{totalPagesInBatch}
+                        Group {currentBatch} • Page {currentPage}/{totalPagesInBatch}
                     </p>
                 </div>
                 
@@ -51,7 +51,7 @@ const ProjectPagination = ({
                         size="sm"
                     >
                         <ChevronLeftIcon className="w-4 h-4" />
-                        이전
+                        Previous
                     </Button>
                     
                     <div className="flex items-center gap-1">
@@ -74,7 +74,7 @@ const ProjectPagination = ({
                         variant="outline"
                         size="sm"
                     >
-                        다음
+                        Next
                         <ChevronRightIcon className="w-4 h-4" />
                     </Button>
                 </div>
@@ -83,13 +83,13 @@ const ProjectPagination = ({
                 {!hasMoreInBatch && (
                     <div className="text-center">
                         <p className="text-gray-500 text-sm flex items-center justify-center gap-2">
-                            이 그룹의 모든 프로젝트를 확인했습니다
+                            You&apos;ve viewed all projects in this group
                         </p>
                         
                         {/* 첫 번째 그룹이고 더 이상 로드할 데이터가 없을 때 */}
                         {maxBatchReached === 1 && !canLoadMoreBatches && (
                             <p className="text-gray-500 text-sm mt-2">
-                                🏁 검색 조건에 맞는 모든 프로젝트를 확인했습니다
+                                🏁 You&apos;ve viewed all projects matching your search criteria
                             </p>
                         )}
                     </div>
@@ -103,7 +103,7 @@ const ProjectPagination = ({
                         onClick={onOpenExplorationModal}
                         className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 px-6 py-3 text-sm font-medium rounded-full"
                     >
-                        다른 프로젝트 보기
+                        View Other Projects
                     </Button>
                 </div>
             )}

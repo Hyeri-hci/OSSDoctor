@@ -13,20 +13,20 @@ const BadgesSection = ({ badges = [], onShowAllBadges }) => {
     return (
         <div className="border-t border-gray-200 pt-8">
             <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">최근 획득 뱃지</h3>
+                <h3 className="text-lg font-semibold text-gray-900">Recently Earned Badges</h3>
                 <div className="text-sm text-gray-600">
-                    {badgeStats.earnedCount}/{badgeStats.totalCount} 획득 ({badgeStats.percentage}%)
+                    {badgeStats.earnedCount}/{badgeStats.totalCount} earned ({badgeStats.percentage}%)
                 </div>
             </div>
 
             <p className="text-sm text-gray-600 mb-4">
-                최근에 획득한 뱃지들입니다.
+                Badges you have recently earned.
             </p>
 
             <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 mb-4">
                 {recentEarnedBadges.length === 0 ? (
                     <div className="col-span-full text-center py-4 text-gray-500">
-                        아직 획득한 뱃지가 없습니다.
+                        No badges earned yet.
                     </div>
                 ) : (
                     recentEarnedBadges.map((badge) => (
@@ -35,7 +35,7 @@ const BadgesSection = ({ badges = [], onShowAllBadges }) => {
                 )}
             </div>
 
-            {/* 전체 뱃지 보기 버튼 */}
+            {/* View All Badges Button */}
             <div className="text-center">
                 <Button
                     onClick={onShowAllBadges}
@@ -43,7 +43,7 @@ const BadgesSection = ({ badges = [], onShowAllBadges }) => {
                     size="sm"
                     className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                 >
-                    전체 뱃지 보기 →
+                    View All Badges →
                 </Button>
             </div>
         </div>

@@ -7,11 +7,11 @@ import SecurityHistory from './SecurityHistory';
 
 
 const DiagnoseTabContent = ({ activeTab, loading, projectData, fullProjectName }) => {
-    // 로딩 중일 때
+    // Loading state
     if (loading) {
         return (
             <LoadingSpinner
-                message={`${fullProjectName} 프로젝트를 분석 중입니다. 잠시만 기다려 주세요...`}
+                message={`Analyzing ${fullProjectName} project. Please wait...`}
                 size="large"
                 color="blue"
             />

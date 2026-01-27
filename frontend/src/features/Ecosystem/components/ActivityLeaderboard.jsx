@@ -67,7 +67,7 @@ const ActivityLeaderboard = ({ onBack }) => {
         return (
             <div className='py-8'>
                 <LoadingSpinner
-                    message={authLoading ? '인증 상태를 확인하고 있습니다...' : '리더보드 데이터를 불러오고 있습니다...'}
+                    message={authLoading ? 'Checking authentication status...' : 'Loading leaderboard data...'}
                     size='large'
                     color='blue'
                 />
@@ -80,11 +80,11 @@ const ActivityLeaderboard = ({ onBack }) => {
         return (
             <div className='py-8'>
                 <EmptyState
-                    title='리더보드 데이터를 불러오는 데 실패했습니다.'
+                    title='Failed to load leaderboard data.'
                     description={error.message}
                     action={
                         <Button onClick={() => window.location.reload()} variant='primary'>
-                            다시 시도
+                            Try Again
                         </Button>
                     }
                 />
@@ -102,13 +102,13 @@ const ActivityLeaderboard = ({ onBack }) => {
                     className="mb-6"
                 >
                     <ArrowLeftIcon className="h-4 w-4 mr-2" />
-                    뒤로가기
+                    Go Back
                 </Button>
 
                 {/* 페이지 제목 */}
                 <div className="mb-8 text-center">
-                    <h1 className="text-2xl md:text-3xl font-bold mb-2">활동 리더보드</h1>
-                    <p className="text-gray-600">프로젝트에 활발히 기여하고 있는 사용자들을 확인해 보세요.</p>
+                    <h1 className="text-2xl md:text-3xl font-bold mb-2">Activity Leaderboard</h1>
+                    <p className="text-gray-600">See the users who are actively contributing to projects.</p>
                 </div>
 
                 {/* 기간 설정 및 업데이트 버튼 */}
@@ -119,8 +119,8 @@ const ActivityLeaderboard = ({ onBack }) => {
                             <ClockIcon className="h-4 w-4" />
                             <span>
                                 {lastUpdateTime 
-                                    ? `마지막 업데이트: ${lastUpdateTime.toLocaleTimeString()}`
-                                    : '자동 업데이트 중...'}
+                                    ? `Last updated: ${lastUpdateTime.toLocaleTimeString()}`
+                                    : 'Auto-updating...'}
                             </span>
                         </div>
                         {isAuthenticated && (
@@ -132,7 +132,7 @@ const ActivityLeaderboard = ({ onBack }) => {
                                 className="text-blue-600 hover:text-blue-700 p-1"
                             >
                                 <ArrowPathIcon className={`h-4 w-4 ${isUpdating ? 'animate-spin' : ''}`} />
-                                <span className="ml-1">{isUpdating ? '업데이트 중...' : '업데이트'}</span>
+                                <span className="ml-1">{isUpdating ? 'Updating...' : 'Update'}</span>
                             </Button>
                         )}
                     </div>
@@ -140,7 +140,7 @@ const ActivityLeaderboard = ({ onBack }) => {
                     {/* 기간 설정 */}
                     <div className="flex items-center gap-3">
                         <div className="flex items-center gap-2">
-                            <span className="text-sm text-gray-600 whitespace-nowrap">기간 설정:</span>
+                            <span className="text-sm text-gray-600 whitespace-nowrap">Time Period:</span>
                             <div className="flex bg-gray-100 rounded-lg p-1">
                                 <button
                                     onClick={() => handleTimePeriodChange('today')}
@@ -149,7 +149,7 @@ const ActivityLeaderboard = ({ onBack }) => {
                                         : 'text-gray-600 hover:text-gray-900'
                                         }`}
                                 >
-                                    오늘
+                                    Today
                                 </button>
                                 <button
                                     onClick={() => handleTimePeriodChange('week')}
@@ -158,7 +158,7 @@ const ActivityLeaderboard = ({ onBack }) => {
                                         : 'text-gray-600 hover:text-gray-900'
                                         }`}
                                 >
-                                    이번 주
+                                    This Week
                                 </button>
                                 <button
                                     onClick={() => handleTimePeriodChange('month')}
@@ -167,7 +167,7 @@ const ActivityLeaderboard = ({ onBack }) => {
                                         : 'text-gray-600 hover:text-gray-900'
                                         }`}
                                 >
-                                    이번 달
+                                    This Month
                                 </button>
                             </div>
                         </div>
@@ -181,8 +181,8 @@ const ActivityLeaderboard = ({ onBack }) => {
                     {!loading && !error && leaderboardData.length === 0 ? (
                         <div className="text-center py-12">
                             <EmptyState
-                                title={`${timePeriod === 'today' ? '오늘은' : timePeriod === 'week' ? '이번 주는' : '이번 달은'} 아직 활동이 없습니다`}
-                                description="다른 기간을 선택해 확인해 보세요."
+                                title={`No activity ${timePeriod === 'today' ? 'today' : timePeriod === 'week' ? 'this week' : 'this month'} yet`}
+                                description="Try selecting a different time period."
                                 icon="📊"
                                 action={
                                     <Button 
@@ -190,7 +190,7 @@ const ActivityLeaderboard = ({ onBack }) => {
                                         variant="primary"
                                         disabled={loading}
                                     >
-                                        {loading ? '새로고침 중...' : '새로고침'}
+                                        {loading ? 'Refreshing...' : 'Refresh'}
                                     </Button>
                                 }
                             />
@@ -199,7 +199,7 @@ const ActivityLeaderboard = ({ onBack }) => {
                         <>
                             {/* 상위 3명 시상대 */}
                             <div className="bg-white rounded-lg border border-gray-200 p-8 mb-8">
-                                <h2 className="text-2xl font-bold text-center mb-8">TOP 3 순위</h2>
+                                <h2 className="text-2xl font-bold text-center mb-8">TOP 3 Rankings</h2>
                                 <div className="flex justify-center items-end gap-6 sm:gap-10 mb-8">
                                     {/* 2위 */}
                                     {leaderboardData[1] && (
@@ -209,7 +209,7 @@ const ActivityLeaderboard = ({ onBack }) => {
                                             </div>
                                             <div className="font-semibold text-base sm:text-lg mb-2" title={leaderboardData[1].username}>{leaderboardData[1].username}</div>
                                             <div className="text-xs sm:text-sm text-gray-500 mb-3">
-                                                {timePeriod === 'today' ? '오늘' : timePeriod === 'week' ? '이번 주' : '이번 달'}: {leaderboardData[1].periodScore ? leaderboardData[1].periodScore.toLocaleString() : leaderboardData[1].totalScore.toLocaleString()}점
+                                                {timePeriod === 'today' ? 'Today' : timePeriod === 'week' ? 'This Week' : 'This Month'}: {leaderboardData[1].periodScore ? leaderboardData[1].periodScore.toLocaleString() : leaderboardData[1].totalScore.toLocaleString()} pts
                                             </div>
                                             <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gray-300 rounded-t-lg mx-auto"></div>
                                         </div>
@@ -223,7 +223,7 @@ const ActivityLeaderboard = ({ onBack }) => {
                                             </div>
                                             <div className="font-bold text-lg sm:text-xl mb-2" title={leaderboardData[0].username}>{leaderboardData[0].username}</div>
                                             <div className="text-sm sm:text-base text-gray-600 mb-3">
-                                                {timePeriod === 'today' ? '오늘' : timePeriod === 'week' ? '이번 주' : '이번 달'}: {leaderboardData[0].periodScore ? leaderboardData[0].periodScore.toLocaleString() : leaderboardData[0].totalScore.toLocaleString()}점
+                                                {timePeriod === 'today' ? 'Today' : timePeriod === 'week' ? 'This Week' : 'This Month'}: {leaderboardData[0].periodScore ? leaderboardData[0].periodScore.toLocaleString() : leaderboardData[0].totalScore.toLocaleString()} pts
                                             </div>
                                             <div className="w-24 h-32 sm:w-28 sm:h-36 bg-yellow-400 rounded-t-lg mx-auto shadow-lg"></div>
                                         </div>
@@ -237,7 +237,7 @@ const ActivityLeaderboard = ({ onBack }) => {
                                             </div>
                                             <div className="font-semibold text-base sm:text-lg mb-2" title={leaderboardData[2].username}>{leaderboardData[2].username}</div>
                                             <div className="text-xs sm:text-sm text-gray-500 mb-3">
-                                                {timePeriod === 'today' ? '오늘' : timePeriod === 'week' ? '이번 주' : '이번 달'}: {leaderboardData[2].periodScore ? leaderboardData[2].periodScore.toLocaleString() : leaderboardData[2].totalScore.toLocaleString()}점
+                                                {timePeriod === 'today' ? 'Today' : timePeriod === 'week' ? 'This Week' : 'This Month'}: {leaderboardData[2].periodScore ? leaderboardData[2].periodScore.toLocaleString() : leaderboardData[2].totalScore.toLocaleString()} pts
                                             </div>
                                             <div className="w-20 h-12 sm:w-24 sm:h-16 bg-amber-400 rounded-t-lg mx-auto"></div>
                                         </div>
@@ -247,7 +247,7 @@ const ActivityLeaderboard = ({ onBack }) => {
 
                             {/* 전체 순위 */}
                             <div className="space-y-3">
-                                <h3 className="text-lg font-semibold mb-4">전체 순위</h3>
+                                <h3 className="text-lg font-semibold mb-4">Full Rankings</h3>
                                 {leaderboardData.map((user) => (
                                     <div key={user.username} className="bg-white border border-gray-200 rounded-lg p-6 flex items-center justify-between hover:shadow-md transition-shadow">
                                         <div className="flex items-center space-x-4">
@@ -265,13 +265,13 @@ const ActivityLeaderboard = ({ onBack }) => {
                                                     GitHub Username
                                                     {user.lastUpdated && (
                                                         <span className="ml-2 text-xs text-blue-600">
-                                                            • 최근 업데이트: {new Date(user.lastUpdated).toLocaleString()}
+                                                            • Last updated: {new Date(user.lastUpdated).toLocaleString()}
                                                         </span>
                                                     )}
                                                 </div>
                                                 {user.incompleteContributions > 0 && (
                                                     <div className="text-xs text-amber-600 mt-1">
-                                                        진행 중인 기여: {user.incompleteContributions}개
+                                                        In-progress contributions: {user.incompleteContributions}
                                                     </div>
                                                 )}
                                             </div>
@@ -280,12 +280,12 @@ const ActivityLeaderboard = ({ onBack }) => {
                                         {/* 활동 통계 */}
                                         <div className="text-right">
                                             <div className="font-bold text-lg mb-1">
-                                                {timePeriod === 'today' ? '오늘' : timePeriod === 'week' ? '이번 주' : '이번 달'}: {user.periodScore ? user.periodScore.toLocaleString() : user.totalScore.toLocaleString()}점
+                                                {timePeriod === 'today' ? 'Today' : timePeriod === 'week' ? 'This Week' : 'This Month'}: {user.periodScore ? user.periodScore.toLocaleString() : user.totalScore.toLocaleString()} pts
                                             </div>
                                             <div className="text-sm text-gray-600">
                                                 PRs: {user.prCount} | Issues: {user.issueCount} | Reviews: {user.reviewCount || 0}
                                                 {user.contributionStreak > 0 && (
-                                                    <span className="ml-2 text-orange-600">🔥 {user.contributionStreak}일 연속</span>
+                                                    <span className="ml-2 text-orange-600">🔥 {user.contributionStreak} day streak</span>
                                                 )}
                                             </div>
                                         </div>
@@ -299,7 +299,7 @@ const ActivityLeaderboard = ({ onBack }) => {
 
                 {/* 나의 랭킹 */}
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-                    <h3 className="text-lg font-semibold mb-4 text-blue-800">나의 랭킹은?</h3>
+                    <h3 className="text-lg font-semibold mb-4 text-blue-800">My Ranking</h3>
                     
                     {authLoading ? (
                         /* 인증 상태 확인 중 */
@@ -308,7 +308,7 @@ const ActivityLeaderboard = ({ onBack }) => {
                                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                             </div>
                             <p className="text-gray-500 text-sm">
-                                인증 상태를 확인하고 있습니다...
+                                Checking authentication status...
                             </p>
                         </div>
                     ) : isAuthenticated && currentUser ? (
@@ -334,7 +334,7 @@ const ActivityLeaderboard = ({ onBack }) => {
                                     <div className="text-gray-500 text-sm">GitHub Username</div>
                                     {currentUser.rank && (
                                         <div className="text-blue-600 text-sm font-medium">
-                                            전체 순위: {currentUser.rank}위
+                                            Overall Rank: #{currentUser.rank}
                                         </div>
                                     )}
                                 </div>
@@ -343,17 +343,17 @@ const ActivityLeaderboard = ({ onBack }) => {
                             {/* 랭킹과 점수 */}
                             <div className="text-right">
                                 <div className="font-bold text-lg mb-1">
-                                    {timePeriod === 'today' ? '오늘' : timePeriod === 'week' ? '이번 주' : '이번 달'}: {currentUser.periodScore ? currentUser.periodScore.toLocaleString() : (currentUser.totalScore?.toLocaleString() || 0)}점
+                                    {timePeriod === 'today' ? 'Today' : timePeriod === 'week' ? 'This Week' : 'This Month'}: {currentUser.periodScore ? currentUser.periodScore.toLocaleString() : (currentUser.totalScore?.toLocaleString() || 0)} pts
                                 </div>
                                 <div className="text-sm text-gray-600">
                                     PRs: {currentUser.prCount || 0} | Issues: {currentUser.issueCount || 0} | Reviews: {currentUser.reviewCount || 0}
                                     {currentUser.contributionStreak > 0 && (
-                                        <span className="ml-2 text-orange-600">🔥 {currentUser.contributionStreak}일 연속</span>
+                                        <span className="ml-2 text-orange-600">🔥 {currentUser.contributionStreak} day streak</span>
                                     )}
                                 </div>
                                 {(currentUser.periodScore === 0 || (!currentUser.periodScore && currentUser.totalScore === 0)) && (
                                     <div className="text-xs text-gray-500 mt-1">
-                                        {timePeriod === 'today' ? '오늘' : timePeriod === 'week' ? '이번 주에는' : '이번 달에는'} 아직 활동이 없습니다
+                                        No activity {timePeriod === 'today' ? 'today' : timePeriod === 'week' ? 'this week' : 'this month'} yet
                                     </div>
                                 )}
                             </div>
@@ -366,10 +366,10 @@ const ActivityLeaderboard = ({ onBack }) => {
                                     <span className="text-2xl">🔒</span>
                                 </div>
                                 <h4 className="text-lg font-semibold text-gray-700 mb-2">
-                                    나의 순위를 확인하고 싶나요?
+                                    Want to see your ranking?
                                 </h4>
                                 <p className="text-gray-500 text-sm mb-6">
-                                    로그인하면 나의 활동 점수와 순위를 확인할 수 있습니다.
+                                    Log in to check your activity score and ranking.
                                 </p>
                             </div>
                             <Button 
@@ -377,7 +377,7 @@ const ActivityLeaderboard = ({ onBack }) => {
                                 variant="primary"
                                 className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2"
                             >
-                                GitHub으로 로그인하기
+                                Log in with GitHub
                             </Button>
                         </div>
                     )}

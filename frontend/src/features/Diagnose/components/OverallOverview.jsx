@@ -5,33 +5,33 @@ import { UserGroupIcon } from "@heroicons/react/24/solid";
 import { calculateRepositoryStats, transformLanguageData } from "../utils/diagnoseUtils";
 import { ProjectDataType } from '../types/proTypes';
 
-// 활동 상태 메시지 생성 함수
+// Activity status message generator
 const getActivityStatus = (data) => {
     const openPRs = data.pullRequests?.open || 0;
     const openIssues = data.issues?.open || 0;
     const lastCommitDate = data.pushedAt || data.lastPush;
 
-    // 마지막 커밋 날짜로부터 경과 시간 계산
+    // Calculate days since last commit
     const daysSinceLastCommit = lastCommitDate ?
         Math.floor((new Date() - new Date(lastCommitDate)) / (1000 * 60 * 60 * 24)) : null;
 
     let activityLevel = '';
     if (daysSinceLastCommit === null) {
-        activityLevel = '활동 정보를 확인할 수 없습니다';
+        activityLevel = 'Activity information is not available';
     } else if (daysSinceLastCommit <= 7) {
-        activityLevel = '매우 활발한 개발 활동이 진행되고 있습니다';
+        activityLevel = 'Very active development is in progress';
     } else if (daysSinceLastCommit <= 30) {
-        activityLevel = '꾸준한 개발 활동이 진행되고 있습니다';
+        activityLevel = 'Steady development activity is ongoing';
     } else if (daysSinceLastCommit <= 90) {
-        activityLevel = '가끔 업데이트가 이루어지고 있습니다';
+        activityLevel = 'Occasional updates are being made';
     } else {
-        activityLevel = '최근 활동이 제한적입니다';
+        activityLevel = 'Recent activity is limited';
     }
 
-    return `${activityLevel}. 현재 ${openPRs}개의 활성 PR과 ${openIssues}개의 미해결 이슈가 있습니다.`;
+    return `${activityLevel}. Currently has ${openPRs} active PRs and ${openIssues} open issues.`;
 };
 
-// 건강도 상태 메시지 생성 함수
+// Health status message generator
 const getHealthStatus = (data, healthScore) => {
     const totalIssues = (data.issues?.open || 0) + (data.issues?.closed || 0);
     const issueResolutionRate = totalIssues > 0 ?
@@ -39,16 +39,16 @@ const getHealthStatus = (data, healthScore) => {
 
     let healthMessage = '';
     if (healthScore >= 80) {
-        healthMessage = '매우 건강한 상태를 유지하고 있습니다';
+        healthMessage = 'Maintaining a very healthy status';
     } else if (healthScore >= 60) {
-        healthMessage = '전반적으로 양호한 상태입니다';
+        healthMessage = 'Overall in good condition';
     } else if (healthScore >= 40) {
-        healthMessage = '개선이 필요한 부분들이 있습니다';
+        healthMessage = 'There are areas that need improvement';
     } else {
-        healthMessage = '주의 깊은 관리가 필요합니다';
+        healthMessage = 'Careful management is required';
     }
 
-    return `${healthMessage}. 이슈 해결률은 ${issueResolutionRate}%이며, 지속적인 커뮤니티 참여가 이루어지고 있습니다.`;
+    return `${healthMessage}. Issue resolution rate is ${issueResolutionRate}%, with ongoing community participation.`;
 };
 
 const OverallOverview = ({ projectData }) => {
@@ -57,14 +57,14 @@ const OverallOverview = ({ projectData }) => {
     if (!displayData) {
         return (
             <EmptyState
-                title="프로젝트 데이터를 불러올 수 없습니다"
-                message="분석할 프로젝트 데이터가 없습니다. 레포지토리를 다시 검색해 주세요."
+                title="Cannot load project data"
+                message="No project data to analyze. Please search for a repository again."
                 action={
                     <Button
                         onClick={() => window.location.reload()}
                         variant="primary"
                     >
-                        다시 시도하기
+                        Try Again
                     </Button>
                 }
             />
@@ -102,73 +102,73 @@ const OverallOverview = ({ projectData }) => {
     return (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div className="p-6 space-y-8">
-                {/* 상단 요약 통계 섹션 */}
+                {/* Summary Statistics Section */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-                    {/* 총 커밋 수 */}
+                    {/* Total Commits */}
                     <div className="text-center">
                         <div className="text-2xl lg:text-3xl font-bold text-blue-600 mb-2">
                             {repositoryStats.totalCommits.toLocaleString()}
                         </div>
-                        <div className="text-sm text-gray-600">총 커밋</div>
+                        <div className="text-sm text-gray-600">Total Commits</div>
                     </div>
 
-                    {/* 총 Pull Request 수 */}
+                    {/* Total Pull Requests */}
                     <div className="text-center">
                         <div className="text-2xl lg:text-3xl font-bold text-green-600 mb-2">
                             {repositoryStats.totalPullRequests.toLocaleString()}
                         </div>
-                        <div className="text-sm text-gray-600">총 PR</div>
+                        <div className="text-sm text-gray-600">Total PRs</div>
                     </div>
 
-                    {/* 총 Issue 수 */}
+                    {/* Total Issues */}
                     <div className="text-center">
                         <div className="text-2xl lg:text-3xl font-bold text-yellow-600 mb-2">
                             {repositoryStats.totalIssues.toLocaleString()}
                         </div>
-                        <div className="text-sm text-gray-600">총 이슈</div>
+                        <div className="text-sm text-gray-600">Total Issues</div>
                     </div>
 
-                    {/* 마지막 커밋 날짜 */}
+                    {/* Last Commit Date */}
                     <div className="text-center">
                         <div className="text-2xl lg:text-3xl font-bold text-purple-600 mb-2">
                             {repositoryStats.lastCommit}
                         </div>
-                        <div className="text-sm text-gray-600">마지막 커밋</div>
+                        <div className="text-sm text-gray-600">Last Commit</div>
                     </div>
                 </div>
 
                 {/* 차트 및 상세 정보 섹션 */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    {/* 왼쪽: 주요 통계 정보 */}
+                    {/* Left: Main Statistics */}
                     <div>
                         <h3 className="text-base font-semibold text-gray-900 mb-4">
-                            저장소 정보
+                            Repository Info
                         </h3>
 
                         <div className="space-y-4">
                             <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg min-h-[60px]">
-                                <span className="text-sm text-gray-600">활성 PR</span>
+                                <span className="text-sm text-gray-600">Active PRs</span>
                                 <span className="font-semibold text-blue-600">
                                     {displayData.pullRequests?.open || 0}
                                 </span>
                             </div>
 
                             <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg min-h-[60px]">
-                                <span className="text-sm text-gray-600">미해결 이슈</span>
+                                <span className="text-sm text-gray-600">Open Issues</span>
                                 <span className="font-semibold text-red-600">
                                     {displayData.issues?.open || 0}
                                 </span>
                             </div>
 
                             <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg min-h-[60px]">
-                                <span className="text-sm text-gray-600">이슈 해결률</span>
+                                <span className="text-sm text-gray-600">Issue Resolution Rate</span>
                                 <span className="font-semibold text-green-600">
                                     {Math.round(((displayData.issues?.closed || 0) / ((displayData.issues?.open || 0) + (displayData.issues?.closed || 0)) * 100)) || 0}%
                                 </span>
                             </div>
 
                             <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg min-h-[60px]">
-                                <span className="text-sm text-gray-600">총 기여자 수</span>
+                                <span className="text-sm text-gray-600">Total Contributors</span>
                                 <span className="font-semibold text-purple-600">
                                     {displayData.totalContributors || 0}
                                 </span>
@@ -214,24 +214,24 @@ const OverallOverview = ({ projectData }) => {
                     </div>
                 </div>
 
-                {/* 언어 분포 및 기여자 정보 */}
+                {/* Language Distribution and Contributor Info */}
                 <div className="grid gap-8">
-                    {/* 왼쪽: 언어 분포 차트 */}
+                    {/* Left: Language Distribution Chart */}
                     <div>
                         <h3 className="text-base font-semibold text-gray-900 mb-3">
-                            언어 분포
+                            Language Distribution
                         </h3>
                         <div className="text-xs text-gray-600 mb-2">
-                            프로젝트에서 사용된 프로그래밍 언어
+                            Programming languages used in the project
                         </div>
 
-                        {/* 주 언어 표시 */}
+                        {/* Primary Language Display */}
                         <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
                             <div className="text-sm font-medium text-blue-800">
-                                주 언어: <span className="font-bold">{primaryLanguage}</span>
+                                Primary Language: <span className="font-bold">{primaryLanguage}</span>
                             </div>
                             <div className="text-xs text-blue-600 mt-1">
-                                전체의 {(primaryLanguagePercentage || 0).toFixed(1)}%를 차지
+                                Accounts for {(primaryLanguagePercentage || 0).toFixed(1)}% of total
                             </div>
                         </div>
 
@@ -253,19 +253,19 @@ const OverallOverview = ({ projectData }) => {
                             ))}
                         </div>
 
-                        {/* 차트 하단 라벨 */}
+                        {/* Chart Bottom Label */}
                         <div className="text-center text-xs text-gray-600 mt-2">
-                            언어별 사용 비율
+                            Usage Ratio by Language
                         </div>
                     </div>
                 </div>
 
-                {/* 기여자 정보 섹션 */}
+                {/* Contributor Info Section */}
                 <div>
                     <div className="flex items-center mb-4">
                         <UserGroupIcon className="w-5 h-5 mr-2 text-gray-600" />
                         <h3 className="text-base font-semibold text-gray-900">
-                            주요 기여자
+                            Top Contributors
                         </h3>
                     </div>
 
@@ -287,35 +287,35 @@ const OverallOverview = ({ projectData }) => {
                                             {contributor.name || contributor.login}
                                         </div>
                                         <div className="text-xs text-gray-600">
-                                            {contributor.contributions} 기여
+                                            {contributor.contributions} contributions
                                         </div>
                                     </div>
                                 </div>
                             ))
                         ) : (
                             <div className="col-span-3 text-center text-gray-500 py-8">
-                                기여자 정보를 불러오는 중입니다...
+                                Loading contributor information...
                             </div>
                         )}
                     </div>
                 </div>
 
-                {/* 최근 활동 요약 */}
+                {/* Recent Activity Summary */}
                 <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
                     <h3 className="text-base font-semibold text-gray-900 mb-4">
-                        프로젝트 요약
+                        Project Summary
                     </h3>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <h4 className="text-sm font-medium text-gray-700 mb-2">활동 상태</h4>
+                            <h4 className="text-sm font-medium text-gray-700 mb-2">Activity Status</h4>
                             <p className="text-sm text-gray-600">
                                 {getActivityStatus(displayData)}
                             </p>
                         </div>
 
                         <div>
-                            <h4 className="text-sm font-medium text-gray-700 mb-2">프로젝트 건강도</h4>
+                            <h4 className="text-sm font-medium text-gray-700 mb-2">Project Health</h4>
                             <p className="text-sm text-gray-600">
                                 {getHealthStatus(displayData, healthScore)}
                             </p>
