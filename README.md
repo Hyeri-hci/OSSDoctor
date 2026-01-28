@@ -4,14 +4,14 @@
 
 <div align="center">
 
-![Java](https://img.shields.io/badge/Java-24-orange?style=for-the-badge&logo=openjdk&logoColor=white)
-![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5-brightgreen?style=for-the-badge&logo=springboot&logoColor=white)
-![React](https://img.shields.io/badge/React-19-blue?style=for-the-badge&logo=react&logoColor=white)
+![Java](https://img.shields.io/badge/Java-24-orange?style=for-the-badge&logo=java&logoColor=white)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2-brightgreen?style=for-the-badge&logo=springboot&logoColor=white)
+![React](https://img.shields.io/badge/React-18-blue?style=for-the-badge&logo=react&logoColor=white)
 ![MySQL](https://img.shields.io/badge/MySQL-8.0-blue?style=for-the-badge&logo=mysql&logoColor=white)
 
 ![Build Status](https://img.shields.io/badge/Build-Passing-brightgreen?style=for-the-badge)
 
-[🐛 이슈 제보](https://github.com/Hyeri-hci/OSSDoctor/issues)
+[🚀 데모 보기](#) | [🐛 이슈 제보](https://github.com/Hyeri-hci/OSSDoctor/issues)
 
 </div>
 
@@ -23,8 +23,7 @@
 - [🚀 빠른 시작](#-빠른-시작)
 - [📱 사용 방법](#-사용-방법)
 - [🛠️ 기술 스택](#️-기술-스택)
-- [� 벤치마크](#-벤치마크)
-- [�📄 라이선스](#-라이선스)
+- [📄 라이선스](#-라이선스)
 - [🤝 기여하기](#-기여하기)
 - [🏆 주요 기여자](#-주요-기여자)
 - [📞 지원 및 문의](#-지원-및-문의)
@@ -37,11 +36,11 @@
 
 ### 🌟 핵심 가치
 
-- **🔍 정확한 진단**: 규칙 기반 프로젝트 건강도 분석 (커밋, 이슈, PR 등 정량 지표 활용)
+- **🔍 정확한 진단**: AI 기반 프로젝트 건강도 분석
 - **👥 커뮤니티 중심**: 개발자 간 협업과 성장 지원
 - **📈 성장 추적**: 개인 및 프로젝트의 발전 과정 시각화
-- **♻️ OSS 지속적 활성화**: 기여와 활용의 선순환 지원
-- **🎯 맞춤형 추천**: Good First Issue 기반 초보자 친화적 프로젝트 필터링
+- **♻️ OSS 지속적 활성화** : 기여와 활용의 선순환 지원
+- **🎯 맞춤형 추천**: 개발자 수준과 관심사에 맞는 프로젝트 매칭
 
 ### 🎪 주요 사용자
 
@@ -60,12 +59,11 @@
 <summary>상세 기능 보기</summary>
 
 - **건강도 스코어링**: 최근 업데이트, Issue 해결율, PR 머지율 분석
-- **보안 취약점 분석** `[In Progress]`: NVD(National Vulnerability Database) API 연동 취약점 검사
-- **커뮤니티 활성도**: Star, Fork, Watcher, Contributor 수 분석
-- **라이선스 표시**: 프로젝트 라이선스 정보 표시
+- **보안 취약점 분석(개발중)**: CVE 데이터베이스 연동 실시간 취약점 검사
+- **커뮤니티 활성도**: Star, Fork, Watcher, Contribution 수 분석
+- **라이선스 유효성**: 프로젝트 라이선스 검사
 
 **진단 항목:**
-
 - ✅ 활성도 (Activity)
 - ✅ 보안성 (Security)
 - ✅ 유지보수성 (Maintainability)
@@ -85,13 +83,12 @@
 - **기여 난이도 표시**: Beginner, Intermediate, Advanced 단계별 분류
 
 **탐색 필터:**
-
 - 🔤 프로그래밍 언어
 - 📄 라이선스 타입
 - 📅 최근 활동 (Last Update)
 - ⚙️ 정렬 기준
   - 🐣 초보자 친화적
-  - ⭐ 인기도 (Stars)
+  - ⭐ 인기도 (Stars) 
   - ⏱️ 최근 업데이트
   - 🏷️ Good First Issue
   - 🛠️ 쉬운 기여도
@@ -109,7 +106,6 @@
 - **기여 히스토리**: 시간별 기여 활동 타임라인
 
 **뱃지 시스템:**
-
 - 🎯 **Initiator**: 첫 커밋 완료
 - ⚡ **Routine Loader**: 꾸준한 활동
 - 🔥 **Pulse Guardian**: 프로젝트 맥박을 지키는 수호자
@@ -130,47 +126,47 @@ flowchart TB
     subgraph CL ["🖥️ Client Layer"]
         A["React Frontend<br/>Vite + Tailwind"]
     end
-
+    
     subgraph AL ["⚙️ Application Layer"]
         B["Spring Boot Backend<br/>REST API Server"]
         C["GitHub OAuth Service"]
         D["JWT Authentication"]
     end
-
+    
     subgraph BLL ["🧠 Business Logic Layer"]
         E["Repository Analysis Service"]
-        F["Score Calculation Service"]
+        F["Score Calculation Service"] 
         G["Vulnerability Service"]
         H["Ecosystem Service"]
     end
-
+    
     subgraph DL ["💾 Data Layer"]
         J["MySQL Database"]
     end
-
+    
     subgraph EA ["🌐 External APIs"]
         K["GitHub GraphQL API"]
-        L["GitHub REST API"]
+        L["GitHub REST API"] 
         M["CVE Database"]
     end
-
+    
     %% 계층 간 연결
     A -->|HTTP Request| B
-
+    
     %% Application Layer 내부 연결
     B --> C & D & E & F & G & H
-
+    
     %% Business Logic to Data Layer
     E -->|Store Data| J
     F -->|Store Scores| J
     G -->|Store Vulns| J
     H -->|Store Projects| J
-
+    
     %% Business Logic to External APIs
     E -.->|GraphQL Query| K
     E -.->|REST Call| L
     G -.->|CVE Query| M
-
+    
     %% 스타일 정의
     style A fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
     style B fill:#e8f5e8,stroke:#388e3c,stroke-width:2px
@@ -184,7 +180,7 @@ flowchart TB
     style K fill:#e8f5e8,stroke:#4caf50,stroke-width:2px
     style L fill:#e8f5e8,stroke:#4caf50,stroke-width:2px
     style M fill:#fff8e1,stroke:#ff9800,stroke-width:2px
-
+    
     %% 서브그래프 스타일
     style CL fill:#fafafa,stroke:#757575,stroke-width:2px
     style AL fill:#fafafa,stroke:#757575,stroke-width:2px
@@ -192,36 +188,32 @@ flowchart TB
     style DL fill:#fafafa,stroke:#757575,stroke-width:2px
     style EA fill:#fafafa,stroke:#757575,stroke-width:2px
 ```
-
 ---
-
 ## 🔧 기술 스택 상세
 
 ### Frontend
-
-- **Framework**: React 19 + Vite 7
+- **Framework**: React 18 + Vite
 - **Language**: JavaScript (ES6+)
-- **Styling**: Tailwind CSS 4
+- **Styling**: Tailwind CSS
 - **State Management**: React Hooks
-- **HTTP Client**: Axios
-- **Charts**: D3.js
+- **HTTP Client**: Fetch API
+- **Charts**: Chart.js / D3.js
 - **Icons**: Heroicons
 
 ### Backend
-
-- **Framework**: Spring Boot 3.5
+- **Framework**: Spring Boot 3.2
 - **Language**: Java 24
 - **Security**: Spring Security + JWT
-- **Database**: H2 (개발/테스트), MySQL 8.0 (운영)
-- **Cache**: Spring Cache (인메모리)
+- **Database**: MySQL 8.0
+- **Cache**: Redis
 - **API**: RESTful APIs
+- **Documentation**: OpenAPI 3.0
 
 ### DevOps & Infrastructure
-
+- **Containerization**: Docker
+- **Orchestration**: Docker Compose
 - **Monitoring**: Spring Boot Actuator
 - **Logging**: SLF4J + Logback
-- **Containerization**: Docker `[Planned]`
-- **Orchestration**: Docker Compose `[Planned]`
 
 ---
 
@@ -229,13 +221,11 @@ flowchart TB
 
 ### 📋 사전 요구사항
 
-- **Java 21** 이상 (Java 24 권장)
-- **Node.js 18** 이상 (Node.js 22 권장)
+- **Java 17** 이상
+- **Node.js 18** 이상  
 - **MySQL 8.0** 이상
+- **Docker & Docker Compose** (선택사항)
 - **GitHub Personal Access Token**
-- **GitHub OAuth App** (Client ID, Client Secret)
-
-> **참고**: 개발 환경에서는 H2 인메모리 DB를 기본으로 사용하며, 운영 환경에서는 MySQL을 사용합니다.
 
 ### 💻 로컬 개발 환경 설정
 
@@ -316,9 +306,24 @@ npm run dev
 - **프론트엔드**: http://localhost:5173
 - **백엔드 API**: http://localhost:8080
 
-### 🐳 Docker로 실행 `[Planned]`
+### 🐳 Docker로 실행 (개발중)
 
-> ⚠️ Docker 기반 배포는 현재 개발 중입니다. 로컬 개발 환경 설정을 사용해 주세요.
+```bash
+# 1. 저장소 클론
+git clone https://github.com/Hyeri-hci/OSSDoctor.git
+cd OSSDoctor
+
+# 2. 환경 변수 설정
+cp .env.example .env
+# .env 파일을 편집하여 필요한 값들을 설정
+
+# 3. Docker Compose로 실행
+#docker-compose up -d
+
+# 4. 초기 데이터 로드 (선택사항)
+#docker-compose exec backend java -jar app.jar --spring.profiles.active=init
+
+```
 
 ---
 
@@ -366,37 +371,32 @@ npm run dev
 ### 주요 엔드포인트
 
 #### 🔐 인증 (Authentication)
-
 ```http
-GET  /oauth/callback        # GitHub OAuth 콜백 (리다이렉트)
-GET  /auth/status           # 로그인 상태 확인
-POST /auth/logout           # 로그아웃
+POST /api/oauth/callback    # GitHub OAuth 콜백
+GET  /api/oauth/status      # 로그인 상태 확인
+POST /api/oauth/logout      # 로그아웃
 ```
 
 #### 🩺 진단 (Diagnosis)
-
 ```http
-GET /api/diagnose/{owner}/{repo}           # 전체 진단 (건강도 + 보안 포함)
+GET /api/diagnose/{owner}/{repo}           # 전체 진단
 GET /api/diagnose/{owner}/{repo}/info      # 기본 정보
+GET /api/diagnose/{owner}/{repo}/security  # 보안 분석
 ```
 
 #### 🌍 탐색 (Ecosystem)
-
 ```http
-GET /api/ecosystem/search                              # 프로젝트 검색
-GET /api/ecosystem/recommended                         # 추천 프로젝트
-GET /api/ecosystem/repository/{owner}/{name}/activity  # 저장소 활동 정보
-GET /api/ecosystem/repository/{owner}/{name}/contributors  # 컨트리뷰터 통계
+GET /api/ecosystem/search                    # 프로젝트 검색
+GET /api/ecosystem/recommended               # 추천시스템
+GET /api/repository/{owner}/{name}/activity  # 저장소 활동 정보 조회
 ```
 
-#### 📊 활동 (My Activity)
-
+#### 📊 활동 (Activity)
 ```http
-GET /api/my-activity/stats/{nickname}          # 기여 통계
-GET /api/my-activity/history/{nickname}        # 기여 히스토리
-GET /api/my-activity/level/{nickname}          # 레벨 및 경험치 조회
-GET /api/my-activity/recent-badges/{nickname}  # 최근 획득 뱃지
-GET /api/badge/all-badges/{nickname}           # 전체 뱃지 목록
+GET /api/stats/{nickname}        # 기여 통계
+GET /api/badges/{nickname}        # 보유 뱃지
+GET /api/history/{nickname}       # 기여 히스토리
+GET /api/level/{nickname}       # 레벨 및 경험치 조회
 ```
 
 ---
@@ -436,54 +436,17 @@ OSSDoctor/
 cd backend
 ./gradlew test
 
-# 프론트엔드 빌드 검증
+# 프론트엔드 테스트
 cd frontend
-npm run build
-npm run lint
-```
+npm run test
 
-> **참고**: 프론트엔드 단위 테스트 및 E2E 테스트는 현재 구현 예정입니다. `[Planned]`
+# E2E 테스트
+npm run test:e2e
+```
 
 ---
 
-## � 벤치마크
-
-OSSDoctor의 성능을 재현 가능한 방법으로 측정할 수 있습니다.
-
-### 벤치마크 실행
-
-```bash
-# 1. Backend 서버 실행 (test 프로필 사용)
-cd backend
-./gradlew bootRun --args='--spring.profiles.active=test'
-
-# 2. 벤치마크 실행 (다른 터미널에서)
-cd ..
-python bench/benchmark_runner.py --repos bench/repos.json --output results/
-
-# 3. 논문용 표/그래프 생성
-python bench/generate_figures.py --input results/summary.csv --output figures/
-```
-
-### 연구 문제 (Research Questions)
-
-| RQ  | 연구 문제                                                  | 측정 지표                                |
-| :-- | :--------------------------------------------------------- | :--------------------------------------- |
-| RQ1 | GraphQL이 REST 대비 API 호출수/응답시간을 얼마나 줄이는가? | API 호출 수, 응답 시간 (ms)              |
-| RQ2 | Spring Cache가 반복 조회 시 응답 시간을 얼마나 줄이는가?   | 캐시 미스/히트 시 latency, speedup ratio |
-
-### 결과 파일
-
-- `results/raw_<timestamp>.jsonl`: 원시 측정 데이터
-- `results/summary.csv`: 저장소별 통계 요약
-- `results/cache_<timestamp>.json`: 캐시 효과 분석
-
-자세한 방법론은 [`docs/benchmark_method.md`](docs/benchmark_method.md)를 참조하세요.
-
----
-
-## �📄 라이선스
-
+## 📄 라이선스
 이 프로젝트는 [Apache License 2.0](LICENSE) 하에 배포됩니다.  
 자세한 내용은 [`LICENSE`](LICENSE) 및 [`NOTICE.md`](NOTICE.md) 파일을 참조하세요.
 
@@ -530,11 +493,11 @@ OSSDoctor 프로젝트에 기여해주셔서 감사합니다! 다음과 같은 �
 
 <div align="center">
 
-| 역할                | 이름   | GitHub                                     | 담당 업무                          |
-| ------------------- | ------ | ------------------------------------------ | ---------------------------------- |
+| 역할 | 이름 | GitHub | 담당 업무 |
+|------|------|---------|-----------|
 | 🎯 **Project Lead** | 신혜리 | [@Hyeri-hci](https://github.com/Hyeri-hci) | 전체 기획 및 관리, front&Back 개발 |
-| 💻 **Backend Dev**  | 정윤환 | [@Unani0528](https://github.com/Unani0528) | GitHub 연동, 보안 진단 시스템      |
-| 🎨 **Backend Dev**  | 진다빈 | [@dabbun](https://github.com/dabbun)       | DB, 점수 계산 시스템               |
+| 💻 **Backend Dev** | 정윤환 | [@Unani0528](https://github.com/Unani0528) | GitHub 연동, 보안 진단 시스템 |
+| 🎨 **Backend Dev** | 진다빈 | [@dabbun](https://github.com/dabbun) | DB, 점수 계산 시스템 |
 
 </div>
 
