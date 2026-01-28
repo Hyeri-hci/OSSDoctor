@@ -56,3 +56,12 @@ gradle-app.setting
 # Spring Boot
 *.jar
 *.war
+
+# benchmark results
+benchmark/docs/
+benchmark/dataset/
+benchmark/results/
+benchmark/figures/
+benchmark/*.csv
+benchmark/scripts/generate*
+benchmark/*.md
