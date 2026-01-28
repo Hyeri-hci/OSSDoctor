@@ -1,5 +1,5 @@
-import React from 'react';
-import PropTypes from 'prop-types';
+import React from "react";
+import PropTypes from "prop-types";
 
 /**
  * 검색 결과 헤더 컴포넌트
@@ -19,75 +19,79 @@ import PropTypes from 'prop-types';
  * @param {React.Ref} props.containerRef - 컨테이너 참조
  */
 const SearchResultsHeader = ({
-    hasSearched,
-    hasActiveFilters,
-    displayedProjects,
-    currentPage,
-    totalPagesInBatch,
-    currentBatch,
-    searchQuery,
-    onClearFilters,
-    containerRef
+  hasSearched,
+  hasActiveFilters,
+  displayedProjects,
+  currentPage,
+  totalPagesInBatch,
+  currentBatch,
+  searchQuery,
+  onClearFilters,
+  containerRef,
 }) => {
-    return (
-        <div className="mb-8">
-            {/* 활성 필터 표시 */}
-            <div className="transition-all duration-300 ease-in-out overflow-hidden">
-                {hasActiveFilters && (
-                    <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg transform transition-all duration-300 ease-out opacity-100 translate-y-0">
-                        <div className="flex flex-wrap items-center justify-between gap-4">
-                            <div className="text-sm text-blue-600">
-                                Search filters applied
-                            </div>
-                            
-                            <div className="flex flex-wrap items-center gap-2">
-                                {searchQuery && (
-                                    <span className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-blue-600 bg-white border border-blue-300 rounded-lg">
-                                        Search: &quot;{searchQuery}&quot;
-                                    </span>
-                                )}
-                                
-                                <button 
-                                    onClick={onClearFilters}
-                                    className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-blue-600 bg-white hover:bg-blue-50 border border-blue-300 rounded-lg transition-colors duration-200"
-                                >
-                                    Clear all filters
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
-            </div>
+  return (
+    <div className="mb-8">
+      {/* 활성 필터 표시 */}
+      <div className="transition-all duration-300 ease-in-out overflow-hidden">
+        {hasActiveFilters && (
+          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg transform transition-all duration-300 ease-out opacity-100 translate-y-0">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="text-sm text-blue-600">
+                Search filters applied
+              </div>
 
-            {/* 검색 결과 헤더 - 검색이 수행된 경우에만 표시 */}
-            {hasSearched && (
-                <div ref={containerRef} className="mb-6 transform transition-all duration-300 ease-out opacity-100 translate-y-0">
-                    <h2 className="text-2xl font-bold mb-2">Search Results</h2>
-                    <p className="text-gray-600">
-                        Found {displayedProjects.length} projects (Batch {currentBatch}, Page {currentPage}/{totalPagesInBatch})
-                    </p>
-                </div>
-            )}
+              <div className="flex flex-wrap items-center gap-2">
+                {searchQuery && (
+                  <span className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-blue-600 bg-white border border-blue-300 rounded-lg">
+                    Search: &quot;{searchQuery}&quot;
+                  </span>
+                )}
+
+                <button
+                  onClick={onClearFilters}
+                  className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-blue-600 bg-white hover:bg-blue-50 border border-blue-300 rounded-lg transition-colors duration-200"
+                >
+                  Clear all filters
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* 검색 결과 헤더 - 검색이 수행된 경우에만 표시 */}
+      {hasSearched && (
+        <div
+          ref={containerRef}
+          className="mb-6 transform transition-all duration-300 ease-out opacity-100 translate-y-0"
+        >
+          <h2 className="text-2xl font-bold mb-2">Search Results</h2>
+          <p className="text-gray-600">
+            Found {displayedProjects.length} projects (Batch {currentBatch},
+            Page {currentPage}/{totalPagesInBatch})
+          </p>
         </div>
-    );
+      )}
+    </div>
+  );
 };
 
 SearchResultsHeader.propTypes = {
-    hasSearched: PropTypes.bool.isRequired,
-    hasActiveFilters: PropTypes.bool.isRequired,
-    displayedProjects: PropTypes.arrayOf(PropTypes.object).isRequired,
-    currentPage: PropTypes.number.isRequired,
-    totalPagesInBatch: PropTypes.number.isRequired,
-    currentBatch: PropTypes.number.isRequired,
-    searchQuery: PropTypes.string.isRequired,
-    selectedLanguage: PropTypes.string.isRequired,
-    selectedLicense: PropTypes.string.isRequired,
-    selectedCommitDate: PropTypes.string.isRequired,
-    filterOptions: PropTypes.shape({
-        commitDates: PropTypes.arrayOf(PropTypes.object).isRequired
-    }).isRequired,
-    onClearFilters: PropTypes.func.isRequired,
-    containerRef: PropTypes.object
+  hasSearched: PropTypes.bool.isRequired,
+  hasActiveFilters: PropTypes.bool.isRequired,
+  displayedProjects: PropTypes.arrayOf(PropTypes.object).isRequired,
+  currentPage: PropTypes.number.isRequired,
+  totalPagesInBatch: PropTypes.number.isRequired,
+  currentBatch: PropTypes.number.isRequired,
+  searchQuery: PropTypes.string.isRequired,
+  selectedLanguage: PropTypes.string.isRequired,
+  selectedLicense: PropTypes.string.isRequired,
+  selectedCommitDate: PropTypes.string.isRequired,
+  filterOptions: PropTypes.shape({
+    commitDates: PropTypes.arrayOf(PropTypes.object).isRequired,
+  }).isRequired,
+  onClearFilters: PropTypes.func.isRequired,
+  containerRef: PropTypes.object,
 };
 
 export default SearchResultsHeader;

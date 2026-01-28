@@ -23,7 +23,8 @@
 - [🚀 빠른 시작](#-빠른-시작)
 - [📱 사용 방법](#-사용-방법)
 - [🛠️ 기술 스택](#️-기술-스택)
-- [📄 라이선스](#-라이선스)
+- [� 벤치마크](#-벤치마크)
+- [�📄 라이선스](#-라이선스)
 - [🤝 기여하기](#-기여하기)
 - [🏆 주요 기여자](#-주요-기여자)
 - [📞 지원 및 문의](#-지원-및-문의)
@@ -445,7 +446,43 @@ npm run lint
 
 ---
 
-## 📄 라이선스
+## � 벤치마크
+
+OSSDoctor의 성능을 재현 가능한 방법으로 측정할 수 있습니다.
+
+### 벤치마크 실행
+
+```bash
+# 1. Backend 서버 실행 (test 프로필 사용)
+cd backend
+./gradlew bootRun --args='--spring.profiles.active=test'
+
+# 2. 벤치마크 실행 (다른 터미널에서)
+cd ..
+python bench/benchmark_runner.py --repos bench/repos.json --output results/
+
+# 3. 논문용 표/그래프 생성
+python bench/generate_figures.py --input results/summary.csv --output figures/
+```
+
+### 연구 문제 (Research Questions)
+
+| RQ  | 연구 문제                                                  | 측정 지표                                |
+| :-- | :--------------------------------------------------------- | :--------------------------------------- |
+| RQ1 | GraphQL이 REST 대비 API 호출수/응답시간을 얼마나 줄이는가? | API 호출 수, 응답 시간 (ms)              |
+| RQ2 | Spring Cache가 반복 조회 시 응답 시간을 얼마나 줄이는가?   | 캐시 미스/히트 시 latency, speedup ratio |
+
+### 결과 파일
+
+- `results/raw_<timestamp>.jsonl`: 원시 측정 데이터
+- `results/summary.csv`: 저장소별 통계 요약
+- `results/cache_<timestamp>.json`: 캐시 효과 분석
+
+자세한 방법론은 [`docs/benchmark_method.md`](docs/benchmark_method.md)를 참조하세요.
+
+---
+
+## �📄 라이선스
 
 이 프로젝트는 [Apache License 2.0](LICENSE) 하에 배포됩니다.  
 자세한 내용은 [`LICENSE`](LICENSE) 및 [`NOTICE.md`](NOTICE.md) 파일을 참조하세요.

@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
-import PropTypes from 'prop-types';
-import { Button, Input, Select } from '../../../components/common';
-import { MagnifyingGlassIcon, QuestionMarkCircleIcon } from '@heroicons/react/24/outline';
-import { SortingGuideModal } from './index';
+import React, { useState } from "react";
+import PropTypes from "prop-types";
+import { Button, Input, Select } from "../../../components/common";
+import {
+  MagnifyingGlassIcon,
+  QuestionMarkCircleIcon,
+} from "@heroicons/react/24/outline";
+import { SortingGuideModal } from "./index";
 
 /**
  * 프로젝트 검색 섹션 컴포넌트
@@ -26,204 +29,208 @@ import { SortingGuideModal } from './index';
  * @param {Function} props.onSearch - 검색 실행 핸들러
  */
 const ProjectSearchSection = ({
-    searchQuery,
-    selectedLanguage,
-    selectedLicense,
-    selectedCommitDate,
-    sortBy,
-    loading,
-    filterOptions,
-    hasActiveFilters,
-    activeFiltersCount,
-    onlyTimeFilterSelected,
-    onSearchChange,
-    onLanguageChange,
-    onLicenseChange,
-    onCommitDateChange,
-    onSortChange,
-    onClearFilters,
-    onSearch
+  searchQuery,
+  selectedLanguage,
+  selectedLicense,
+  selectedCommitDate,
+  sortBy,
+  loading,
+  filterOptions,
+  hasActiveFilters,
+  activeFiltersCount,
+  onlyTimeFilterSelected,
+  onSearchChange,
+  onLanguageChange,
+  onLicenseChange,
+  onCommitDateChange,
+  onSortChange,
+  onClearFilters,
+  onSearch,
 }) => {
-    const [isGuideModalOpen, setIsGuideModalOpen] = useState(false);
+  const [isGuideModalOpen, setIsGuideModalOpen] = useState(false);
 
-    const handleGuideModalOpen = () => {
-        setIsGuideModalOpen(true);
-    };
+  const handleGuideModalOpen = () => {
+    setIsGuideModalOpen(true);
+  };
 
-    const handleGuideModalClose = () => {
-        setIsGuideModalOpen(false);
-    };
+  const handleGuideModalClose = () => {
+    setIsGuideModalOpen(false);
+  };
 
-    // 로컬 검색어 변경 처리
-    return (
-        <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
-            <div className="space-y-6">
-                {/* 필터 옵션들 */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div>
-                        <label className="block text-sm font-medium mb-2 text-gray-700">
-                            Programming Language
-                        </label>
-                        <Select
-                            value={selectedLanguage}
-                            onChange={onLanguageChange}
-                            options={filterOptions.languages}
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            License
-                        </label>
-                        <Select
-                            value={selectedLicense}
-                            onChange={onLicenseChange}
-                            options={filterOptions.licenses}
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Recent Update
-                        </label>
-                        <Select
-                            value={selectedCommitDate}
-                            onChange={onCommitDateChange}
-                            options={filterOptions.commitDates}
-                        />
-                    </div>
-
-                    <div>
-                        <div className="flex items-center gap-2 mb-2">
-                            <label className="block text-sm font-medium text-gray-700">
-                                Sort By
-                            </label>
-                            <button
-                                onClick={handleGuideModalOpen}
-                                className="text-gray-400 hover:text-blue-600 transition-colors"
-                                title="정렬 기준 가이드"
-                            >
-                                <QuestionMarkCircleIcon className="w-5 h-5" />
-                            </button>
-                        </div>
-                        <Select
-                            value={sortBy}
-                            onChange={onSortChange}
-                            options={filterOptions.sortOptions}
-                        />
-                    </div>
-                </div>
-
-                {/* Search Input */}
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Project Search
-                    </label>
-                    <div className="relative">
-                        <Input
-                            type="text"
-                            placeholder="Search by project name or description"
-                            value={searchQuery}
-                            onChange={(e) => onSearchChange(e.target.value)}
-                            className="pl-10"
-                        />
-                        <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    </div>
-                    
-                    {/* 검색 안내 메시지 - 최근 업데이트만 선택되었을 때만 표시 */}
-                    <div className="mt-3 min-h-0 transition-all duration-200">
-                        {onlyTimeFilterSelected && (
-                            <div className="text-sm text-orange-600 bg-orange-50 border border-orange-200 rounded-lg p-3">
-                                <p className="font-medium">💡 Search Help</p>
-                                <p className="mt-1"><strong>Recent Update</strong> is a filter that can be used with other search criteria.</p>
-                                <p className="mt-2 text-xs text-orange-500 bg-orange-100 rounded px-2 py-1">
-                                    <strong>To search:</strong> Enter a project name or select at least one programming language or license.
-                                </p>
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                {/* 검색 버튼과 필터 상태 */}
-                <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                        <Button
-                            onClick={onSearch}
-                            variant="primary"
-                            disabled={loading}
-                            className="flex items-center justify-center gap-2 w-full sm:w-auto"
-                        >
-                            {loading ? (
-                                <>
-                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                    Searching...
-                                </>
-                            ) : (
-                                <>
-                                    <MagnifyingGlassIcon className="w-4 h-4" />
-                                    Search Projects
-                                </>
-                            )}
-                        </Button>
-
-                        <div className="flex items-center gap-3">
-                            {hasActiveFilters && (
-                                <button
-                                    onClick={onClearFilters}
-                                    className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded-lg transition-colors duration-200 whitespace-nowrap"
-                                >
-                                    ✕ Clear Filters
-                                </button>
-                            )}
-                            
-                            {!loading && hasActiveFilters && (
-                                <div className="text-sm text-green-600 whitespace-nowrap flex items-center gap-1">
-                                    <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                                    Filters Applied
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    {hasActiveFilters && (
-                        <div className="text-sm text-gray-600 text-center sm:text-right">
-                            {activeFiltersCount} filter(s) applied
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            {/* 정렬 기준 가이드 모달 */}
-            <SortingGuideModal 
-                isOpen={isGuideModalOpen}
-                onClose={handleGuideModalClose}
+  // 로컬 검색어 변경 처리
+  return (
+    <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
+      <div className="space-y-6">
+        {/* 필터 옵션들 */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div>
+            <label className="block text-sm font-medium mb-2 text-gray-700">
+              Programming Language
+            </label>
+            <Select
+              value={selectedLanguage}
+              onChange={onLanguageChange}
+              options={filterOptions.languages}
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              License
+            </label>
+            <Select
+              value={selectedLicense}
+              onChange={onLicenseChange}
+              options={filterOptions.licenses}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Recent Update
+            </label>
+            <Select
+              value={selectedCommitDate}
+              onChange={onCommitDateChange}
+              options={filterOptions.commitDates}
+            />
+          </div>
+
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Sort By
+              </label>
+              <button
+                onClick={handleGuideModalOpen}
+                className="text-gray-400 hover:text-blue-600 transition-colors"
+                title="정렬 기준 가이드"
+              >
+                <QuestionMarkCircleIcon className="w-5 h-5" />
+              </button>
+            </div>
+            <Select
+              value={sortBy}
+              onChange={onSortChange}
+              options={filterOptions.sortOptions}
+            />
+          </div>
         </div>
-    );
+
+        {/* Search Input */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Project Search
+          </label>
+          <div className="relative">
+            <Input
+              type="text"
+              placeholder="Search by project name or description"
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
+              className="pl-10"
+            />
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+          </div>
+
+          {/* 검색 안내 메시지 - 최근 업데이트만 선택되었을 때만 표시 */}
+          <div className="mt-3 min-h-0 transition-all duration-200">
+            {onlyTimeFilterSelected && (
+              <div className="text-sm text-orange-600 bg-orange-50 border border-orange-200 rounded-lg p-3">
+                <p className="font-medium">💡 Search Help</p>
+                <p className="mt-1">
+                  <strong>Recent Update</strong> is a filter that can be used
+                  with other search criteria.
+                </p>
+                <p className="mt-2 text-xs text-orange-500 bg-orange-100 rounded px-2 py-1">
+                  <strong>To search:</strong> Enter a project name or select at
+                  least one programming language or license.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* 검색 버튼과 필터 상태 */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <Button
+              onClick={onSearch}
+              variant="primary"
+              disabled={loading}
+              className="flex items-center justify-center gap-2 w-full sm:w-auto"
+            >
+              {loading ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Searching...
+                </>
+              ) : (
+                <>
+                  <MagnifyingGlassIcon className="w-4 h-4" />
+                  Search Projects
+                </>
+              )}
+            </Button>
+
+            <div className="flex items-center gap-3">
+              {hasActiveFilters && (
+                <button
+                  onClick={onClearFilters}
+                  className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded-lg transition-colors duration-200 whitespace-nowrap"
+                >
+                  ✕ Clear Filters
+                </button>
+              )}
+
+              {!loading && hasActiveFilters && (
+                <div className="text-sm text-green-600 whitespace-nowrap flex items-center gap-1">
+                  <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                  Filters Applied
+                </div>
+              )}
+            </div>
+          </div>
+
+          {hasActiveFilters && (
+            <div className="text-sm text-gray-600 text-center sm:text-right">
+              {activeFiltersCount} filter(s) applied
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* 정렬 기준 가이드 모달 */}
+      <SortingGuideModal
+        isOpen={isGuideModalOpen}
+        onClose={handleGuideModalClose}
+      />
+    </div>
+  );
 };
 ProjectSearchSection.propTypes = {
-    searchQuery: PropTypes.string.isRequired,
-    selectedLanguage: PropTypes.string.isRequired,
-    selectedLicense: PropTypes.string.isRequired,
-    selectedCommitDate: PropTypes.string.isRequired,
-    sortBy: PropTypes.string.isRequired,
-    loading: PropTypes.bool.isRequired,
-    filterOptions: PropTypes.shape({
-        languages: PropTypes.array.isRequired,
-        licenses: PropTypes.array.isRequired,
-        commitDates: PropTypes.array.isRequired,
-        sortOptions: PropTypes.array.isRequired
-    }).isRequired,
-    hasActiveFilters: PropTypes.bool.isRequired,
-    activeFiltersCount: PropTypes.number.isRequired,
-    onlyTimeFilterSelected: PropTypes.bool.isRequired,
-    onSearchChange: PropTypes.func.isRequired,
-    onLanguageChange: PropTypes.func.isRequired,
-    onLicenseChange: PropTypes.func.isRequired,
-    onCommitDateChange: PropTypes.func.isRequired,
-    onSortChange: PropTypes.func.isRequired,
-    onClearFilters: PropTypes.func.isRequired,
-    onSearch: PropTypes.func.isRequired
+  searchQuery: PropTypes.string.isRequired,
+  selectedLanguage: PropTypes.string.isRequired,
+  selectedLicense: PropTypes.string.isRequired,
+  selectedCommitDate: PropTypes.string.isRequired,
+  sortBy: PropTypes.string.isRequired,
+  loading: PropTypes.bool.isRequired,
+  filterOptions: PropTypes.shape({
+    languages: PropTypes.array.isRequired,
+    licenses: PropTypes.array.isRequired,
+    commitDates: PropTypes.array.isRequired,
+    sortOptions: PropTypes.array.isRequired,
+  }).isRequired,
+  hasActiveFilters: PropTypes.bool.isRequired,
+  activeFiltersCount: PropTypes.number.isRequired,
+  onlyTimeFilterSelected: PropTypes.bool.isRequired,
+  onSearchChange: PropTypes.func.isRequired,
+  onLanguageChange: PropTypes.func.isRequired,
+  onLicenseChange: PropTypes.func.isRequired,
+  onCommitDateChange: PropTypes.func.isRequired,
+  onSortChange: PropTypes.func.isRequired,
+  onClearFilters: PropTypes.func.isRequired,
+  onSearch: PropTypes.func.isRequired,
 };
 
 export default ProjectSearchSection;
