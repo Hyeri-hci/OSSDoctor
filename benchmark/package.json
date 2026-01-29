@@ -1,0 +1,28 @@
+{
+  "name": "ossdoctor-benchmark",
+  "version": "1.0.0",
+  "description": "GraphQL vs REST API Benchmark for OSSDoctor",
+  "type": "module",
+  "scripts": {
+    "collect-dataset": "node scripts/collect-dataset.js",
+    "benchmark-graphql": "node scripts/benchmark-graphql.js",
+    "benchmark-rest": "node scripts/benchmark-rest.js",
+    "run-all": "node scripts/run-benchmark.js",
+    "analyze": "node scripts/analyze-results.js",
+    "generate-figures": "node scripts/generate-figures.js",
+    "rq2-graphql": "node scripts/rq2-benchmark-graphql.js",
+    "rq2-rest": "node scripts/rq2-benchmark-rest.js",
+    "rq2-analyze": "node scripts/rq2-analyze.js",
+    "rq2-figures": "python scripts/rq2-generate-figures.py",
+    "rq2-all": "node scripts/rq2-run-all.js"
+  },
+  "dependencies": {
+    "@octokit/graphql": "^7.0.2",
+    "@octokit/rest": "^20.0.2",
+    "dotenv": "^16.3.1",
+    "simple-statistics": "^7.8.3"
+  },
+  "devDependencies": {},
+  "author": "OSSDoctor Research Team",
+  "license": "MIT"
+}
